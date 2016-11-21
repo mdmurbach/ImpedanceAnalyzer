@@ -3,7 +3,7 @@ branch-defaults:
     environment: null
     group_suffix: null
   master:
-    environment: null
+    environment: impedance-analyzer-env
 global:
   application_name: impedance-analyzer
   branch: null
