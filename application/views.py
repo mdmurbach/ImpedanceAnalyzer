@@ -1,5 +1,6 @@
 from application import application
 from flask import render_template
+import scipy
 
 # main webpage
 @application.route('/', methods=['GET', 'POST'])
