@@ -1,0 +1,15 @@
+branch-defaults:
+  default:
+    environment: null
+    group_suffix: null
+  master:
+    environment: null
+global:
+  application_name: impedance-analyzer
+  branch: null
+  default_ec2_keyname: null
+  default_platform: Python 2.7
+  default_region: us-west-2
+  profile: eb-cli
+  repository: null
+  sc: git

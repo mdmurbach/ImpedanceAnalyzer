@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Impedance Analyzer</title>
+
+
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+        <style media="screen">
+
+        /************** Customize NavBar ******************/
+        .navbar-custom {
+            margin-bottom: 0px;
+            background-color: #009688;
+            color:#009688;
+        }
+
+        /*  Link colors     */
+        .navbar-custom .navbar-nav > li > a {
+          	color:#fff;
+        }
+
+        .navbar-custom .navbar-nav > .active > a, .navbar-nav > .active > a:hover, .navbar-nav > .active > a:focus {
+            color: #fff;
+        	background-color:transparent;
+        }
+
+        /* Hover background */
+        .navbar-custom .navbar-nav > li > a:hover, .nav > li > a:focus {
+            text-decoration: none;
+            background-color: #00796B;
+            color: #FF5722;
+        }
+
+        .navbar-custom .navbar-brand {
+          	color:#fff;
+            font-weight: bold;
+        }
+        .navbar-custom .navbar-toggle {
+          	background-color:#eeeeee;
+        }
+        .navbar-custom .icon-bar {
+          	background-color:#009688;
+        }
+
+        /*@media (min-width:768px){
+            .navbar-custom .navbar-nav > li:last-child {
+                border-left:2px solid #fff;
+            }
+        }*/
+        /************* End Customize NavBar **************/
+
+        html, body {
+            height:100%;
+        }
+
+        /* Medium devices (desktops, 992px and up) */
+        @media screen and (min-device-width: 992px) {
+            #first-row {
+                height: 30%;
+            }
+
+            #second-row {
+                height: 70%;
+            }
+        }
+
+        div #grid-impedance, #grid-parameters,
+        #grid-introduction, #grid-load {
+            height: 100%;
+            background-color: #FFFFFF;
+            border: 1px black solid;
+            border-radius: 2px;
+            padding: 0px 10px;
+            /*overflow: auto;*/
+            }
+
+        .glyphicon-question-sign {
+            font-size: .5em;
+            vertical-align: top;
+        }
+
+        .btn-browse {
+            background-color: #b2dfdb;
+        }
+
+        .btn-plot {
+            background-color: #FF5722;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+
+        </style>
+
+    </head>
+    <body>
+
+        <!-- Header -->
+        <nav class="navbar navbar-static-top navbar-custom">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Impedance Analyzer</a>
+                </div>
+                <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#index">Home</a></li>
+                        <li><a href="#about">Demo</a></li>
+                        <li><a href="#contact">About</a></li>
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div>
+        </nav>
+
+        <!-- Modal for defining Equivalent Circuit-->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">Define your equivalent circuit</h4>
+                    </div>
+                    <div class="modal-body">
+                    <form class="form-horizontal" action="" id="defineECparams">
+                        <div class="form-group">
+                            <label for="R1" class="col-sm-2 control-label">R1</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="R1" value="0.1" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="R2" class="col-sm-2 control-label">R2</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="R2" value="0.35" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="W1" class="col-sm-2 control-label">W1</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="W1" value="50" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="W2" class="col-sm-2 control-label">W2</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="W2" value="0.1" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="C1" class="col-sm-2 control-label">C1</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="C1" value="0.001" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="C2" class="col-sm-2 control-label">C2</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" name="C2" value="0.8" class="form-control">
+                                    <div class="input-group-addon">Ohms</div>
+                                </div>
+                        </div>
+                    </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid" style="height: calc(100% - 50px);">
+            <div class="row" id="first-row">
+                <div class="col-md-3" id="grid-introduction">
+                    <h4> Welcome to the Impedance Analyzer: </h4><h5>an open-source tool for analyzing EIS data.</h5>
+                </div>
+                <div class="col-md-9"  id="grid-load">
+                    <h4>Upload a file<i id="info-fileupload" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i> or choose an example</h3>
+                    <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="#" id="fileinput">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="fileselectbutton"> Select File </label>
+                                    <input style="display: none;" type="file" name="data" id="fileselect" />
+                                    <input class="btn btn-browse form-control" type="button" value="Browse..." onclick="document.getElementById('fileselect').click();" id="fileselectbutton">
+                                    <button class="btn" onclick="reset($('#fileselect'))"><span aria-hidden="true">&times; remove file</span></button></input>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="exampleselect">
+                                        Select Example Dataset
+                                    </label>
+                                    <select class="form-control" name="example" id="exampleselect">
+                                        <option value="null">Select a dataset</option>
+                                        <option value="zhang_example.csv">Zhang, 2000</option>
+                                        <option value="imp-data.csv">EIS data</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Model(s) to fit: </label>
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="ecinput" name="fitting-ec" value="ec" onchange="ecdefine();"/>Equivalent Circuit
+                                            <button type="button" id="ecmodal" data-toggle="modal" data-target="#myModal" style="display: none;"></button>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label style="">
+                                            <input type="checkbox" name="fitting-p2d" value="p2d"/>Pseudo 2-Dimensional
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" value="Plot" id="plot" >
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row" id="second-row">
+                <div class="col-md-8" id="grid-impedance">
+                        Impedance plot
+                </div>
+                <div class="col-md-4" id="grid-parameters">
+                    <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
+                    <div class="table-responsive" id="table-div">
+                        <table class="table" id="parameter-estimates">
+                            <tr>
+                                <th>
+                                    Parameter
+                                </th>
+                                <th>
+                                    Best Estimate
+                                </th>
+                                <th>
+                                    Sensitivity
+                                </th>
+                            </tr>
+                            <!-- {% for parameter in parameter_results %}
+                                <tr>
+                                    <td><p>{{ parameter.name }}</p></td>
+                                    <td>{{ parameter.value }}</td>
+                                    <td>{{ parameter.sensitivity }}</td>
+                                </tr>
+                            {% endfor %} -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <!-- file input button -->
+        <script type="text/javascript">
+        $('#fileselect').on('change', function() {
+            $('#fileselectbutton').val($(this).val());
+            $('#plot').prop('disabled', false);
+            $('#modelFieldset').removeProp('disabled');
+        });
+        $('#exampleselect').on('change', function() {
+            $('#plot').prop('disabled', false);
+            $('#modelFieldset').removeProp('disabled');
+        });
+        window.reset = function (e) {
+            e.wrap('<form>').closest('form').get(0).reset();
+            e.unwrap();
+        }
+        </script>
+
+        <!-- bootstrap tooltips -->
+        <!-- TODO: Add tooltip help here -->
+        <script type="text/javascript">
+            $('#info-fileupload').prop('title', 'TODO: The uploaded .csv file will be interpreted with the first column as frequency, second column as real impedance, third column as imaginary impedance.')
+        </script>
+
+        <script type="text/javascript">
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip({ placement: 'bottom'})
+        })
+        </script>
+
+        <!-- define equivalent circuit -->
+        <script type="text/javascript">
+        function ecdefine() {
+            if($('#ecinput').is(':checked')) {
+                document.getElementById('ecmodal').click();
+            }
+        }
+        </script>
+
+    </body>
+</html>
