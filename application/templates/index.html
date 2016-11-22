@@ -9,6 +9,8 @@
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
+        <link rel="stylesheet" href="{{ url_for('static', filename='nyquist.css') }}">
+
         <style media="screen">
 
         /************** Customize NavBar ******************/
@@ -21,6 +23,7 @@
         /*  Link colors     */
         .navbar-custom .navbar-nav > li > a {
           	color:#fff;
+            font-weight: bold;
         }
 
         .navbar-custom .navbar-nav > .active > a, .navbar-nav > .active > a:hover, .navbar-nav > .active > a:focus {
@@ -31,8 +34,9 @@
         /* Hover background */
         .navbar-custom .navbar-nav > li > a:hover, .nav > li > a:focus {
             text-decoration: none;
-            background-color: #00796B;
+            background-color: #B2DFDB;
             color: #FF5722;
+            font-weight: bold;
         }
 
         .navbar-custom .navbar-brand {
@@ -75,7 +79,7 @@
             border: 1px black solid;
             border-radius: 2px;
             padding: 0px 10px;
-            /*overflow: auto;*/
+            overflow: auto;
             }
 
         .glyphicon-question-sign {
@@ -88,9 +92,35 @@
         }
 
         .btn-plot {
+
+            transition: all 0.3s ease 0s;
             background-color: #FF5722;
             font-weight: bold;
             color: #FFFFFF;
+        }
+
+        .btn-plot:hover:enabled {
+            transition: all 0.3s ease 0s;
+            background-color: #FF5722;
+            font-weight: bold;
+            color: #FFFFFF;
+            -webkit-transform: scale(1.2);
+            -ms-transform: scale(1.2);
+            transform: scale(1.2);
+        }
+
+        .ec-fit {
+          fill: none;
+          stroke: black;
+          stroke-width: 1.5px;
+        }
+
+        .default-circle {
+            fill: #009688;
+        }
+
+        .selected-circle {
+            fill: #FF5722;
         }
 
         </style>
@@ -129,53 +159,54 @@
                         <h4 class="modal-title" id="myModalLabel">Define your equivalent circuit</h4>
                     </div>
                     <div class="modal-body">
+                        <input type="radio" class="disabled" value="randles_cpe"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></input>
                     <form class="form-horizontal" action="" id="defineECparams">
                         <div class="form-group">
                             <label for="R1" class="col-sm-2 control-label">R1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="R1" value="0.1" class="form-control">
+                                    <input type="text" name="R1" value="0.01" class="form-control">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="R2" class="col-sm-2 control-label">R2</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="R2" value="0.35" class="form-control">
+                                    <input type="text" name="R2" value="0.01" class="form-control">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="W1" class="col-sm-2 control-label">W1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="W1" value="50" class="form-control">
+                                    <input type="text" name="W1" value=".01" class="form-control">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="W2" class="col-sm-2 control-label">W2</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="W2" value="0.1" class="form-control">
+                                    <input type="text" name="W2" value="10" class="form-control">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="C1" class="col-sm-2 control-label">C1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="C1" value="0.001" class="form-control">
-                                    <div class="input-group-addon">Ohms</div>
+                                    <input type="text" name="C1" value="0.01" class="form-control">
+                                    <div class="input-group-addon">F</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="C2" class="col-sm-2 control-label">C2</label>
                                 <div class="col-sm-8 input-group">
                                     <input type="text" name="C2" value="0.8" class="form-control">
-                                    <div class="input-group-addon">Ohms</div>
+                                    <div class="input-group-addon"></div>
                                 </div>
                         </div>
                     </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submitECparams()">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -188,7 +219,7 @@
                 </div>
                 <div class="col-md-9"  id="grid-load">
                     <h4>Upload a file<i id="info-fileupload" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i> or choose an example</h3>
-                    <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="#" id="fileinput">
+                    <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="{{ url_for('index') }}" id="fileinput">
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -207,7 +238,7 @@
                                         <option value="null">Select a dataset</option>
                                         <option value="zhang_example.csv">Zhang, 2000</option>
                                         <option value="imp-data.csv">EIS data</option>
-                                        <option>4</option>
+                                        <option value="wu_example.csv">Wu</option>
                                         <option>5</option>
                                     </select>
                                 </div>
@@ -237,7 +268,14 @@
             </div>
             <div class="row" id="second-row">
                 <div class="col-md-8" id="grid-impedance">
-                        Impedance plot
+                    <div class="row">
+                        <div class="col-md-6">
+                                <div id="bode"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="nyquist"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4" id="grid-parameters">
                     <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
@@ -254,13 +292,13 @@
                                     Sensitivity
                                 </th>
                             </tr>
-                            <!-- {% for parameter in parameter_results %}
+                            {% for parameter in parameter_results %}
                                 <tr>
                                     <td><p>{{ parameter.name }}</p></td>
                                     <td>{{ parameter.value }}</td>
                                     <td>{{ parameter.sensitivity }}</td>
                                 </tr>
-                            {% endfor %} -->
+                            {% endfor %}
                         </table>
                     </div>
                 </div>
@@ -273,6 +311,29 @@
 
         <!-- Latest compiled and minified JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <!-- d3 -->
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+
+        <!-- submit form -->
+        <script type="text/javascript">
+        function submitECparams() {
+            console.log('Submitting params...');
+
+            // var params = [$("input[name='R1']").val(),
+            //                 $("input[name='R2']").val(),
+            //                 $("input[name='W1']").val(),
+            //                 $("input[name='W2']").val(),
+            //                 $("input[name='C1']").val(),
+            //                 $("input[name='C2']").val()];
+
+            var inputs = $('#defineECparams :input');
+            inputs.each(function() {
+                $(this).appendTo('#fileinput');
+            });
+
+        }
+        </script>
 
         <!-- file input button -->
         <script type="text/javascript">
@@ -310,6 +371,256 @@
                 document.getElementById('ecmodal').click();
             }
         }
+        </script>
+
+        <!-- draw chart with d3 -->
+        <script type="text/javascript" src="{{ url_for('static', filename='nyquist-models.js') }}"> </script>
+
+        <script type="text/javascript">
+            var data = {{ data|tojson|safe }}; // 1 x N frequencys Array of 1 x 3 arrays (real, imag, freq)
+            console.log("data");
+            console.log(data);
+            if (data == 0) {
+                d3.select('#nyquist')
+            	.append('div')
+            	.text('<-- Upload a file')
+            } else {
+                var ecmodel = {{ ecFit|tojson|safe }}; // Boolean [EC, P2D]
+
+                console.log(ecmodel);
+
+                var nyquist = nyquistChart({width: 400, height: 400, ec: ecmodel})
+                    .x(function(d) { return d[1] })
+                    .y(function(d) { return -d[2] });
+
+                d3.select("#nyquist")
+                    .datum(data)
+                    .call(nyquist);
+
+            }
+        </script>
+
+        <!-- draw bode plot  with d3 -->
+        <script type="text/javascript">
+            var data = {{ data|tojson|safe }}; // 1 x N frequencys Array of 1 x 3 arrays (real, imag, freq)
+
+            function phase(real, imag) {
+                return Math.atan2(imag,real)*180/Math.PI;
+            }
+
+            function mag(real, imag) {
+                return Math.sqrt(Math.pow(imag, 2) + Math.pow(real, 2));
+            }
+
+            if (data == 0) {
+                d3.select('#bode')
+            	.append('div')
+            	.text('<-- Upload a file')
+            } else {
+                var ecmodel = {{ ecFit|tojson|safe }}; // Boolean [EC, P2D]
+
+                outerWidth = 400;
+                outerHeight = 400;
+
+                var margin = {top: 10, right: 10, bottom: 60, left: 60};
+                var width = outerWidth - margin.left - margin.right;
+                var height = outerHeight/2 - margin.top - margin.bottom;
+
+                var xScale_ph = d3.scale.log()
+                var yScale_ph = d3.scale.linear()
+
+                var xScale_mag = d3.scale.log()
+                var yScale_mag = d3.scale.log()
+
+                var xAxis_ph = d3.svg.axis()
+                    .scale(xScale_ph)
+                    .ticks(5)
+                    .orient('bottom');
+
+                var yAxis_ph = d3.svg.axis()
+                    .scale(yScale_ph)
+                    .ticks(5)
+                    .orient('left');
+
+                var xAxis_mag = d3.svg.axis()
+                    .scale(xScale_mag)
+                    .ticks(5)
+                    .orient('bottom');
+
+                var yAxis_mag = d3.svg.axis()
+                    .scale(yScale_mag)
+                    .ticks(5)
+                    .orient('left');
+
+                xScale_ph
+                    .range([0, width])
+                    .domain(d3.extent(data, function(d, i) { return d[0]} ));
+
+                yScale_ph
+                    .range([height, 0])
+                    .domain([0, d3.min(data, function(d, i) { return phase(d[1], d[2])} )]);
+
+                xScale_mag
+                    .range([0, width])
+                    .domain(d3.extent(data, function(d, i) { return d[0]} ));
+
+                yScale_mag
+                    .range([height, 0])
+                    .domain(d3.extent(data, function(d, i) { return mag(d[1], d[2])} ))
+                    .nice();
+
+                // Select the svg element, if it exists.
+                var svg_ph = d3.select('#bode').append("svg").attr("id", "phase")
+                var svg_mag = d3.select('#bode').append("svg").attr("id", "magnitude")
+
+                var plot_ph = svg_ph.append("g");
+                var plot_mag = svg_mag.append("g");
+
+                plot_ph.append("g").attr("class", "x axis");
+                plot_ph.append("g").attr("class", "y axis");
+
+                plot_mag.append("g").attr("class", "x axis");
+                plot_mag.append("g").attr("class", "y axis");
+
+                // Update the outer dimensions.
+                svg_ph
+                    .attr("width", outerWidth)
+                    .attr("height", outerHeight/2);
+
+                svg_mag
+                    .attr("width", outerWidth)
+                    .attr("height", outerHeight/2);
+
+                var g_ph = svg_ph.select("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                var g_mag = svg_mag.select("g")
+                    .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
+
+                g_ph.select(".x.axis")
+                    .attr('transform', 'translate(0,' + height + ')')
+                    .call(xAxis_ph)
+
+                g_ph.select(".y.axis")
+                    .attr('transform', 'translate(0,' + 0 + ')')
+                    .call(yAxis_ph)
+
+                g_mag.select(".x.axis")
+                    .attr('transform', 'translate(0,' + height + ')')
+                    .call(xAxis_mag)
+
+                g_mag.select(".y.axis")
+                    .attr('transform', 'translate(0,' + 0 + ')')
+                    .call(yAxis_mag)
+
+                g_ph.append("text")
+                    .attr("class", "label")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", -margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("-Phase");
+
+                g_mag.append("text")
+                    .attr("class", "label")
+                    .attr("transform", "translate(" + (width/2) + " ," +
+                                                    (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Frequency");
+
+                g_mag.append("text")
+                    .attr("class", "label")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", -margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Magnitude");
+
+                var phases = g_ph.selectAll("circle").data(data);
+
+                phases.enter().append('circle');
+                phases
+                    .attr("class", "default-circle")
+                    .attr("cx", function (d) { return xScale_ph( d[0] ); } )
+                    .attr("cy", function (d) { return yScale_ph( phase(d[1], d[2]) ); } )
+                    .attr("r", 5)
+                    .on("mouseover", function(d,i) {
+                        d3.select(this)
+                            .classed("selected-circle", true)
+                            .attr("r", 10);
+
+                        g_mag.selectAll("circle")
+                            .data(data)
+                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                        d3.select("#nyquist").selectAll("circle")
+                            .data(data)
+                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    })
+                    .on("mouseout", function(d,i) {
+                        d3.select(this)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+
+                        g_mag.selectAll("circle")
+                            .data(data)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+
+                        d3.select("#nyquist").selectAll("circle")
+                            .data(data)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+                    });
+
+                var mags = g_mag.selectAll("circle").data(data);
+
+                mags.enter().append('circle');
+                mags
+                    .attr("class", "default-circle")
+                    .attr("cx", function (d) { return xScale_mag( d[0] ); } )
+                    .attr("cy", function (d) { return yScale_mag( mag(d[1], d[2]) );  } )
+                    .attr("r", 5)
+                    .on("mouseover", function(d,i) {
+                        d3.select(this)
+                            .classed("selected-circle", true)
+                            .attr("r", 10);
+
+                        // console.log(phases);
+                        g_ph.selectAll("circle")
+                            .data(data)
+                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                        d3.select("#nyquist").selectAll("circle")
+                            .data(data)
+                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    })
+                    .on("mouseout", function(d,i) {
+                        d3.select(this)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+
+                        g_ph.selectAll("circle")
+                            .data(data)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+
+                        d3.select("#nyquist").selectAll("circle")
+                            .data(data)
+                            .attr("class", "default-circle")
+                            .attr("r", 5);
+
+                    });
+
+            }
         </script>
 
     </body>
