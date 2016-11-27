@@ -15,6 +15,7 @@ def index():
     if request.method == 'POST' and 'data' in request.files:
 
         fit_equivalent_circuit = 'fitting-ec' in request.values
+        fit_p2d = 'fitting-p2d' in request.values
 
         if fit_equivalent_circuit:
             param_string = [request.values['R1'], request.values['R2'],
@@ -45,8 +46,14 @@ def index():
             else:
                 ecFit = False
 
+            # check if p2d check box is checked
+            if fit_p2d:
+                p2dFit = [(.1,.3,-.3)]
+            else:
+                p2dFit = False
 
-            return render_template('index.html', chart_title=request.files['data'].filename, upload=True, data=array, parameter_results=parameter_results, ecFit=ecFit)
+
+            return render_template('index.html', chart_title=request.files['data'].filename, upload=True, data=array, parameter_results=parameter_results, ecFit=ecFit, p2dFit=p2dFit)
 
         #### else if POST request contains a selection from the example dropdown ####
         elif request.values['example'] != "null":
@@ -59,22 +66,27 @@ def index():
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, ecFit = fitEquivalentCircuit(array, p0)
+                p_results, p_error, ecFit = fitEquivalentCircuit(array, p0)
 
-                parameter_results = [{"name": u"R1",  "value": p_results[0], "sensitivity": 7},
-                                                {"name": u"R2", "value": p_results[1], "sensitivity": 1.3},
-                                                {"name":u"W1", "value": p_results[2], "sensitivity": 3},
-                                                {"name": u"W2",  "value": p_results[3], "sensitivity": 7},
-                                                {"name": u"CPE1", "value": p_results[4], "sensitivity": 1.3},
-                                                {"name":u"CPE2", "value": p_results[5], "sensitivity": 3}]
+                parameter_results = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
+                                                {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
+                                                {"name":u"W1", "value": format(p_results[2], '.4f'), "sensitivity": format(p_error[2], '.4f')},
+                                                {"name": u"W2",  "value": format(p_results[3], '.4f'), "sensitivity": format(p_error[3], '.4f')},
+                                                {"name": u"CPE1", "value": format(p_results[4], '.4f'), "sensitivity": format(p_error[4], '.4f')},
+                                                {"name":u"CPE2", "value": format(p_results[5], '.4f'), "sensitivity": format(p_error[5], '.4f')}]
             else:
                 ecFit = False
 
-            print(ecFit, file=sys.stderr)
-            return render_template('index.html', chart_title=filename, upload=False, data=array, parameter_results=parameter_results, ecFit=ecFit)
+            # check if p2d check box is checked
+            if fit_p2d:
+                p2dFit = [(.1,.3,-.3), (.01,.03,-.03)]
+            else:
+                p2dFit = False
+
+            return render_template('index.html', chart_title=filename, upload=False, data=array, parameter_results=parameter_results, ecFit=ecFit, p2dFit=p2dFit)
 
     #### initial load + load after "remove file" button ####
-    return render_template('index.html', chart_title="Welcome", upload=False, data="", parameter_results=parameter_results, ecFit=False)
+    return render_template('index.html', chart_title="Welcome", upload=False, data="", parameter_results=parameter_results, ecFit=False, p2dFit=False)
 
 
 def to_array(input):

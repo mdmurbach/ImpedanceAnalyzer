@@ -140,6 +140,21 @@ function nyquistChart(config) {
                       .attr("class", "ec-fit")
                       .attr("d", line);
             }
+
+            //  Add model fit if exists
+            if(config.p2d.length > 0) {
+
+                p2d = config.p2d;
+
+                var line = d3.svg.line()
+                    .x(function(d) { return xScale( d[1] ); })
+                    .y(function(d) { return yScale( -d[2] ); });
+
+                    g.append("path")
+                      .datum(p2d)
+                      .attr("class", "p2d-fit")
+                      .attr("d", line);
+            }
         });
     }
 

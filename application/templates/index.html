@@ -76,10 +76,9 @@
         #grid-introduction, #grid-load {
             height: 100%;
             background-color: #FFFFFF;
-            border: 1px black solid;
-            border-radius: 2px;
+            border: 2px #BDBDBD solid;
             padding: 0px 10px;
-            overflow: auto;
+            overflow-y: auto;
             }
 
         .glyphicon-question-sign {
@@ -111,8 +110,14 @@
 
         .ec-fit {
           fill: none;
-          stroke: black;
-          stroke-width: 1.5px;
+          stroke: #FF5722;
+          stroke-width: 2px;
+        }
+
+        .p2d-fit {
+          fill: none;
+          stroke: #000;
+          stroke-width: 2px;
         }
 
         .default-circle {
@@ -121,6 +126,23 @@
 
         .selected-circle {
             fill: #FF5722;
+        }
+
+        .tooltip {
+          position: absolute;
+          width: 200px;
+          height: 28px;
+          pointer-events: none;
+        }
+
+        .navbar-fixed-bottom {
+            min-height: 40px;
+            background-color: #B2DFDB;
+            /*border-top: 1px solid #BDBDBD;*/
+        }
+
+        @media screen and (max-width: 992px) {
+            #grid-parameters { padding-bottom: 40px; }
         }
 
         </style>
@@ -164,42 +186,42 @@
                         <div class="form-group">
                             <label for="R1" class="col-sm-2 control-label">R1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="R1" value="0.01" class="form-control">
+                                    <input type="text" name="R1" value="0.01" class="form-control" style="display:none">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="R2" class="col-sm-2 control-label">R2</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="R2" value="0.01" class="form-control">
+                                    <input type="text" name="R2" value="0.01" class="form-control" style="display:none">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="W1" class="col-sm-2 control-label">W1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="W1" value=".01" class="form-control">
+                                    <input type="text" name="W1" value=".01" class="form-control" style="display:none">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="W2" class="col-sm-2 control-label">W2</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="W2" value="10" class="form-control">
+                                    <input type="text" name="W2" value="10" class="form-control" style="display:none">
                                     <div class="input-group-addon">Ohms</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="C1" class="col-sm-2 control-label">C1</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="C1" value="0.01" class="form-control">
+                                    <input type="text" name="C1" value="0.01" class="form-control" style="display:none">
                                     <div class="input-group-addon">F</div>
                                 </div>
                         </div>
                         <div class="form-group">
                             <label for="C2" class="col-sm-2 control-label">C2</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="text" name="C2" value="0.8" class="form-control">
+                                    <input type="text" name="C2" value="0.8" class="form-control" style="display:none">
                                     <div class="input-group-addon"></div>
                                 </div>
                         </div>
@@ -212,7 +234,7 @@
             </div>
         </div>
 
-        <div class="container-fluid" style="height: calc(100% - 50px);">
+        <div class="container-fluid" style="height: calc(100% - 90px);">
             <div class="row" id="first-row">
                 <div class="col-md-3" id="grid-introduction">
                     <h4> Welcome to the Impedance Analyzer: </h4><h5>an open-source tool for analyzing EIS data.</h5>
@@ -236,10 +258,10 @@
                                     </label>
                                     <select class="form-control" name="example" id="exampleselect">
                                         <option value="null">Select a dataset</option>
-                                        <option value="zhang_example.csv">Zhang, 2000</option>
+                                        <!-- <option value="zhang_example.csv">Zhang, 2000</option> -->
                                         <option value="imp-data.csv">EIS data</option>
                                         <option value="wu_example.csv">Wu</option>
-                                        <option>5</option>
+                                        <!-- <option>5</option> -->
                                     </select>
                                 </div>
                             </div>
@@ -249,7 +271,7 @@
                                     <div class="checkbox">
                                         <label>
                                             <input type="checkbox" id="ecinput" name="fitting-ec" value="ec" onchange="ecdefine();"/>Equivalent Circuit
-                                            <button type="button" id="ecmodal" data-toggle="modal" data-target="#myModal" style="display: none;"></button>
+                                            <button type="button" id="ecmodal" onclick="submitECparams()" style="display: none;"></button>
                                         </label>
                                     </div>
                                     <div class="checkbox">
@@ -278,7 +300,7 @@
                     </div>
                 </div>
                 <div class="col-md-4" id="grid-parameters">
-                    <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
+                    <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
                     <div class="table-responsive" id="table-div">
                         <table class="table" id="parameter-estimates">
                             <tr>
@@ -289,7 +311,7 @@
                                     Best Estimate
                                 </th>
                                 <th>
-                                    Sensitivity
+                                    Error
                                 </th>
                             </tr>
                             {% for parameter in parameter_results %}
@@ -305,6 +327,14 @@
             </div>
 
         </div>
+
+        <nav class="navbar navbar-default navbar-fixed-bottom">
+            <div class="container.fluid">
+                <img class="" src="{{ url_for('static', filename='images/W.png') }}" alt="CEI logo" style="height: 30px; margin: 5px 10px;">
+                <img class="pull-right" src="{{ url_for('static', filename='images/CEI_logo_tag_color.png') }}" alt="CEI logo" style="height: 30px; margin: 5px 10px;">
+                <img class="pull-right" src="{{ url_for('static', filename='images/IGERT.png') }}" alt="CEI logo" style="height: 30px; margin: 5px 10px;">
+            </div>
+        </nav>
 
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -355,7 +385,8 @@
         <!-- bootstrap tooltips -->
         <!-- TODO: Add tooltip help here -->
         <script type="text/javascript">
-            $('#info-fileupload').prop('title', 'TODO: The uploaded .csv file will be interpreted with the first column as frequency, second column as real impedance, third column as imaginary impedance.')
+        $('#info-fileupload').prop('title', 'TODO: The uploaded .csv file will be interpreted with the first column as frequency, second column as real impedance, third column as imaginary impedance.')
+        $('#info-parameters').prop('title', 'Error indicates estimated standard deviation of fit parameters');
         </script>
 
         <script type="text/javascript">
@@ -385,11 +416,10 @@
             	.append('div')
             	.text('<-- Upload a file')
             } else {
-                var ecmodel = {{ ecFit|tojson|safe }}; // Boolean [EC, P2D]
+                var ecmodel = {{ ecFit|tojson|safe }};
+                var p2dmodel = {{ p2dFit|tojson|safe }};
 
-                console.log(ecmodel);
-
-                var nyquist = nyquistChart({width: 400, height: 400, ec: ecmodel})
+                var nyquist = nyquistChart({width: 400, height: 400, ec: ecmodel, p2d: p2dmodel})
                     .x(function(d) { return d[1] })
                     .y(function(d) { return -d[2] });
 
@@ -417,7 +447,8 @@
             	.append('div')
             	.text('<-- Upload a file')
             } else {
-                var ecmodel = {{ ecFit|tojson|safe }}; // Boolean [EC, P2D]
+                var ecmodel = {{ ecFit|tojson|safe }};
+                var p2dmodel = {{ p2dFit|tojson|safe }};
 
                 outerWidth = 400;
                 outerHeight = 400;
@@ -472,6 +503,11 @@
                 // Select the svg element, if it exists.
                 var svg_ph = d3.select('#bode').append("svg").attr("id", "phase")
                 var svg_mag = d3.select('#bode').append("svg").attr("id", "magnitude")
+
+                // add the tooltip area to the webpage
+                var tooltip = d3.select("body").append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
 
                 var plot_ph = svg_ph.append("g");
                 var plot_mag = svg_mag.append("g");
@@ -561,6 +597,15 @@
                             .classed("selected-circle", function(d2, i2) {return i2 == i; })
                             .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
 
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+
+                        tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                                            'Phase: ' + Math.round(phase(d[1], d[2])*1000)/1000)
+                                            .style("left", (d3.event.pageX + 20) + "px")
+                                            .style("top", (d3.event.pageY - 50) + "px");
+
                     })
                     .on("mouseout", function(d,i) {
                         d3.select(this)
@@ -601,6 +646,15 @@
                             .data(data)
                             .classed("selected-circle", function(d2, i2) {return i2 == i; })
                             .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+
+                        tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                                            'Mag: ' + Math.round(mag(d[1], d[2])*1000)/1000)
+                                            .style("left", (d3.event.pageX + 20) + "px")
+                                            .style("top", (d3.event.pageY - 50) + "px");
 
                     })
                     .on("mouseout", function(d,i) {

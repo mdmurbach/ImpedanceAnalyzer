@@ -11,58 +11,55 @@ def fitEquivalentCircuit(data, p0):
     # Define Circuit and Initial Parameters
     global circuit_string
 
-    randles_circuit ='s(R1,p(s(R1,W2),E2))'
-    # randles_circuit_results = [ 'R_ct_1', 'Warburg_Z0', 'C_dl']
-    # randles_circuit_parameters = [.1,   .35,   .01, 50,   .001,  .99]
-    randles_circuit_parameters = p0 #[.01,   .01,   .01, 10,   .01,  .8]
-
-    print('data: ' + str(data), file=sys.stderr)
-    print('p0: ' + str(randles_circuit_parameters), file=sys.stderr)
+    circuit_string ='s(R1,p(s(R1,W2),E2))'
 
     # Define circuits to compare
-    circuit_string = randles_circuit
-    # results_string = randles_circuit_results
-    parameters = randles_circuit_parameters
+    # circuit_string = randles_circuit
+    # parameters = p0
+
+    f = np.array([run[0] for run in data])
+    real = np.array([run[1] for run in data])
+    imag = np.array([run[2] for run in data])
+
+    # Calculate best guesses
+    r1 = real[np.argmax(f)]
+    r2 = real.mean() - r1
+
+    c1 = 1/(f[f>1][np.argmax(np.abs(np.arctan2(imag[f>1],real[f>1])))]*r1)
+
+    parameters = [r1, r2, p0[2], p0[3], c1, p0[5]]
+
+    print(parameters, file=sys.stderr)
 
     freq = np.array([a for a,b,c in data])
     zr = np.array([b for a,b,c in data])
     zi =np.array([c for a,b,c in data])
     zrzi = zr + 1j*zi
 
-
     # Simulates Initial Conditions and Performs Least
     # Squares fit of circuit(s)
-
     sim_data = compute_circuit(parameters, circuit_string, freq)
 
     plsq, covar, info, errmsg, ier = leastsq(residuals, parameters, args=(zrzi, freq), maxfev=100000,
                                             ftol=1E-13,  full_output=True)
 
-    # ranges = [(.001, 1), (.001,1), (.001, 10),(.001, 1000),(.00001,.01),(.1,.99)]
+    s_sq = ((residuals(plsq, zrzi, freq)**2).sum())/(len(zrzi) - len(plsq))
+    p_cov = covar * s_sq
 
-    # x0, fval, grid, Jout = brute(residuals, ranges, args=(zrzi, freq), Ns=10, full_output=True, finish=None, disp=True)
-
-    # fit_data_1 = compute_circuit(x0.tolist(), circuit_string, freq)
+    error = []
+    for i in range(len(covar)):
+        try:
+          error.append(np.absolute(p_cov[i][i])**0.5)
+        except:
+          error.append( 0.00 )
 
     fit_data_1 = compute_circuit(plsq.tolist(), circuit_string, freq)
 
     fit_zrzi = [a[1] for a in fit_data_1]
 
-    # print(x0, file=sys.stderr)
-
     fit = zip(freq.tolist(), np.real(fit_zrzi).tolist(), np.imag(fit_zrzi).tolist())
 
-    return plsq.tolist(), fit
-
-# def residuals(param, y, x):
-#     err = y - compute_circuit(param.tolist(), circuit_string, x)[:, 1]
-#     z1d = np.zeros(y.size*2, dtype=np.float64)
-#     z1d[0:z1d.size:2] = err.real
-#     z1d[1:z1d.size:2] = err.imag
-#     if valid(param):
-#         return z1d.sum()
-#     else:
-#         return 1e6
+    return plsq.tolist(), error, fit
 
 def residuals(param, y, x):
     err = y - compute_circuit(param.tolist(), circuit_string, x)[:, 1]
