@@ -1,7 +1,7 @@
 from __future__ import print_function
 from application import application
 from flask import render_template, request
-from application.fitModels import fitEquivalentCircuit
+from application.fitModels import fitEquivalentCircuit, fitP2D
 import scipy
 import sys, os
 
@@ -48,7 +48,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit = [(.1,.3,-.3)]
+                p2dFit = fitP2D(array)
             else:
                 p2dFit = False
 
@@ -79,7 +79,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit = [(.1,.3,-.3), (.01,.03,-.03)]
+                p2dFit = fitP2D(array)
             else:
                 p2dFit = False
 

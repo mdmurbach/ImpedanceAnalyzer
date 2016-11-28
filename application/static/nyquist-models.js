@@ -129,8 +129,6 @@ function nyquistChart(config) {
 
                 ec = config.ec;
 
-                console.log('Add EC Model');
-
                 var line = d3.svg.line()
                     .x(function(d) { return xScale( d[1] ); })
                     .y(function(d) { return yScale( -d[2] ); });

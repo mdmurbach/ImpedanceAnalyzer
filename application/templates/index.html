@@ -87,7 +87,7 @@
         }
 
         .btn-browse {
-            background-color: #b2dfdb;
+            background-color: #80cbc4;
         }
 
         .btn-plot {
@@ -137,7 +137,7 @@
 
         .navbar-fixed-bottom {
             min-height: 40px;
-            background-color: #B2DFDB;
+            background-color: #80cbc4;
             /*border-top: 1px solid #BDBDBD;*/
         }
 
@@ -409,8 +409,6 @@
 
         <script type="text/javascript">
             var data = {{ data|tojson|safe }}; // 1 x N frequencys Array of 1 x 3 arrays (real, imag, freq)
-            console.log("data");
-            console.log(data);
             if (data == 0) {
                 d3.select('#nyquist')
             	.append('div')

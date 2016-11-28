@@ -1,9 +1,87 @@
 from __future__ import print_function
 import sys
 import numpy as np
+import pandas as pd
 import cmath
-from scipy.optimize import leastsq, basinhopping, brute
+from scipy.optimize import leastsq, basinhopping, brute, minimize
 
+def fitP2D(data):
+    freq = np.array([run[0] for run in data])
+    real = np.array([run[1] for run in data])
+    imag = np.array([run[2] for run in data])
+
+    mag =  np.array([np.sqrt(run[1]**2 + run[2]**2) for run in data])
+    phase =  np.array([np.arctan2(-run[2], run[1]) for run in data])
+
+
+    Z = pd.read_pickle('./14067-Z.pkl')
+
+    min_f = min(freq)
+    max_f = max(freq)
+
+    frequencies = [f for f in Z.columns if min_f <= f <= max_f]
+
+    to_fit = pd.DataFrame(index=frequencies, columns=['Zmag', 'Zph'])
+
+    for frequency in frequencies:
+        idx = np.argmin(np.abs(frequency - freq))
+
+        m_mag = (mag[idx+1] - mag[idx-1])/(freq[idx+1] - freq[idx-1])
+        b_mag = mag[idx+1] - m_mag*freq[idx+1]
+
+        y_mag = m_mag*frequency + b_mag
+
+        m_ph = (phase[idx+1] - phase[idx-1])/(freq[idx+1] - freq[idx-1])
+        b_ph = phase[idx+1] - m_ph*freq[idx+1]
+
+        y_ph = m_ph*frequency + b_ph
+
+        to_fit.loc[frequency, 'Zmag'] = y_mag
+        to_fit.loc[frequency, 'Zph'] = y_ph
+
+    to_fit['Zreal'] = to_fit.Zmag*(to_fit.Zph.map(np.cos))
+    to_fit['Zimag'] = to_fit.Zmag*(to_fit.Zph.map(np.sin))
+
+    def residual(scale, Z11_model, Z11_exp):
+        '''
+        Returns average distance of error between the model and experimental data
+        '''
+        return (1./len(Z11_model))*np.sqrt(sum((Z11_exp.map(np.real) - scale*np.real(Z11_model))**2 + (Z11_exp.map(np.imag) - scale*np.imag(Z11_model))**2))
+
+    def fit_model(Z11_model):
+        res = minimize(residual, 10.0, args=(Z11_model, Z11_exp), tol=1e-5)
+        return [res.x, res.fun]
+
+    Z11_exp = to_fit.Zreal + 1j*to_fit.Zimag
+
+    print(Z11_exp, file=sys.stderr)
+    print(Z11_exp, file=sys.stderr)
+
+    results = Z.loc[:, frequencies].apply(fit_model, axis=1)
+
+    def split_scale(input):
+        return input[0][0]
+
+    def split_mse(input):
+        return input[1]
+
+    res_df = pd.DataFrame(index = results.index, columns=['scale', 'mse'])
+
+    res_df['scale'] = results.map(split_scale)
+    res_df['mse'] = results.map(split_mse)
+
+    sorted_res_df = res_df.sort_values(['mse'])
+
+    best_fit = sorted_res_df.index[0]
+    Z11_model = sorted_res_df['scale'].loc[best_fit]*Z.loc[best_fit]
+
+    print(Z11_model, file=sys.stderr)
+
+    fit = zip(Z11_model.index, Z11_model.map(np.real).tolist(), (-1*Z11_model.map(np.imag)).tolist())
+
+    print(fit, file=sys.stderr)
+
+    return fit
 
 def fitEquivalentCircuit(data, p0):
     print("fitting circuit")
