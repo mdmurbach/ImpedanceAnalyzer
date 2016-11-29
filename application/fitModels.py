@@ -3,85 +3,86 @@ import sys
 import numpy as np
 import pandas as pd
 import cmath
-from scipy.optimize import leastsq, basinhopping, brute, minimize
+from scipy.optimize import leastsq,minimize
+from scipy.interpolate import interp1d
 
 def fitP2D(data):
-    freq = np.array([run[0] for run in data])
-    real = np.array([run[1] for run in data])
-    imag = np.array([run[2] for run in data])
-
-    mag =  np.array([np.sqrt(run[1]**2 + run[2]**2) for run in data])
-    phase =  np.array([np.arctan2(-run[2], run[1]) for run in data])
-
+    exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
+    exp_data['mag'] = exp_data.apply(lambda x: np.sqrt(x[1]**2 + x[2]**2), axis=1)
+    exp_data['phase'] = exp_data.apply(lambda x: np.arctan2(x[2], x[1]), axis=1)
 
     Z = pd.read_pickle('./14067-Z.pkl')
 
-    min_f = min(freq)
-    max_f = max(freq)
+    min_f = min(exp_data['f'])
+    max_f = max(exp_data['f'])
 
-    frequencies = [f for f in Z.columns if min_f <= f <= max_f]
+    freq_mask = [f for f in Z.columns if min_f < f < max_f]
 
-    to_fit = pd.DataFrame(index=frequencies, columns=['Zmag', 'Zph'])
+    to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
 
-    for frequency in frequencies:
-        idx = np.argmin(np.abs(frequency - freq))
+    for frequency in to_fit.index:
+        idx = np.argmin(np.abs(frequency - exp_data['f']))
 
-        m_mag = (mag[idx+1] - mag[idx-1])/(freq[idx+1] - freq[idx-1])
-        b_mag = mag[idx+1] - m_mag*freq[idx+1]
+        x = exp_data['f'].iloc[idx-2:idx+3]
+        y_mag = exp_data['mag'].iloc[idx-2:idx+3]
+        y_phase = exp_data['phase'].iloc[idx-2:idx+3]
 
-        y_mag = m_mag*frequency + b_mag
+        mag = interp1d(x, y_mag, kind='cubic')
+        phase = interp1d(x, y_phase, kind='cubic')
 
-        m_ph = (phase[idx+1] - phase[idx-1])/(freq[idx+1] - freq[idx-1])
-        b_ph = phase[idx+1] - m_ph*freq[idx+1]
+        to_fit.loc[frequency, 'mag'] = mag(frequency)
+        to_fit.loc[frequency, 'ph'] = phase(frequency)
 
-        y_ph = m_ph*frequency + b_ph
+    to_fit['real'] = to_fit.mag*(to_fit.ph.map(np.cos))
+    to_fit['imag'] = to_fit.mag*(to_fit.ph.map(np.sin))
 
-        to_fit.loc[frequency, 'Zmag'] = y_mag
-        to_fit.loc[frequency, 'Zph'] = y_ph
+    crossover = exp_data[exp_data['imag'] > 0]
 
-    to_fit['Zreal'] = to_fit.Zmag*(to_fit.Zph.map(np.cos))
-    to_fit['Zimag'] = to_fit.Zmag*(to_fit.Zph.map(np.sin))
+    if crossover.index.tolist():
+        index = crossover.index.tolist()[-1]
+
+        x = exp_data['imag'].loc[index-2:index+3]
+        y = exp_data['real'].loc[index-2:index+3]
+
+        hf = interp1d(x,y, kind='quadratic')
+
+        Zreal_hf = np.asscalar(hf(0))
+
+        to_fit.drop(to_fit[to_fit['ph'] > 0].index, inplace=True)
+
+        to_fit = pd.concat([pd.DataFrame(data={'mag': Zreal_hf, 'ph': 0.0, 'real': Zreal_hf, 'imag': 0.0},
+                                index=[1e5], columns=to_fit.columns), to_fit])
+
+    Z11_exp = np.array(to_fit.real.tolist()) + 1j*np.array(to_fit.imag.tolist())
 
     def residual(scale, Z11_model, Z11_exp):
         '''
         Returns average distance of error between the model and experimental data
         '''
-        return (1./len(Z11_model))*np.sqrt(sum((Z11_exp.map(np.real) - scale*np.real(Z11_model))**2 + (Z11_exp.map(np.imag) - scale*np.imag(Z11_model))**2))
+        return (1./len(Z11_model))*np.sqrt(sum((np.real(Z11_exp) - scale*np.real(Z11_model))**2 + (np.imag(Z11_exp) - -1*scale*np.imag(Z11_model))**2))
 
-    def fit_model(Z11_model):
-        res = minimize(residual, 10.0, args=(Z11_model, Z11_exp), tol=1e-5)
-        return [res.x, res.fun]
+    Z_array = np.array(Z)
+    results_array = np.ndarray((len(Z_array), 3))
 
-    Z11_exp = to_fit.Zreal + 1j*to_fit.Zimag
+    mask = [f for f in range(len(Z.columns)) if Z.columns[f] in to_fit.index]
 
-    print(Z11_exp, file=sys.stderr)
-    print(Z11_exp, file=sys.stderr)
+    for run in range(len(Z_array)):
+        res = minimize(residual, 10.0, args=(Z_array[run, mask], Z11_exp), tol=1e-5)
 
-    results = Z.loc[:, frequencies].apply(fit_model, axis=1)
+        results_array[run,0] = run
+        results_array[run,1] = res.x
+        results_array[run,2] = res.fun
 
-    def split_scale(input):
-        return input[0][0]
+    res_df = pd.DataFrame(results_array[:,1:], index=range(1,len(results_array)+1), columns=['scale', 'error'])
 
-    def split_mse(input):
-        return input[1]
-
-    res_df = pd.DataFrame(index = results.index, columns=['scale', 'mse'])
-
-    res_df['scale'] = results.map(split_scale)
-    res_df['mse'] = results.map(split_mse)
-
-    sorted_res_df = res_df.sort_values(['mse'])
+    sorted_res_df = res_df.sort_values(['error'])
 
     best_fit = sorted_res_df.index[0]
     Z11_model = sorted_res_df['scale'].loc[best_fit]*Z.loc[best_fit]
 
-    print(Z11_model, file=sys.stderr)
-
     fit = zip(Z11_model.index, Z11_model.map(np.real).tolist(), (-1*Z11_model.map(np.imag)).tolist())
 
-    print(fit, file=sys.stderr)
-
-    return fit
+    return best_fit, fit
 
 def fitEquivalentCircuit(data, p0):
     print("fitting circuit")

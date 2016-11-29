@@ -48,7 +48,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit = fitP2D(array)
+                best_fit, p2dFit = fitP2D(array)
             else:
                 p2dFit = False
 
@@ -79,7 +79,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit = fitP2D(array)
+                best_fit, p2dFit = fitP2D(array)
             else:
                 p2dFit = False
 
