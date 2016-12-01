@@ -261,6 +261,7 @@
                                         <!-- <option value="zhang_example.csv">Zhang, 2000</option> -->
                                         <option value="imp-data.csv">EIS data</option>
                                         <option value="wu_example.csv">Wu</option>
+                                        <option value="vetter_example.csv">Vetter</option>
                                         <!-- <option>5</option> -->
                                     </select>
                                 </div>
@@ -301,28 +302,67 @@
                 </div>
                 <div class="col-md-4" id="grid-parameters">
                     <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
-                    <div class="table-responsive" id="table-div">
-                        <table class="table" id="parameter-estimates">
-                            <tr>
-                                <th>
-                                    Parameter
-                                </th>
-                                <th>
-                                    Best Estimate
-                                </th>
-                                <th>
-                                    Error
-                                </th>
-                            </tr>
-                            {% for parameter in parameter_results %}
-                                <tr>
-                                    <td><p>{{ parameter.name }}</p></td>
-                                    <td>{{ parameter.value }}</td>
-                                    <td>{{ parameter.sensitivity }}</td>
-                                </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
+                    <ul class="nav nav-tabs" role="tablist">
+                        {% if ec_parameters %}
+                        <li role="presentation" class="nav active"><a href="#ec_param" aria-controls="EC parameters" role="tab" data-toggle="tab">EC</a></li>
+                        {% endif %}
+                        {% if p2d_parameters %}
+                        <li role="presentation" class="nav"><a href="#p2d_param" aria-controls="P2D parameters" role="tab" data-toggle="tab">P2D</a></li>
+                        {% endif %}
+                    </ul>
+                    <div class="tab-content">
+                        {% if ec_parameters %}
+                        <div class="tab-pane active fade in active" id="ec_param">
+                            <div class="table-responsive" id="table-div">
+                                <table class="table" id="parameter-estimates">
+                                    <tr>
+                                        <th>
+                                            Parameter
+                                        </th>
+                                        <th>
+                                            Best Estimate
+                                        </th>
+                                        <th>
+                                            Error
+                                        </th>
+                                    </tr>
+                                    {% for parameter in ec_parameters %}
+                                        <tr>
+                                            <td><p>{{ parameter.name }}</p></td>
+                                            <td>{{ parameter.value }}</td>
+                                            <td>{{ parameter.sensitivity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if p2d_parameters %}
+                        <div class="tab-pane fade" id="p2d_param">
+                            <div class="table-responsive" id="table-div">
+                                <table class="table" id="parameter-estimates">
+                                    <tr>
+                                        <th>
+                                            Parameter
+                                        </th>
+                                        <th>
+                                            Best Estimate
+                                        </th>
+                                        <th>
+                                            Sensitivity
+                                        </th>
+                                    </tr>
+                                    {% for parameter in p2d_parameters %}
+                                        <tr>
+                                            <td><p>{{ parameter.name }}</p></td>
+                                            <td>{{ parameter.value }}</td>
+                                            <td>{{ parameter.sensitivity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
                 </div>
             </div>
 

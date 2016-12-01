@@ -6,32 +6,55 @@ import cmath
 from scipy.optimize import leastsq,minimize
 from scipy.interpolate import interp1d
 
+import pandas as pd
+import numpy as np
+from scipy.interpolate import interp1d
+from scipy.optimize import minimize
+
 def fitP2D(data):
     exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
     exp_data['mag'] = exp_data.apply(lambda x: np.sqrt(x[1]**2 + x[2]**2), axis=1)
     exp_data['phase'] = exp_data.apply(lambda x: np.arctan2(x[2], x[1]), axis=1)
 
-    Z = pd.read_pickle('./14067-Z.pkl')
+    exp_data.sort_values(by='f', ascending=False, inplace=True)
+    exp_data.index = range(len(exp_data))
+    # print(exp_data, file=sys.stderr)
+
+    Z = pd.read_pickle('../impedance-analyzer/16707-Z.pkl')
 
     min_f = min(exp_data['f'])
     max_f = max(exp_data['f'])
 
-    freq_mask = [f for f in Z.columns if min_f < f < max_f]
+    freq_mask = sorted([f for f in Z.columns if min_f <= f <= max_f], reverse=True)
 
     to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
 
     for frequency in to_fit.index:
-        idx = np.argmin(np.abs(frequency - exp_data['f']))
+        if not exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)].empty:
+            # print(frequency, file=sys.stderr)
+            # print(.99*frequency, file=sys.stderr)
+            # print(1.01*frequency, file=sys.stderr)
+            # print(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)], file=sys.stderr)
+            to_fit.loc[frequency, 'mag'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)]['mag'])
+            to_fit.loc[frequency, 'ph'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)]['phase'])
+        else:
+            # print(frequency, file=sys.stderr)
+            # print(exp_data.f, file=sys.stderr)
+            idx = np.argmin(np.abs(frequency - exp_data['f']))
+            # print(idx, file=sys.stderr)
 
-        x = exp_data['f'].iloc[idx-2:idx+3]
-        y_mag = exp_data['mag'].iloc[idx-2:idx+3]
-        y_phase = exp_data['phase'].iloc[idx-2:idx+3]
+            x = exp_data['f'].iloc[idx-2:idx+3]
+            y_mag = exp_data['mag'].iloc[idx-2:idx+3]
+            y_phase = exp_data['phase'].iloc[idx-2:idx+3]
 
-        mag = interp1d(x, y_mag, kind='cubic')
-        phase = interp1d(x, y_phase, kind='cubic')
+            # print(x, file=sys.stderr)
+            # print(y_mag, file=sys.stderr)
 
-        to_fit.loc[frequency, 'mag'] = mag(frequency)
-        to_fit.loc[frequency, 'ph'] = phase(frequency)
+            mag = interp1d(x, y_mag, kind='quadratic')
+            phase = interp1d(x, y_phase, kind='quadratic')
+
+            to_fit.loc[frequency, 'mag'] = mag(frequency)
+            to_fit.loc[frequency, 'ph'] = phase(frequency)
 
     to_fit['real'] = to_fit.mag*(to_fit.ph.map(np.cos))
     to_fit['imag'] = to_fit.mag*(to_fit.ph.map(np.sin))
@@ -81,7 +104,6 @@ def fitP2D(data):
     Z11_model = sorted_res_df['scale'].loc[best_fit]*Z.loc[best_fit]
 
     fit = zip(Z11_model.index, Z11_model.map(np.real).tolist(), (-1*Z11_model.map(np.imag)).tolist())
-
     return best_fit, fit
 
 def fitEquivalentCircuit(data, p0):
