@@ -20,7 +20,7 @@ def fitP2D(data):
     exp_data.index = range(len(exp_data))
     # print(exp_data, file=sys.stderr)
 
-    Z = pd.read_pickle('../impedance-analyzer/16707-Z.pkl')
+    Z = pd.read_pickle('application/static/data/16707-Z.pkl')
 
     min_f = min(exp_data['f'])
     max_f = max(exp_data['f'])
