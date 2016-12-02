@@ -26,25 +26,23 @@ def index():
 
             p0 = [float(p) for p in param_string]
 
-            print(p0, file=sys.stderr)
-
         #### if POST request contains an uploaded file #####
         if request.files['data'].filename != "":
-            print(request.files['data'].filename, file=sys.stderr)
+            # print(request.files['data'].filename, file=sys.stderr)
             f = request.files['data']
             contents = f.read()
             array = to_array(contents)
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, ecFit = fitEquivalentCircuit(array, p0)
+                p_results, p_error, ecFit = fitEquivalentCircuit(array, p0)
 
-                ec_parameters = [{"name": u"R1",  "value": p_results[0], "sensitivity": 7},
-                                                {"name": u"R2", "value": p_results[1], "sensitivity": 1.3},
-                                                {"name":u"W1", "value": p_results[2], "sensitivity": 3},
-                                                {"name": u"W2",  "value": p_results[3], "sensitivity": 7},
-                                                {"name": u"CPE1", "value": p_results[4], "sensitivity": 1.3},
-                                                {"name":u"CPE2", "value": p_results[5], "sensitivity": 3}]
+                ec_parameters = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
+                                                {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
+                                                {"name":u"W1", "value": format(p_results[2], '.4f'), "sensitivity": format(p_error[2], '.4f')},
+                                                {"name": u"W2",  "value": format(p_results[3], '.4f'), "sensitivity": format(p_error[3], '.4f')},
+                                                {"name": u"CPE1", "value": format(p_results[4], '.4f'), "sensitivity": format(p_error[4], '.4f')},
+                                                {"name":u"CPE2", "value": format(p_results[5], '.4f'), "sensitivity": format(p_error[5], '.4f')}]
             else:
                 ecFit = False
 
@@ -52,17 +50,18 @@ def index():
             if fit_p2d:
                 best_fit, p2dFit = fitP2D(array)
 
-                p2d_parameters = [{"name": u"R1",  "value": p_results[0], "sensitivity": 7},
-                                                {"name": u"R2", "value": p_results[1], "sensitivity": 1.3},
-                                                {"name":u"W1", "value": p_results[2], "sensitivity": 3},
-                                                {"name": u"W2",  "value": p_results[3], "sensitivity": 7},
-                                                {"name": u"CPE1", "value": p_results[4], "sensitivity": 1.3},
-                                                {"name":u"CPE2", "value": p_results[5], "sensitivity": 3}]
+                parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+
+                param_Series = parameters.loc[best_fit-1]
+
+                p2d_parameters = []
+                for parameter in range(len(param_Series)):
+                    p2d_parameters.append({'name': param_Series.index[parameter].split('[')[0], "value": param_Series.iloc[parameter], "sensitivity": "x"})
             else:
                 p2dFit = False
 
 
-            return render_template('index.html', chart_title=request.files['data'].filename, upload=True, data=array, ec_parameters=ec_parameters, ecFit=ecFit, p2dFit=p2dFit)
+            return render_template('index.html', chart_title=request.files['data'].filename, upload=True, data=array, ec_parameters=ec_parameters, ecFit=ecFit, p2d_parameters=p2d_parameters, p2dFit=p2dFit)
 
         #### else if POST request contains a selection from the example dropdown ####
         elif request.values['example'] != "null":
@@ -93,18 +92,10 @@ def index():
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
 
                 param_Series = parameters.loc[best_fit-1]
-                print(param_Series, file=sys.stderr)
-
 
                 p2d_parameters = []
                 for parameter in range(len(param_Series)):
-                    p2d_parameters.append({'name': param_Series.index[parameter], "value": param_Series.iloc[parameter], "sensitivity": "x"})
-                # p2d_parameters = [{"name": u"R1",  "value": p_results[0], "sensitivity": 7},
-                #                                 {"name": u"R2", "value": p_results[1], "sensitivity": 1.3},
-                #                                 {"name":u"W1", "value": p_results[2], "sensitivity": 3},
-                #                                 {"name": u"W2",  "value": p_results[3], "sensitivity": 7},
-                #                                 {"name": u"CPE1", "value": p_results[4], "sensitivity": 1.3},
-                #                                 {"name":u"CPE2", "value": p_results[5], "sensitivity": 3}]
+                    p2d_parameters.append({'name': param_Series.index[parameter].split('[')[0], "value": param_Series.iloc[parameter], "sensitivity": "x"})
             else:
                 p2dFit = False
 

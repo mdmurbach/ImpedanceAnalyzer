@@ -130,7 +130,7 @@
 
         .tooltip {
           position: absolute;
-          width: 200px;
+          /*width: 200px;*/
           height: 28px;
           pointer-events: none;
         }
@@ -173,62 +173,113 @@
         </nav>
 
         <!-- Modal for defining Equivalent Circuit-->
-        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" onclick="uncheckEC();" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title" id="myModalLabel">Define your equivalent circuit</h4>
                     </div>
                     <div class="modal-body">
-                        <input type="radio" class="disabled" value="randles_cpe"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></input>
-                    <form class="form-horizontal" action="" id="defineECparams">
-                        <div class="form-group">
-                            <label for="R1" class="col-sm-2 control-label">R1</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="R1" value="0.01" class="form-control" style="display:none">
-                                    <div class="input-group-addon">Ohms</div>
-                                </div>
+                        <p class="danger">Note: only Randles w/ CPE currently works</p>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="nav active"><a href="#randles" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles.png') }}" alt="" /></a></li>
+                            <li role="presentation" class="nav"><a href="#randles_cpe" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></a></li>
+                            <li role="presentation" class="nav"><a href="#self_define" role="tab" data-toggle="tab" onclick="initializeEC();"><p style="text-align: center; font-weight: bold;">Define <br> custom <br> circuit</p></a></li>
+                        </ul>
+                        <div class="tab-content" id="ECtab">
+                            <div class="tab-pane active" id="randles">
+                                <form class="form-horizontal" action="" id="defineECparam">
+                                    <div class="form-group">
+                                        <label for="R1" class="col-sm-2 control-label">R1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="R1" value="0.01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="R2" class="col-sm-2 control-label">R2</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="R2" value="0.01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="W1" class="col-sm-2 control-label">W1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="W1" value=".01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="W2" class="col-sm-2 control-label">W2</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="W2" value="10" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="C1" class="col-sm-2 control-label">C1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="C1" value="0.01" class="form-control" >
+                                                <div class="input-group-addon">F</div>
+                                            </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="tab-pane" id="randles_cpe">
+                                <form class="form-horizontal" action="" id="defineECparam">
+                                    <div class="form-group">
+                                        <label for="R1" class="col-sm-2 control-label">R1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="R1" value="0.01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="R2" class="col-sm-2 control-label">R2</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="R2" value="0.01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="W1" class="col-sm-2 control-label">W1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="W1" value=".01" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="W2" class="col-sm-2 control-label">W2</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="W2" value="10" class="form-control">
+                                                <div class="input-group-addon">Ohms</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="C1" class="col-sm-2 control-label">C1</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="C1" value="0.01" class="form-control" >
+                                                <div class="input-group-addon">F</div>
+                                            </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="C2" class="col-sm-2 control-label">C2</label>
+                                            <div class="col-sm-8 input-group">
+                                                <input type="text" name="C2" value="0.8" class="form-control">
+                                                <div class="input-group-addon"></div>
+                                            </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="tab-pane" id="self_define">
+                                TODO:
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="R2" class="col-sm-2 control-label">R2</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="R2" value="0.01" class="form-control" style="display:none">
-                                    <div class="input-group-addon">Ohms</div>
-                                </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="W1" class="col-sm-2 control-label">W1</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="W1" value=".01" class="form-control" style="display:none">
-                                    <div class="input-group-addon">Ohms</div>
-                                </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="W2" class="col-sm-2 control-label">W2</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="W2" value="10" class="form-control" style="display:none">
-                                    <div class="input-group-addon">Ohms</div>
-                                </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="C1" class="col-sm-2 control-label">C1</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="C1" value="0.01" class="form-control" style="display:none">
-                                    <div class="input-group-addon">F</div>
-                                </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="C2" class="col-sm-2 control-label">C2</label>
-                                <div class="col-sm-8 input-group">
-                                    <input type="text" name="C2" value="0.8" class="form-control" style="display:none">
-                                    <div class="input-group-addon"></div>
-                                </div>
-                        </div>
-                    </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submitECparams()">Save changes</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -262,7 +313,7 @@
                                         <option value="imp-data.csv">EIS data</option>
                                         <option value="wu_example.csv">Wu</option>
                                         <option value="vetter_example.csv">Vetter</option>
-                                        <!-- <option>5</option> -->
+                                        <option value="samsung_example.csv">Samsung NMC</option>
                                     </select>
                                 </div>
                             </div>
@@ -272,7 +323,7 @@
                                     <div class="checkbox">
                                         <label>
                                             <input type="checkbox" id="ecinput" name="fitting-ec" value="ec" onchange="ecdefine();"/>Equivalent Circuit
-                                            <button type="button" id="ecmodal" onclick="submitECparams()" style="display: none;"></button>
+                                            <button type="button" id="ecmodal" style="display: none;" data-toggle="modal" data-target="#myModal" onclick="initializeEC();"></button>
                                         </label>
                                     </div>
                                     <div class="checkbox">
@@ -283,7 +334,7 @@
                                 </div>
                             </div>
                             <div class="col-md-1">
-                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" value="Plot" id="plot" >
+                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" onclick="submitECparams()" value="Plot" id="plot" >
                             </div>
                         </div>
                     </form>
@@ -312,7 +363,7 @@
                     </ul>
                     <div class="tab-content">
                         {% if ec_parameters %}
-                        <div class="tab-pane active fade in active" id="ec_param">
+                        <div class="tab-pane fade in active" id="ec_param">
                             <div class="table-responsive" id="table-div">
                                 <table class="table" id="parameter-estimates">
                                     <tr>
@@ -322,7 +373,7 @@
                                         <th>
                                             Best Estimate
                                         </th>
-                                        <th>
+                                        <th data-toggle="tooltip" title="The error is given as the estimated one-sigma standard deviation">
                                             Error
                                         </th>
                                     </tr>
@@ -390,19 +441,28 @@
         function submitECparams() {
             console.log('Submitting params...');
 
-            // var params = [$("input[name='R1']").val(),
-            //                 $("input[name='R2']").val(),
-            //                 $("input[name='W1']").val(),
-            //                 $("input[name='W2']").val(),
-            //                 $("input[name='C1']").val(),
-            //                 $("input[name='C2']").val()];
-
-            var inputs = $('#defineECparams :input');
+            var inputs = $('#ECtab .tab-pane.active #defineECparam :input');
             inputs.each(function() {
                 $(this).appendTo('#fileinput');
+                $(this).hide();
             });
 
         }
+        </script>
+
+        <script type="text/javascript">
+            function initializeEC() {
+                var inputs = $('#ECtab #defineECparam :input');
+                inputs.each(function() {
+                    $(this).show();
+                }
+            }
+        </script>
+
+        <script type="text/javascript">
+            function uncheckEC() {
+                $('#ecinput').prop('checked', false);
+            }
         </script>
 
         <!-- file input button -->

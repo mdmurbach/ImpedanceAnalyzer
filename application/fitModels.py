@@ -107,7 +107,7 @@ def fitP2D(data):
     return best_fit, fit
 
 def fitEquivalentCircuit(data, p0):
-    print("fitting circuit")
+    # print("fitting circuit")
 
     # Define Circuit and Initial Parameters
     global circuit_string
@@ -130,7 +130,7 @@ def fitEquivalentCircuit(data, p0):
 
     parameters = [r1, r2, p0[2], p0[3], c1, p0[5]]
 
-    print(parameters, file=sys.stderr)
+    # print(parameters, file=sys.stderr)
 
     freq = np.array([a for a,b,c in data])
     zr = np.array([b for a,b,c in data])
