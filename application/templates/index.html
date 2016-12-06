@@ -145,6 +145,43 @@
             #grid-parameters { padding-bottom: 40px; }
         }
 
+        .button rect {
+          stroke: #ff5722;
+          stroke-width: 1px;
+        }
+
+        .button #gradient-start {
+        /*  stop-color: #3498db; */
+          stop-color: #ff5722b3; /* 70% */
+          stop-opacity: 1;
+        }
+
+        .button #gradient-stop {
+        /*  stop-color: #2980b9; */
+          stop-color: #ff5722b3; /* 100% */
+          stop-opacity: 1;
+        }
+
+        .button #gradient-start.active {
+        /*  stop-color: #3cb0fd; */
+          stop-color: #ff572266; /* 40% */
+        }
+
+        .button #gradient-stop.active {
+        /*  stop-color: #3498db; */
+          stop-color: #ff572266; /* 70% */
+        }
+
+        .button text {
+          font-size: 1em;
+          fill: #eee;
+          pointer-events: none;
+          text-anchor: middle;
+          -moz-user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
+        }
+
         </style>
 
     </head>
@@ -285,6 +322,26 @@
             </div>
         </div>
 
+        <!-- Explore Fit Modal -->
+        <div class="modal fade" id="exploreFitModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Note: This does not reflect the actual fit yet. Eventually, it will actually contain the results from the last model fitting.</p>
+                    <iframe src="mseviz" width="800" height="300" frameBorder="0" style="overflow: hidden"></iframe>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
         <div class="container-fluid" style="height: calc(100% - 90px);">
             <div class="row" id="first-row">
                 <div class="col-md-3" id="grid-introduction">
@@ -455,7 +512,7 @@
                 var inputs = $('#ECtab #defineECparam :input');
                 inputs.each(function() {
                     $(this).show();
-                }
+                });
             }
         </script>
 
@@ -504,7 +561,10 @@
         }
         </script>
 
-        <!-- draw chart with d3 -->
+        <!-- add svg button -->
+        <script type="text/javascript" src="{{ url_for('static', filename='button.js') }}"> </script>
+
+        <!-- draw Nyquist with d3 -->
         <script type="text/javascript" src="{{ url_for('static', filename='nyquist-models.js') }}"> </script>
 
         <script type="text/javascript">
@@ -524,6 +584,23 @@
                 d3.select("#nyquist")
                     .datum(data)
                     .call(nyquist);
+
+                if (p2dmodel) {
+                    var svg = d3.select("#nyquist svg")
+
+                    var g = svg.append('g')
+                        .attr('class', 'button')
+                        .attr('transform', 'translate(300,50)')
+
+                    var text = g.append('text')
+                        .text('Explore P2D Fit')
+
+                    button()
+                        .container(g)
+                        .text(text)
+                        .count(0)
+                        .cb(function() { $('#exploreFitModal').modal('show') })();
+                }
 
             }
         </script>

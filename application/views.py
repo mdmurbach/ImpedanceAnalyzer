@@ -48,7 +48,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                best_fit, p2dFit = fitP2D(array)
+                best_fit, p2dFit, residuals = fitP2D(array)
 
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
 
@@ -87,7 +87,7 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                best_fit, p2dFit = fitP2D(array)
+                best_fit, p2dFit, residuals  = fitP2D(array)
 
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
 
@@ -103,6 +103,10 @@ def index():
 
     #### initial load + load after "remove file" button ####
     return render_template('index.html', chart_title="Welcome", upload=False, data="", ec_parameters=ec_parameters, ecFit=False, p2d_parameters=p2d_parameters, p2dFit=False)
+
+@application.route('/mseviz')
+def mseviz():
+    return render_template('mse_viz_v4.html')
 
 
 def to_array(input):

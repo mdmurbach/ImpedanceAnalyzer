@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>MSE Viz.</title>
+
+        <style media="screen">
+        rect {
+            fill: transparent;
+            shape-rendering: crispEdges;
+        }
+
+        .axis line, .axis path {
+            shape-rendering: crispEdges;
+            stroke: black;
+            fill: none;
+        }
+
+        .axis text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+
+        .dot, .circles {
+            fill: steelblue;
+            opacity: .6;
+        }
+
+        div.tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 7px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            opacity: .7;
+            border: 0px;
+            border-radius: 12px;
+        }
+
+        #scatter, #nyquist {
+            float: left;
+        }
+
+        .line {
+          fill: none;
+          stroke: steelblue;
+          stroke-width: 4px;
+        }
+
+
+
+        .ticks {
+          font: 10px sans-serif;
+        }
+
+        .track,
+        .track-inset,
+        .track-overlay {
+          stroke-linecap: round;
+        }
+
+        .track {
+          stroke: #000;
+          stroke-opacity: 0.3;
+          stroke-width: 10px;
+        }
+
+        .track-inset {
+          stroke: #ddd;
+          stroke-width: 8px;
+        }
+
+        .track-overlay {
+          pointer-events: stroke;
+          stroke-width: 50px;
+          cursor: crosshair;
+        }
+
+        .handle {
+          fill: #fff;
+          stroke: #000;
+          stroke-opacity: 0.5;
+          stroke-width: 1.25px;
+        }
+
+        </style>
+    </head>
+    <body>
+        <div id="scatter"></div>
+        <div id="nyquist"></div>
+        <div id="slider"></div>
+        <div id="parameters"></div>
+
+        <script src="https://d3js.org/d3.v4.js"></script>
+        <script type="text/javascript">
+
+            var margin = { top: 20, right: 20, bottom: 60, left: 60 },
+                outerWidth = 300,
+                outerHeight = 300,
+                width = outerWidth - margin.left - margin.right,
+                height = outerHeight - margin.top - margin.bottom;
+
+            var xScale = d3.scaleLinear()
+                .range([0, width]);
+
+            var yScale = d3.scaleLinear()
+                .range([height, 0]);
+
+                // create table
+            var table = d3.select('#parameters')
+                .append('table');
+
+            d3.csv("{{ url_for('static', filename='fit_results2.csv') }}", function(data) {
+                data.forEach(function(d) {
+                    d.run = +d.run;
+                    d.mse = +d.mse;
+                    d.scale = +d.scale;
+                });
+
+                d3.csv("{{ url_for('static', filename='Z.csv') }}", function(Z_data) {
+                    Z_data.forEach(function(d, i) {
+                        for(var freq in d) {
+                            if (freq != 'run') {
+                                d[freq + '_real'] = +(d[freq].match("([+-]?[0-9]+(\.[0-9]+))([^eE+-]|[eE][+-]?[0-9]+)")[0])
+                                d[freq + '_imag'] = +(d[freq].match("([+-]?[0-9]+(\.[0-9]+))([^eE+-]|[eE][+-]?[0-9]+)j")[0].replace("j", ""))
+                            }
+                        }
+                        d.run = +d.run
+                    })
+
+                var Z_data = Z_data
+
+                data = data.sort(function(a,b) { return d3.ascending(a.mse,b.mse)});
+
+                data = data.filter(function(row, i) {
+                    if(i<200) {
+                        row.run = +row.run;
+                        row.mse = +row.mse;
+                        row.scale = +row.scale;
+                        return row;
+                    }
+                });
+
+                xScale
+                    .domain([d3.min(data, function(d, i) { return i} ) - 3, d3.max(data, function(d, i) { return i} ) + 3]);
+
+                yScale
+                    .domain([d3.min(data, function(d, i) { return d.mse} )*.95, d3.max(data, function(d, i) { return d.mse} )*1.05]);
+
+                var xAxis = d3.axisBottom()
+                    .scale(xScale)
+                    .ticks(5);
+
+                var yAxis = d3.axisLeft()
+                    .scale(yScale)
+                    .ticks(5);
+
+                var div = d3.select("body").append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
+
+                var svg = d3.select("#scatter")
+                    .append("svg")
+                        .attr("width", outerWidth)
+                        .attr("height", outerHeight)
+                    .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis)
+
+                svg.append("text")
+                .attr("class", "label")
+                .attr("transform", "translate(" + (width/2) + " ," +
+                                                (height + margin.top + 10) + ")")
+                .style("text-anchor", "middle")
+                .text("N runs");
+
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+
+                svg.append("text")
+                    .attr("class", "label")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 20 - margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Avg. % Error");
+
+                var objects = svg.append("svg")
+                    .classed("objects", true)
+                    .attr("width", width)
+                    .attr("height", height);
+
+                initialize_impedance();
+
+                objects.selectAll('.dot')
+                        .data(data)
+                        .enter().append("circle")
+                        .classed("dot", true)
+                        .attr("r", 5)
+                        .attr("cx", function(d,i) {return xScale(i)})
+                        .attr("cy", function(d) { return yScale(d.mse)})
+                        .on("mouseover", function(d, i) {
+                            impedance = Z_data.find( function(data) { return data.run == d.run; });
+                            scale = d.scale;
+                            plot_nyquist(impedance, scale)
+                            d3.select(this).style("fill", "red")
+
+                            div.transition()
+                                .duration(200)
+                                .style("opacity", 1);
+
+                            div.html(
+                                'Rank: ' + (i+1) + '<br>' +
+                                'MSE:  ' + Math.round(d.mse * 1000)/ 1000  + '%'  + '<br>' +
+                                'Run: '+ d.run)
+                                .style("left", width + "px")
+                                .style("top", (height-50) + "px");
+                            })
+                            .on("mouseout", function(d) {
+                                d3.select(this).transition().duration(150).style("fill", "dodgerblue");
+                            });
+
+                var x = d3.scaleLinear()
+                    .domain(d3.extent(data, function(d,i) { return i; }))
+                    .range([0, 100])
+                    .clamp(true);
+
+                var slider_svg = d3.select("#scatter").append("svg")
+                    .attr("height", 200)
+                    .attr("width", 50)
+
+                var slider = slider_svg.append("g")
+                    .attr("class", "slider")
+                    .attr("transform", "translate(" + 25 + "," + 120 + ") rotate(-90)");
+
+                slider.append("line")
+                    .attr("class", "track")
+                    .attr("x1", x.range()[0])
+                    .attr("x2", x.range()[1])
+                    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+                    .attr("class", "track-inset")
+                    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+                    .attr("class", "track-overlay")
+                    .call(d3.drag()
+                        .on("start.interrupt", function() { slider.interrupt(); })
+                        .on("start drag", function() { slider_drag(x.invert(d3.event.x)) } ));
+
+                slider.insert("g", ".track-overlay")
+                    .attr("class", "ticks")
+                    .attr("transform", "translate(0," + 18 + ")")
+                    .selectAll("text")
+                    .data(x.ticks(5))
+                    .enter().append("text")
+                    .attr("x", x)
+                    .attr("text-anchor", "start")
+                    // .attr("transform", "rotate(90)")
+                    .text(function(d) { return d; });
+
+                var handle = slider.insert("circle", ".track-overlay")
+                    .attr("class", "handle")
+                    .attr("r", 9);
+
+                function slider_drag(d) {
+                    handle.attr("cx", x(d));
+
+                    index = Math.floor(d)
+                    impedance = Z_data.find( function(Z) { return Z.run == data[index].run; });
+                    scale = data[index].scale;
+                    d3.selectAll("circle.dot")
+                        .data(data)
+                        .style("fill", function(d, i ) { if(index == i) { return "red" ;} });
+
+                    plot_nyquist(impedance, scale)
+                }
+
+                });
+
+
+            });
+        </script>
+
+        <script type="text/javascript">
+            function initialize_impedance() {
+
+                var margin = { top: 20, right: 20, bottom: 60, left: 80 },
+                    outerWidth = 320,
+                    outerHeight = 300,
+                    width = outerWidth - margin.left - margin.right,
+                    height = outerHeight - margin.top - margin.bottom;
+
+                d3.text("{{ url_for('static', filename='data/examples/wu_example.csv') }}", function(string) {
+
+                    var exp_data = d3.csvParseRows(string, function(d, i) {
+                        return {
+                            f: +d[0],
+                            real: +d[1],
+                            imag: -1*(+d[2])
+                        };
+                    });
+
+                    max = d3.max( [d3.max(exp_data, function(d, i) { return d.real} ) - d3.min(exp_data, function(d, i) { return d.real} ),
+                                            d3.max(exp_data, function(d, i) { return d.imag} ) - d3.min(exp_data, function(d, i) { return d.imag} )]);
+
+                    xScale_imp = d3.scaleLinear()
+                        .range([0, width])
+                        .domain([ d3.min(exp_data, function(d, i) { return d.real} ) - max*.1,  d3.min(exp_data, function(d, i) { return d.real} ) + max*1.2]);
+
+                    yScale_imp = d3.scaleLinear()
+                        .range([height, 0])
+                        .domain([0, max*1.3]);
+
+                    xAxis_imp = d3.axisBottom()
+                        .scale(xScale_imp)
+                        .ticks(5);
+
+                    yAxis_imp = d3.axisLeft()
+                        .scale(yScale_imp)
+                        .ticks(5);
+
+                    var svg = d3.select("#nyquist")
+                        .append("svg")
+                            .attr("width", outerWidth)
+                            .attr("height", outerHeight)
+                        .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+                    svg.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis_imp)
+
+                    svg.append("text")
+                    .attr("class", "label")
+                    .attr("transform", "translate(" + (width/2) + " ," +
+                                                    (height + margin.top + 10) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Z_real");
+
+                    svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis_imp)
+
+                    svg.append("text")
+                        .attr("class", "label")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", 20 - margin.left)
+                        .attr("x",0 - (height / 2))
+                        .attr("dy", "1em")
+                        .style("text-anchor", "middle")
+                        .text("-Z_imag");
+
+                    var impedance = svg.append("svg")
+                        .classed("impedance", true)
+                        .attr("width", width)
+                        .attr("height", height);
+
+                    impedance.selectAll('.experimental')
+                        .data(exp_data).enter().append("circle")
+                        .attr("class", "experimental")
+                        .attr("r", 5)
+                        .attr("cx", function(d) {return xScale_imp(d.real)})
+                        .attr("cy", function(d) { return yScale_imp(d.imag)})
+
+                    impedance.append("path")
+                        .data([exp_data])
+                        .attr("class", "line")
+
+                })
+            };
+        </script>
+        </script>
+
+        <script type="text/javascript">
+            function plot_nyquist(input, scale) {
+
+                var data = [];
+
+                for( key in input) {
+                    if(key.includes("real")) {
+                        if(data.findIndex( function(d) { return d.f == key.split("_")[0]} ) == -1) {
+                            data.push({
+                                f: key.split("_")[0],
+                                real: input[key]
+                            });
+                        } else {
+                            data[data.findIndex( function(d) { return d.f == key.split("_")[0]} )].real = input[key];
+                        }
+                    }
+                    if(key.includes("imag")) {
+                        if(data.findIndex( function(d) { return d.f == key.split("_")[0]} ) == -1) {
+                            data.push({
+                                f: key.split("_")[0],
+                                imag: input[key]
+                            });
+                        } else {
+                            data[data.findIndex( function(d) { return d.f == key.split("_")[0]} )].imag = input[key];
+                        }
+                    }
+                }
+
+
+                var svg = d3.select("#nyquist svg g")
+
+                impedance = d3.selectAll('svg.impedance')
+
+                circles = impedance.selectAll('.circles')
+                        .data(data);
+
+                // define the line
+                var valueline = d3.line()
+                    .x(function(d) { return xScale_imp(scale*d.real); })
+                    .y(function(d) { return yScale_imp(scale*d.imag); });
+
+                impedance.selectAll("path")
+                  .data([data])
+                  .attr("class", "line")
+                  .transition().duration(100)
+                  .attr("d", valueline);
+
+                circles
+                        .enter().append("circle")
+                        .attr("class", "circles")
+                        .attr("r", 5)
+                    .merge(circles)
+                        .transition().duration(100)
+                        .attr("cx", function(d) {return xScale_imp(scale*d.real)})
+                        .attr("cy", function(d) { return yScale_imp(scale*d.imag)})
+
+                circles
+                    .exit().remove();
+
+            };
+        </script>
+    </body>
+</html>

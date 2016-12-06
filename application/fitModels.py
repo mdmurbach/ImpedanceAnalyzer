@@ -104,7 +104,7 @@ def fitP2D(data):
     Z11_model = sorted_res_df['scale'].loc[best_fit]*Z.loc[best_fit]
 
     fit = zip(Z11_model.index, Z11_model.map(np.real).tolist(), (-1*Z11_model.map(np.imag)).tolist())
-    return best_fit, fit
+    return best_fit, fit, sorted_res_df
 
 def fitEquivalentCircuit(data, p0):
     # print("fitting circuit")
