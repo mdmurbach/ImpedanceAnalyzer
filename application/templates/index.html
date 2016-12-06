@@ -78,8 +78,12 @@
             background-color: #FFFFFF;
             border: 2px #BDBDBD solid;
             padding: 0px 10px;
-            overflow-y: auto;
+            overflow-y: auto;;
             }
+
+        div #grid-impedance {
+            overflow: hidden;
+        }
 
         .glyphicon-question-sign {
             font-size: .5em;
@@ -128,6 +132,10 @@
             fill: #FF5722;
         }
 
+        .label {
+            font-size: 1em;
+        }
+
         .tooltip {
           position: absolute;
           /*width: 200px;*/
@@ -152,24 +160,24 @@
 
         .button #gradient-start {
         /*  stop-color: #3498db; */
-          stop-color: #ff5722b3; /* 70% */
+          stop-color: #ff5722; /* 70% */
           stop-opacity: 1;
         }
 
         .button #gradient-stop {
         /*  stop-color: #2980b9; */
-          stop-color: #ff5722b3; /* 100% */
+          stop-color: #ff5722; /* 100% */
           stop-opacity: 1;
         }
 
         .button #gradient-start.active {
         /*  stop-color: #3cb0fd; */
-          stop-color: #ff572266; /* 40% */
+          stop-color: #ff5722; /* 40% */
         }
 
         .button #gradient-stop.active {
         /*  stop-color: #3498db; */
-          stop-color: #ff572266; /* 70% */
+          stop-color: #ff5722; /* 70% */
         }
 
         .button text {
@@ -180,6 +188,28 @@
           -moz-user-select: none;
           -webkit-user-select: none;
           -ms-user-select: none;
+        }
+
+        @keyframes spinner {
+            to {transform: rotate(360deg);}
+        }
+
+        .spinner:before {
+            content: '';
+            box-sizing: border-box;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            margin-top: -10px;
+            margin-left: -10px;
+            border-radius: 50%;
+            border: 5px solid #f6f;
+            border-top-color: #0e0;
+            border-right-color: #0dd;
+            border-bottom-color: #f90;
+            animation: spinner .7s ease infinite;
         }
 
         </style>
@@ -399,12 +429,13 @@
             </div>
             <div class="row" id="second-row">
                 <div class="col-md-8" id="grid-impedance">
-                    <div class="row">
-                        <div class="col-md-6">
-                                <div id="bode"></div>
+                    <div class="row" style="height: 100%">
+                        <div id="loadingDiv" class="spinner"></div>
+                        <div class="col-md-6" style="height: 100%">
+                                <div id="bode" style="height: 100%"></div>
                         </div>
-                        <div class="col-md-6">
-                            <div id="nyquist"></div>
+                        <div class="col-md-6" style="height: 100%">
+                            <div id="nyquist" style="height: 100%"></div>
                         </div>
                     </div>
                 </div>
@@ -487,6 +518,17 @@
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
+        <script type="text/javascript">
+        var $loading = $('#loadingDiv').hide();
+        $(document)
+            .ajaxStart(function () {
+            $loading.show();
+            })
+            .ajaxStop(function () {
+                $loading.hide();
+            });
+        </script>
+
         <!-- Latest compiled and minified JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
@@ -496,7 +538,7 @@
         <!-- submit form -->
         <script type="text/javascript">
         function submitECparams() {
-            console.log('Submitting params...');
+            $('#loadingDiv').show();
 
             var inputs = $('#ECtab .tab-pane.active #defineECparam :input');
             inputs.each(function() {
@@ -577,7 +619,10 @@
                 var ecmodel = {{ ecFit|tojson|safe }};
                 var p2dmodel = {{ p2dFit|tojson|safe }};
 
-                var nyquist = nyquistChart({width: 400, height: 400, ec: ecmodel, p2d: p2dmodel})
+                outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
+                outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
+
+                var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: ecmodel, p2d: p2dmodel})
                     .x(function(d) { return d[1] })
                     .y(function(d) { return -d[2] });
 
@@ -590,7 +635,7 @@
 
                     var g = svg.append('g')
                         .attr('class', 'button')
-                        .attr('transform', 'translate(300,50)')
+                        .attr('transform', 'translate(' + outerWidth*.75 + ',' + outerHeight*.1 + ')')
 
                     var text = g.append('text')
                         .text('Explore P2D Fit')
@@ -625,10 +670,12 @@
                 var ecmodel = {{ ecFit|tojson|safe }};
                 var p2dmodel = {{ p2dFit|tojson|safe }};
 
-                outerWidth = 400;
-                outerHeight = 400;
+                outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
+                outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
-                var margin = {top: 10, right: 10, bottom: 60, left: 60};
+                console.log(outerHeight);
+
+                var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
                 var width = outerWidth - margin.left - margin.right;
                 var height = outerHeight/2 - margin.top - margin.bottom;
 
@@ -726,28 +773,35 @@
 
                 g_ph.append("text")
                     .attr("class", "label")
+                    .attr("transform", "translate(" + (width/2) + " ," +
+                                                    (height + margin.bottom - 10) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Frequency [Hz]");
+
+                g_ph.append("text")
+                    .attr("class", "label")
                     .attr("transform", "rotate(-90)")
-                    .attr("y", -margin.left)
+                    .attr("y", -margin.left - 1)
                     .attr("x",0 - (height / 2))
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
-                    .text("-Phase");
+                    .text("-Phase [deg]");
 
                 g_mag.append("text")
                     .attr("class", "label")
                     .attr("transform", "translate(" + (width/2) + " ," +
-                                                    (height + margin.top + 20) + ")")
+                                                    (height + margin.bottom - 10) + ")")
                     .style("text-anchor", "middle")
-                    .text("Frequency");
+                    .text("Frequency [Hz]");
 
                 g_mag.append("text")
                     .attr("class", "label")
                     .attr("transform", "rotate(-90)")
-                    .attr("y", -margin.left)
+                    .attr("y", -margin.left - 1)
                     .attr("x",0 - (height / 2))
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
-                    .text("Magnitude");
+                    .text("Magnitude [Ohms]");
 
                 var phases = g_ph.selectAll("circle").data(data);
 
@@ -848,6 +902,50 @@
                             .attr("r", 5);
 
                     });
+
+                    //  Add model fit if exists
+                    if(ecmodel.length > 0) {
+
+                        var line_ph = d3.svg.line()
+                            .x(function(d) { return xScale_ph( d[0] ); })
+                            .y(function(d) { return yScale_ph(phase(d[1], d[2])); });
+
+                        g_ph.append("path")
+                              .datum(ecmodel)
+                              .attr("class", "ec-fit")
+                              .attr("d", line_ph);
+
+                        var line_mag = d3.svg.line()
+                            .x(function(d) { return xScale_mag( d[0] ); })
+                            .y(function(d) { return yScale_mag(mag(d[1], d[2])); });
+
+                        g_mag.append("path")
+                            .datum(ecmodel)
+                            .attr("class", "ec-fit")
+                            .attr("d", line_mag);
+                    }
+
+                    //  Add model fit if exists
+                    if(p2dmodel.length > 0) {
+
+                        var line_ph = d3.svg.line()
+                            .x(function(d) { return xScale_ph( d[0] ); })
+                            .y(function(d) { return yScale_ph(phase(d[1], d[2])); });
+
+                        g_ph.append("path")
+                              .datum(p2dmodel)
+                              .attr("class", "p2d-fit")
+                              .attr("d", line_ph);
+
+                        var line_mag = d3.svg.line()
+                            .x(function(d) { return xScale_mag( d[0] ); })
+                            .y(function(d) { return yScale_mag(mag(d[1], d[2])); });
+
+                        g_mag.append("path")
+                            .datum(p2dmodel)
+                            .attr("class", "p2d-fit")
+                            .attr("d", line_mag);
+                    }
 
             }
         </script>

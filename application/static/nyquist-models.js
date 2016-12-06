@@ -71,9 +71,9 @@ function nyquistChart(config) {
             g.append("text")
                 .attr("class", "label")
                 .attr("transform", "translate(" + (width/2) + " ," +
-                                                (height + margin.top + 10) + ")")
+                                                (height + margin.bottom - 10) + ")")
                 .style("text-anchor", "middle")
-                .text("Z_real");
+                .text("Z' [Ohms]");
 
             g.append("text")
                 .attr("class", "label")
@@ -82,7 +82,7 @@ function nyquistChart(config) {
                 .attr("x",0 - (height / 2))
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("-Z_imag");
+                .text("-Z'' [Ohms] ");
 
             var circles = g.selectAll("circle").data(data);
 
