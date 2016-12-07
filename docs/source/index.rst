@@ -10,12 +10,15 @@ Welcome to Impedance Analyzer's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+Flask Application Structure
+=====================
+ImpedanceAnalyzer's structure is a Flask application with the structure shown below.
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
+* :ref:`search`
 
 .. automodule:: application
