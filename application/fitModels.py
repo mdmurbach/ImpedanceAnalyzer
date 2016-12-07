@@ -1,15 +1,10 @@
 from __future__ import print_function
 import sys
-import numpy as np
-import pandas as pd
 import cmath
-from scipy.optimize import leastsq,minimize
-from scipy.interpolate import interp1d
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+from scipy.optimize import leastsq, minimize
 from scipy.interpolate import interp1d
-from scipy.optimize import minimize
 
 def fitP2D(data):
     exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
@@ -18,7 +13,6 @@ def fitP2D(data):
 
     exp_data.sort_values(by='f', ascending=False, inplace=True)
     exp_data.index = range(len(exp_data))
-    # print(exp_data, file=sys.stderr)
 
     Z = pd.read_pickle('application/static/data/16707-Z.pkl')
 
@@ -30,25 +24,15 @@ def fitP2D(data):
     to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
 
     for frequency in to_fit.index:
-        if not exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)].empty:
-            # print(frequency, file=sys.stderr)
-            # print(.99*frequency, file=sys.stderr)
-            # print(1.01*frequency, file=sys.stderr)
-            # print(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)], file=sys.stderr)
-            to_fit.loc[frequency, 'mag'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)]['mag'])
-            to_fit.loc[frequency, 'ph'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency,1.01*frequency)]['phase'])
+        if not exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)].empty:
+            to_fit.loc[frequency, 'mag'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]['mag'])
+            to_fit.loc[frequency, 'ph'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]['phase'])
         else:
-            # print(frequency, file=sys.stderr)
-            # print(exp_data.f, file=sys.stderr)
             idx = np.argmin(np.abs(frequency - exp_data['f']))
-            # print(idx, file=sys.stderr)
 
             x = exp_data['f'].iloc[idx-2:idx+3]
             y_mag = exp_data['mag'].iloc[idx-2:idx+3]
             y_phase = exp_data['phase'].iloc[idx-2:idx+3]
-
-            # print(x, file=sys.stderr)
-            # print(y_mag, file=sys.stderr)
 
             mag = interp1d(x, y_mag, kind='quadratic')
             phase = interp1d(x, y_phase, kind='quadratic')
@@ -114,10 +98,6 @@ def fitEquivalentCircuit(data, p0):
 
     circuit_string ='s(R1,p(s(R1,W2),E2))'
 
-    # Define circuits to compare
-    # circuit_string = randles_circuit
-    # parameters = p0
-
     f = np.array([run[0] for run in data])
     real = np.array([run[1] for run in data])
     imag = np.array([run[2] for run in data])
@@ -130,7 +110,6 @@ def fitEquivalentCircuit(data, p0):
 
     parameters = [r1, r2, p0[2], p0[3], c1, p0[5]]
 
-    # print(parameters, file=sys.stderr)
 
     freq = np.array([a for a,b,c in data])
     zr = np.array([b for a,b,c in data])

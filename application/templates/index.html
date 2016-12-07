@@ -138,10 +138,17 @@
         }
 
         .tooltip {
-          position: absolute;
-          /*width: 200px;*/
-          height: 28px;
-          pointer-events: none;
+            position: absolute;;
+            height: 28px;
+            pointer-events: none;
+            position: absolute;
+            text-align: left;
+            padding: 7px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            opacity: .7;
+            border: 0px;
+            border-radius: 12px;
         }
 
         .navbar-fixed-bottom {
@@ -733,10 +740,6 @@
                 var svg_ph = d3.select('#bode').append("svg").attr("id", "phase")
                 var svg_mag = d3.select('#bode').append("svg").attr("id", "magnitude")
 
-                // add the tooltip area to the webpage
-                var tooltip = d3.select("body").append("div")
-                    .attr("class", "tooltip")
-                    .style("opacity", 0);
 
                 var plot_ph = svg_ph.append("g");
                 var plot_mag = svg_mag.append("g");
@@ -761,6 +764,14 @@
 
                 var g_mag = svg_mag.select("g")
                     .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
+
+                var tooltip_ph = g_ph.append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
+
+                var tooltip_mag = g_mag.append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
 
                 g_ph.select(".x.axis")
                     .attr('transform', 'translate(0,' + height + ')')
@@ -833,14 +844,14 @@
                             .classed("selected-circle", function(d2, i2) {return i2 == i; })
                             .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
 
-                        tooltip.transition()
+                        tooltip_ph.transition()
                             .duration(200)
                             .style("opacity", .9);
 
-                        tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                        tooltip_ph.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
                                             'Phase: ' + Math.round(phase(d[1], d[2])*1000)/1000)
-                                            .style("left", (d3.event.pageX + 20) + "px")
-                                            .style("top", (d3.event.pageY - 50) + "px");
+                                            .style("left", 30 + "px")
+                                            .style("top", 30 + "px");
 
                     })
                     .on("mouseout", function(d,i) {
@@ -883,14 +894,14 @@
                             .classed("selected-circle", function(d2, i2) {return i2 == i; })
                             .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
 
-                        tooltip.transition()
-                            .duration(200)
-                            .style("opacity", .9);
-
-                        tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
-                                            'Mag: ' + Math.round(mag(d[1], d[2])*1000)/1000)
-                                            .style("left", (d3.event.pageX + 20) + "px")
-                                            .style("top", (d3.event.pageY - 50) + "px");
+                        // tooltip.transition()
+                        //     .duration(200)
+                        //     .style("opacity", .9);
+                        //
+                        // tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                        //                     'Mag: ' + Math.round(mag(d[1], d[2])*1000)/1000)
+                        //                     .style("left", (outerWidth - 30) + "px")
+                        //                     .style("top", outerHeight*3/4 + "px");
 
                     })
                     .on("mouseout", function(d,i) {
