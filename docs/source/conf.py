@@ -18,7 +18,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('C:/Users/Matt/Dropbox/uw-files/research/impedance-analyzer/impedance-analyzer/'))
+sys.path.insert(0, '../')
 
 
 # -- General configuration ------------------------------------------------
