@@ -7,26 +7,35 @@ from scipy.optimize import leastsq, minimize
 from scipy.interpolate import interp1d
 
 def fitP2D(data):
+    """ Fit physics-based model
+
+    """
+
+    # take incoming list of tuples and create a dataframe
+    # sorted by descending frequency
     exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
     exp_data['mag'] = exp_data.apply(lambda x: np.sqrt(x[1]**2 + x[2]**2), axis=1)
     exp_data['phase'] = exp_data.apply(lambda x: np.arctan2(x[2], x[1]), axis=1)
-
     exp_data.sort_values(by='f', ascending=False, inplace=True)
     exp_data.index = range(len(exp_data))
 
-    Z = pd.read_pickle('application/static/data/16707-Z.pkl')
+    # read in all of the simulation results
+    Z = pd.read_pickle('application/static/data/17190-Z.pkl')
 
-    min_f = min(exp_data['f'])
-    max_f = max(exp_data['f'])
-
+    # find the frequencies that fall within the experimental data and create
+    # the DataFrame, to_fit, to store interpolated experimental data for fitting
+    min_f, max_f = min(exp_data['f']), max(exp_data['f'])
     freq_mask = sorted([f for f in Z.columns if min_f <= f <= max_f], reverse=True)
 
     to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
 
+    # if the frequency isn't already within 1% of the simulation frequencies,
+    # quadratically interpolate the nearest four points in the magnitude and phase
     for frequency in to_fit.index:
-        if not exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)].empty:
-            to_fit.loc[frequency, 'mag'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]['mag'])
-            to_fit.loc[frequency, 'ph'] = np.asscalar(exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]['phase'])
+        exact = exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]
+        if not exact.empty:
+            to_fit.loc[frequency, 'mag'] = np.asscalar(exact['mag'])
+            to_fit.loc[frequency, 'ph'] = np.asscalar(exact['phase'])
         else:
             idx = np.argmin(np.abs(frequency - exp_data['f']))
 
@@ -43,6 +52,8 @@ def fitP2D(data):
     to_fit['real'] = to_fit.mag*(to_fit.ph.map(np.cos))
     to_fit['imag'] = to_fit.mag*(to_fit.ph.map(np.sin))
 
+    # if the imaginary impedance crosses zeros, finds the crossover
+    # and includes it in to_fit as the model's 10**5 Hz entry
     crossover = exp_data[exp_data['imag'] > 0]
 
     if crossover.index.tolist():
@@ -60,35 +71,37 @@ def fitP2D(data):
         to_fit = pd.concat([pd.DataFrame(data={'mag': Zreal_hf, 'ph': 0.0, 'real': Zreal_hf, 'imag': 0.0},
                                 index=[1e5], columns=to_fit.columns), to_fit])
 
+
     Z11_exp = np.array(to_fit.real.tolist()) + 1j*np.array(to_fit.imag.tolist())
 
     def residual(scale, Z11_model, Z11_exp):
         '''
         Returns average distance of error between the model and experimental data
         '''
-        return (1./len(Z11_model))*np.sqrt(sum((np.real(Z11_exp) - scale*np.real(Z11_model))**2 + (np.imag(Z11_exp) - -1*scale*np.imag(Z11_model))**2))
+        return (1./len(Z11_model))*np.sqrt(sum((np.real(Z11_exp) - scale*np.real(Z11_model))**2 + (np.imag(Z11_exp) - scale*np.imag(Z11_model))**2))
 
     Z_array = np.array(Z)
     results_array = np.ndarray((len(Z_array), 3))
 
-    mask = [f for f in range(len(Z.columns)) if Z.columns[f] in to_fit.index]
+    mask = [i for i, f in enumerate(Z.columns) if f in to_fit.index]
 
-    for run in range(len(Z_array)):
+    for run, __ in enumerate(Z_array):
         res = minimize(residual, 10.0, args=(Z_array[run, mask], Z11_exp), tol=1e-5)
 
         results_array[run,0] = run
-        results_array[run,1] = res.x
-        results_array[run,2] = res.fun
+        results_array[run,1] = res.x # scale
+        results_array[run,2] = res.fun # residual
 
-    res_df = pd.DataFrame(results_array[:,1:], index=range(1,len(results_array)+1), columns=['scale', 'error'])
+    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
 
-    sorted_res_df = res_df.sort_values(['error'])
+    sorted_results = results.sort_values(['residual'])
+    sorted_results['residual'] = sorted_results['residual'].map(lambda x: x*100/(to_fit['mag'].mean()))
 
-    best_fit = sorted_res_df.index[0]
-    Z11_model = sorted_res_df['scale'].loc[best_fit]*Z.loc[best_fit]
+    best_fit =int(sorted_results['run'].iloc[0])
+    Z11_model = sorted_results['scale'].iloc[0]*Z.iloc[best_fit]
 
-    fit = zip(Z11_model.index, Z11_model.map(np.real).tolist(), (-1*Z11_model.map(np.imag)).tolist())
-    return best_fit, fit, sorted_res_df
+    fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
+    return fit, sorted_results.iloc[0:100]
 
 def fitEquivalentCircuit(data, p0):
     # print("fitting circuit")
@@ -127,11 +140,11 @@ def fitEquivalentCircuit(data, p0):
     p_cov = covar * s_sq
 
     error = []
-    for i in range(len(covar)):
+    for i, __ in enumerate(covar):
         try:
           error.append(np.absolute(p_cov[i][i])**0.5)
         except:
-          error.append( 0.00 )
+          error.append(0.0)
 
     fit_data_1 = compute_circuit(plsq.tolist(), circuit_string, freq)
 

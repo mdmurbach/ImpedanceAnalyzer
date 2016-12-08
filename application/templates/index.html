@@ -18,7 +18,6 @@
             margin-bottom: 0px;
             background-color: #009688;
             color:#009688;
-            z-index: -1;
         }
 
         /*  Link colors     */
@@ -217,7 +216,29 @@
             border-top-color: #0e0;
             border-right-color: #0dd;
             border-bottom-color: #f90;
-            animation: spinner .7s ease infinite;
+            animation: spinner .9s ease infinite;
+        }
+
+        .axis line, .axis path {
+            shape-rendering: crispEdges;
+            stroke: black;
+            fill: none;
+        }
+
+        .axis text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+
+        div.explore-tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 7px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            opacity: .7;
+            border: 0px;
+            border-radius: 12px;
         }
 
         </style>
@@ -241,9 +262,9 @@
                 </div>
                 <div id="navbar" class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#index">Home</a></li>
-                        <li><a href="#about">Demo</a></li>
-                        <li><a href="#contact">About</a></li>
+                        <li><a href="{{ url_for('index')}}">Home</a></li>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a target="_blank" href="http://impedanceanalyzer.readthedocs.io/en/latest/">Docs</a></li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div>
@@ -260,12 +281,12 @@
                     <div class="modal-body">
                         <p class="danger">Note: only Randles w/ CPE currently works</p>
                         <ul class="nav nav-tabs" role="tablist">
-                            <li role="presentation" class="nav active"><a href="#randles" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles.png') }}" alt="" /></a></li>
+                            <!-- <li role="presentation" class="nav active"><a href="#randles" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles.png') }}" alt="" /></a></li> -->
                             <li role="presentation" class="nav"><a href="#randles_cpe" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></a></li>
                             <li role="presentation" class="nav"><a href="#self_define" role="tab" data-toggle="tab" onclick="initializeEC();"><p style="text-align: center; font-weight: bold;">Define <br> custom <br> circuit</p></a></li>
                         </ul>
                         <div class="tab-content" id="ECtab">
-                            <div class="tab-pane active" id="randles">
+                            <!-- <div class="tab-pane active" id="randles">
                                 <form class="form-horizontal" action="" id="defineECparam">
                                     <div class="form-group">
                                         <label for="R1" class="col-sm-2 control-label">R1</label>
@@ -303,8 +324,8 @@
                                             </div>
                                     </div>
                                 </form>
-                            </div>
-                            <div class="tab-pane" id="randles_cpe">
+                            </div> -->
+                            <div class="tab-pane active" id="randles_cpe">
                                 <form class="form-horizontal" action="" id="defineECparam">
                                     <div class="form-group">
                                         <label for="R1" class="col-sm-2 control-label">R1</label>
@@ -371,8 +392,15 @@
                         <h4 class="modal-title" id="myModalLabel">Modal title</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Note: This does not reflect the actual fit yet. Eventually, it will actually contain the results from the last model fitting.</p>
-                    <iframe src="mseviz" width="800" height="300" frameBorder="0" style="overflow: hidden"></iframe>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div id="explore-residuals"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="explore-nyquist"></div>
+                            </div>
+                        </div>
+                    <!-- <iframe src="mseviz" width="800" height="300" frameBorder="0" style="overflow: hidden"></iframe> -->
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -413,7 +441,6 @@
                                         <!-- <option value="zhang_example.csv">Zhang, 2000</option> -->
                                         <option value="imp-data.csv">EIS data</option>
                                         <option value="wu_example.csv">Wu</option>
-                                        <option value="vetter_example.csv">Vetter</option>
                                         <option value="samsung_example.csv">Samsung NMC</option>
                                     </select>
                                 </div>
@@ -662,6 +689,242 @@
                 }
 
             }
+        </script>
+
+        <script type="text/javascript">
+            var sorted_results = {{ p2d_residuals|tojson|safe }};
+            var simulations = {{ p2d_simulations|tojson|safe }};
+
+            outerWidth = $(window).width();
+            outerHeight = $(window).height()*.5;
+
+            console.log(simulations);
+            // console.log("height: " + outerHeight);
+            // console.log("width: " + outerWidth);
+
+            var svg_res = d3.select('#explore-residuals').append("svg")
+            var svg_nyq = d3.select('#explore-nyquist').append("svg")
+
+            var margin = {top: 10, right: 10, bottom: 60, left: 60};
+            var width = outerWidth/3 - margin.left - margin.right;
+            var height = outerHeight - margin.top - margin.bottom;
+
+            var xScale_res = d3.scale.linear()
+            var yScale_res = d3.scale.linear()
+
+            var xScale_nyq = d3.scale.linear()
+            var yScale_nyq = d3.scale.linear()
+
+            var xAxis_res = d3.svg.axis()
+                .scale(xScale_res)
+                .ticks(5)
+                .orient('bottom');
+
+            var yAxis_res = d3.svg.axis()
+                .scale(yScale_res)
+                .ticks(5)
+                .orient('left');
+
+            xScale_res
+                .range([0, width])
+                .domain(d3.extent(sorted_results, function(d, i) { return i} ));
+
+            yScale_res
+                .range([height, 0])
+                .domain(d3.extent(sorted_results, function(d, i) { return d[2]} ));
+
+            var plot_res = svg_res.append("g");
+            var plot_nyq = svg_nyq.append("g");
+
+            plot_res.append("g").attr("class", "x axis");
+            plot_res.append("g").attr("class", "y axis");
+
+            // Update the outer dimensions.
+            svg_res
+                .attr("width", outerWidth/3)
+                .attr("height", outerHeight);
+
+            svg_nyq
+                .attr("width", d3.min([outerWidth/3, outerHeight]))
+                .attr("height", d3.min([outerWidth/3, outerHeight]));
+
+            var g_res = svg_res.select("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var g_nyq = svg_nyq.select("g")
+                .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
+
+            // var tooltip_ph = g_ph.append("div")
+            //     .attr("class", "tooltip")
+            //     .style("opacity", 0);
+            //
+            // var tooltip_mag = g_mag.append("div")
+            //     .attr("class", "tooltip")
+            //     .style("opacity", 0);
+
+            g_res.select(".x.axis")
+                .attr('transform', 'translate(0,' + height + ')')
+                .call(xAxis_res)
+
+            g_res.select(".y.axis")
+                .attr('transform', 'translate(0,' + 0 + ')')
+                .call(yAxis_res)
+
+
+            g_res.append("text")
+                .attr("class", "label")
+                .attr("transform", "translate(" + (width/2) + " ," +
+                                                (height + margin.bottom - 10) + ")")
+                .style("text-anchor", "middle")
+                .text("Number #");
+
+            g_res.append("text")
+                .attr("class", "label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left - 0)
+                .attr("x",0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Avg. % Error");
+
+            var div = d3.select("#explore-residuals").append("div")
+                .attr("class", "explore-tooltip")
+                .style("opacity", 0);
+
+            var residuals = g_res.selectAll("circle").data(sorted_results);
+
+            residuals.enter().append('circle');
+            residuals
+                .attr("class", "default-circle")
+                .attr("cx", function (d, i) { return xScale_res(i); } )
+                .attr("cy", function (d) { return yScale_res(d[2]); } )
+                .attr("r", 5)
+                .on("mouseover", function(d, i) {
+                    impedance = simulations.find( function(data) { return data[0] == d[0]; });
+                    scale = d[1];
+                    plot_impedance(impedance, scale)
+
+                    d3.select(this).style("fill", "red")
+
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", 1);
+
+                    div.html(
+                        'Rank: ' + (i+1) + '<br>' +
+                        'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
+                        'Run: '+ d[0])
+                        .style("left", width + "px")
+                        .style("top", (height-20) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                        d3.select(this).transition().duration(150).style("fill", "#009688");
+                    });
+
+            initialize_impedance();
+
+            function plot_impedance(data, scale) {
+                impedance = [];
+
+                data[1].split(',').forEach(function(d,i) {
+                    impedance[i] = {
+                        f: +d,
+                        real: +data[2].split(',')[i],
+                        imag: -1*(+data[3].split(',')[i])
+                    }
+                })
+
+                impedances = g_nyq.selectAll(".circles").data(impedance)
+
+                // define the line
+                var line = d3.svg.line()
+                    .x(function(d) { return xScale_nyq(scale*d.real); })
+                    .y(function(d) { return yScale_nyq(scale*d.imag); });
+
+                g_nyq.selectAll("path")
+                  .datum(impedance)
+                  .attr("class", "p2d-fit")
+                  .transition().duration(100)
+                  .attr("d", line);
+
+                impedances
+                        .enter().append("circle")
+                        .attr("class", "circles")
+                        .attr("r", 5)
+
+                impedances
+                        .transition().duration(100)
+                        .attr("cx", function(d) {return xScale_nyq(scale*d.real)})
+                        .attr("cy", function(d) { return yScale_nyq(scale*d.imag)})
+
+                impedances
+                    .exit().remove();
+
+                };
+
+                function initialize_impedance() {
+
+                    var data = {{ data|tojson|safe }};
+
+                    plot_nyq.append("g").attr("class", "x axis");
+                    plot_nyq.append("g").attr("class", "y axis");
+
+                    max = d3.max( [d3.max(data, function(d, i) { return d[1]} ) - d3.min(data, function(d, i) { return d[1]} ),
+                                            d3.max(data, function(d, i) { return -d[2]} ) - d3.min(data, function(d, i) { return -d[2]} )]);
+
+                    xScale_nyq
+                        .range([0, d3.min([outerWidth/3, outerHeight]) - margin.left - margin.right ])
+                        .domain([ d3.min(data, function(d, i) { return d[1]} ) - max*.1,  d3.min(data, function(d, i) { return d[1]} ) + max*1.4]);
+
+                    yScale_nyq
+                        .range([d3.min([outerWidth/3, outerHeight]) - margin.top - margin.bottom , 0])
+                        .domain([0, max*1.5]);
+
+                    var xAxis_nyq = d3.svg.axis()
+                        .scale(xScale_nyq)
+                        .ticks(5)
+                        .orient('bottom');
+
+                    var yAxis_nyq = d3.svg.axis()
+                        .scale(yScale_nyq)
+                        .ticks(5)
+                        .orient('left');
+
+                    g_nyq.select(".x.axis")
+                        .attr('transform', 'translate(0,' + height + ')')
+                        .call(xAxis_nyq)
+
+                    g_nyq.select(".y.axis")
+                        .attr('transform', 'translate(0,' + 0 + ')')
+                        .call(yAxis_nyq)
+
+                    g_nyq.append("text")
+                        .attr("class", "label")
+                        .attr("transform", "translate(" + (width/2) + " ," +
+                                                        (height + margin.bottom - 10) + ")")
+                        .style("text-anchor", "middle")
+                        .text("Z' [Ohms]");
+
+                    g_nyq.append("text")
+                        .attr("class", "label")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", -margin.left - 1)
+                        .attr("x",0 - (height / 2))
+                        .attr("dy", "1em")
+                        .style("text-anchor", "middle")
+                        .text("-Z'' [Ohms]");
+
+                    var nyquist = g_nyq.selectAll("circle").data(data);
+
+                    nyquist.enter().append('circle');
+                    nyquist
+                        .attr("class", "default-circle")
+                        .attr("cx", function (d, i) { return xScale_nyq(d[1]); } )
+                        .attr("cy", function (d) { return yScale_nyq(-d[2]); } )
+                        .attr("r", 5)
+
+                }
+
         </script>
 
         <!-- draw bode plot  with d3 -->

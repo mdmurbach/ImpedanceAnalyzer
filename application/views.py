@@ -5,14 +5,15 @@ from application.fitModels import fitEquivalentCircuit, fitP2D
 import scipy
 import sys, os
 import pandas as pd
+import numpy as np
 
 # main webpage
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
 def index():
 
-    ec_parameters = ""
-    p2d_parameters = ""
+    default_context = {'upload': False, 'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': ""}
+
     #### if POST request triggered by form-data button ####
     if request.method == 'POST' and 'data' in request.files:
 
@@ -31,11 +32,11 @@ def index():
             # print(request.files['data'].filename, file=sys.stderr)
             f = request.files['data']
             contents = f.read()
-            array = to_array(contents)
+            uploaded_data = to_array(contents)
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, p_error, ecFit = fitEquivalentCircuit(array, p0)
+                p_results, p_error, ecFit = fitEquivalentCircuit(uploaded_data, p0)
 
                 ec_parameters = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
                                                 {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
@@ -44,11 +45,12 @@ def index():
                                                 {"name": u"CPE1", "value": format(p_results[4], '.4f'), "sensitivity": format(p_error[4], '.4f')},
                                                 {"name":u"CPE2", "value": format(p_results[5], '.4f'), "sensitivity": format(p_error[5], '.4f')}]
             else:
+                ec_parameters = ""
                 ecFit = False
 
             # check if p2d check box is checked
             if fit_p2d:
-                best_fit, p2dFit, residuals = fitP2D(array)
+                p2dFit, sorted_results = fitP2D(uploaded_data)
 
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
 
@@ -58,10 +60,12 @@ def index():
                 for parameter in range(len(param_Series)):
                     p2d_parameters.append({'name': param_Series.index[parameter].split('[')[0], "value": param_Series.iloc[parameter], "sensitivity": "x"})
             else:
+                p2d_parameters = ""
                 p2dFit = False
 
+            context = {'upload': True, 'data': uploaded_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit}
 
-            return render_template('index.html', chart_title=request.files['data'].filename, upload=True, data=array, ec_parameters=ec_parameters, ecFit=ecFit, p2d_parameters=p2d_parameters, p2dFit=p2dFit)
+            return render_template('index.html', **context)
 
         #### else if POST request contains a selection from the example dropdown ####
         elif request.values['example'] != "null":
@@ -70,11 +74,11 @@ def index():
             filename = request.values['example']
             with open('./application/static/data/examples/' + filename, 'r') as f:
                 contents = f.read()
-            array = to_array(contents)
+            example_data = to_array(contents)
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, p_error, ecFit = fitEquivalentCircuit(array, p0)
+                p_results, p_error, ecFit = fitEquivalentCircuit(example_data, p0)
 
                 ec_parameters = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
                                                 {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
@@ -83,31 +87,53 @@ def index():
                                                 {"name": u"CPE1", "value": format(p_results[4], '.4f'), "sensitivity": format(p_error[4], '.4f')},
                                                 {"name":u"CPE2", "value": format(p_results[5], '.4f'), "sensitivity": format(p_error[5], '.4f')}]
             else:
+                ec_parameters = ""
                 ecFit = False
 
             # check if p2d check box is checked
             if fit_p2d:
-                best_fit, p2dFit, residuals  = fitP2D(array)
+                p2dFit, sorted_results  = fitP2D(example_data)
 
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+                Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
+                Z.index = range(len(Z))
 
-                param_Series = parameters.loc[best_fit-1]
+                Z = Z.loc[sorted_results['run'].map(int).values]
+                p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
+
+                p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
+                p2d_simulations['imag'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.imag(x))).values.tolist()), axis=1)
+                p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
+                p2d_simulations['run'] = Z.index
+
+                p2d_simulations = p2d_simulations.values.tolist()
+
+                # print(p2d_simulations, file=sys.stderr)
+
+                best_fit = sorted_results['run'].iloc[0]
+                param_Series = parameters.loc[best_fit]
+
+                p2d_residuals = sorted_results.values.tolist()
 
                 p2d_parameters = []
-                for parameter in range(len(param_Series)):
-                    p2d_parameters.append({'name': param_Series.index[parameter].split('[')[0], "value": param_Series.iloc[parameter], "sensitivity": "x"})
+                for i, parameter in enumerate(param_Series.index):
+                    p2d_parameters.append({'name': parameter.split('[')[0], "value": param_Series.iloc[i], "sensitivity": "x"})
             else:
+                p2d_parameters = ""
                 p2dFit = False
+                p2d_residuals = ""
+                p2d_simulations = ""
 
-            return render_template('index.html', chart_title=filename, upload=False, data=array, ec_parameters=ec_parameters, ecFit=ecFit, p2d_parameters=p2d_parameters, p2dFit=p2dFit)
+            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations}
+
+            return render_template('index.html', **context)
 
     #### initial load + load after "remove file" button ####
-    return render_template('index.html', chart_title="Welcome", upload=False, data="", ec_parameters=ec_parameters, ecFit=False, p2d_parameters=p2d_parameters, p2dFit=False)
+    return render_template('index.html', **default_context)
 
-@application.route('/mseviz')
-def mseviz():
-    return render_template('mse_viz_v4.html')
-
+# @application.route('/mseviz')
+# def mseviz():
+#     return render_template('mse_viz_v4.html')
 
 def to_array(input):
     input = input.replace('\r\n', ',')
