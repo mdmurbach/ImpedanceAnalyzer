@@ -6,10 +6,17 @@ Available modules
 ----------
 
 views
-    handles the routing of requests
+    - handles the routing of requests
+
+    / and /index.html
+        - the main webpage
 
 fitModels
-    contains functions for the fitting of both equivalent circuit and physics-based model_runs-full
+    - contains functions for the fitting of both equivalent circuit and physics-based model_runs-full
+
+    fitP2d(data)
+
+    fitEquivalentCircuit(data, initial_guess)
 
 """
 

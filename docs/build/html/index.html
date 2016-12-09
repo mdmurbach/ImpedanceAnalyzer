@@ -85,11 +85,12 @@
                 <!-- Local TOC -->
                 <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">Welcome to Impedance Analyzer&#8217;s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a><ul>
+<li><a class="reference internal" href="#flask-application-structure">Flask Application Structure</a><ul>
 <li><a class="reference internal" href="#application-package-for-flask">Application package for Flask</a><ul>
 <li><a class="reference internal" href="#available-modules">Available modules</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
 </ul>
@@ -141,23 +142,58 @@
 <div class="toctree-wrapper compound">
 </div>
 </div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-</ul>
+<div class="section" id="flask-application-structure">
+<h1>Flask Application Structure<a class="headerlink" href="#flask-application-structure" title="Permalink to this headline">¶</a></h1>
+<p>ImpedanceAnalyzer&#8217;s structure is a Flask application with the structure shown below.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>\<span class="n">impedance</span><span class="o">-</span><span class="n">analyzer</span>
+    \<span class="o">.</span><span class="n">ebextensions</span>      <span class="o">&lt;--</span> <span class="n">setup</span> <span class="n">files</span> <span class="k">for</span> <span class="n">executing</span> <span class="n">code</span> <span class="n">on</span> <span class="n">EC2</span> <span class="n">instances</span>
+    \<span class="o">.</span><span class="n">elasticbeanstalk</span>  <span class="o">&lt;--</span> <span class="n">config</span> <span class="n">files</span> <span class="k">for</span> <span class="n">setting</span> <span class="n">up</span> <span class="n">Elastic</span> <span class="n">Beanstalk</span> <span class="n">environment</span>
+    \<span class="n">application</span>        <span class="o">&lt;--</span> <span class="n">main</span> <span class="n">module</span>
+        \<span class="n">static</span>         <span class="o">&lt;--</span> <span class="n">folder</span> <span class="k">for</span> <span class="n">static</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">js</span><span class="p">,</span> <span class="n">css</span><span class="p">,</span> <span class="n">etc</span><span class="o">.</span><span class="p">)</span> <span class="n">files</span>
+        \<span class="n">templates</span>      <span class="o">&lt;--</span> <span class="n">contains</span> <span class="n">html</span> <span class="n">templates</span> <span class="k">for</span> <span class="n">pages</span>
+        <span class="n">__init</span><span class="o">.</span><span class="n">py__</span>     <span class="o">&lt;--</span> <span class="n">makes</span> <span class="n">this</span> <span class="n">folder</span> <span class="n">a</span> <span class="n">module</span>
+        <span class="n">fitModels</span><span class="o">.</span><span class="n">py</span>    <span class="o">&lt;--</span> <span class="n">python</span> <span class="n">functions</span> <span class="k">for</span> <span class="n">fitting</span> <span class="n">equivalent</span> <span class="n">circuit</span> <span class="ow">and</span> <span class="n">physics</span><span class="o">-</span><span class="n">based</span> <span class="n">models</span>
+        <span class="n">views</span><span class="o">.</span><span class="n">py</span>        <span class="o">&lt;--</span> <span class="n">responsible</span> <span class="k">for</span> <span class="n">routing</span> <span class="n">requests</span> <span class="n">to</span> <span class="n">different</span> <span class="n">pages</span>
+    \<span class="n">docs</span>               <span class="o">&lt;--</span> <span class="n">contains</span> <span class="n">files</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">this</span> <span class="n">documentation</span>
+    <span class="n">application</span><span class="o">.</span><span class="n">py</span>      <span class="o">&lt;--</span> <span class="o">.</span><span class="n">py</span> <span class="nb">file</span> <span class="k">for</span> <span class="n">starting</span> <span class="n">Flask</span> <span class="n">app</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">py</span>           <span class="o">&lt;--</span> <span class="n">config</span> <span class="nb">file</span> <span class="k">for</span> <span class="n">Flask</span> <span class="n">app</span>
+    <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>    <span class="o">&lt;--</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">python</span> <span class="n">packages</span> <span class="n">used</span> <span class="n">to</span> <span class="n">setup</span> <span class="n">environment</span>
+</pre></div>
+</div>
 <span class="target" id="module-application"></span><div class="section" id="application-package-for-flask">
 <h2>Application package for Flask<a class="headerlink" href="#application-package-for-flask" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="available-modules">
 <h3>Available modules<a class="headerlink" href="#available-modules" title="Permalink to this headline">¶</a></h3>
 <dl class="docutils">
 <dt>views</dt>
-<dd>handles the routing of requests</dd>
+<dd><ul class="first simple">
+<li>handles the routing of requests</li>
+</ul>
+<dl class="last docutils">
+<dt>/ and /index.html</dt>
+<dd><ul class="first last simple">
+<li>the main webpage</li>
+</ul>
+</dd>
+</dl>
+</dd>
 <dt>fitModels</dt>
-<dd>contains functions for the fitting of both equivalent circuit and physics-based model_runs-full</dd>
+<dd><ul class="first simple">
+<li>contains functions for the fitting of both equivalent circuit and physics-based model_runs-full</li>
+</ul>
+<p>fitP2d(data)</p>
+<p class="last">fitEquivalentCircuit(data, initial_guess)</p>
+</dd>
 </dl>
 </div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
 </div>
 </div>
 
