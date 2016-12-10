@@ -1,17 +1,16 @@
 """
-Application package for Flask
-=====
-
-Available modules
+Application package modules
 ----------
 
 views
+^^^^^
     - handles the routing of requests
 
     / and /index.html
         - the main webpage
 
 fitModels
+^^^^^^^^
     - contains functions for the fitting of both equivalent circuit and physics-based model_runs-full
 
     fitP2d(data)

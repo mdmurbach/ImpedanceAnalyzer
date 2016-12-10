@@ -216,7 +216,7 @@
             border-top-color: #0e0;
             border-right-color: #0dd;
             border-bottom-color: #f90;
-            animation: spinner .9s ease infinite;
+            animation: spinner 1.0s ease infinite;
         }
 
         .axis line, .axis path {
@@ -282,7 +282,7 @@
                         <p class="danger">Note: only Randles w/ CPE currently works</p>
                         <ul class="nav nav-tabs" role="tablist">
                             <!-- <li role="presentation" class="nav active"><a href="#randles" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles.png') }}" alt="" /></a></li> -->
-                            <li role="presentation" class="nav"><a href="#randles_cpe" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></a></li>
+                            <li role="presentation" class="nav active"><a href="#randles_cpe" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></a></li>
                             <li role="presentation" class="nav"><a href="#self_define" role="tab" data-toggle="tab" onclick="initializeEC();"><p style="text-align: center; font-weight: bold;">Define <br> custom <br> circuit</p></a></li>
                         </ul>
                         <div class="tab-content" id="ECtab">
@@ -389,7 +389,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                        <h4 class="modal-title" id="myModalLabel">Explore P2D fit</h4>
                     </div>
                     <div class="modal-body">
                         <div class="row">
@@ -400,7 +400,16 @@
                                 <div id="explore-nyquist"></div>
                             </div>
                         </div>
-                    <!-- <iframe src="mseviz" width="800" height="300" frameBorder="0" style="overflow: hidden"></iframe> -->
+                        <div class="table-responsive" id="table-div" style="height: 20vh; overflow-y: auto">
+                            <table class="table table-condensed" id="parameter-estimates">
+                                <tbody>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -487,14 +496,14 @@
                         <li role="presentation" class="nav active"><a href="#ec_param" aria-controls="EC parameters" role="tab" data-toggle="tab">EC</a></li>
                         {% endif %}
                         {% if p2d_parameters %}
-                        <li role="presentation" class="nav"><a href="#p2d_param" aria-controls="P2D parameters" role="tab" data-toggle="tab">P2D</a></li>
+                        <li role="presentation" class="nav {% if ec_parameters|length < 1 %} active {% endif %}"><a href="#p2d_param" aria-controls="P2D parameters" role="tab" data-toggle="tab">P2D</a></li>
                         {% endif %}
                     </ul>
                     <div class="tab-content">
                         {% if ec_parameters %}
                         <div class="tab-pane fade in active" id="ec_param">
                             <div class="table-responsive" id="table-div">
-                                <table class="table" id="parameter-estimates">
+                                <table class="table table-condensed" id="parameter-estimates">
                                     <tr>
                                         <th>
                                             Parameter
@@ -518,9 +527,9 @@
                         </div>
                         {% endif %}
                         {% if p2d_parameters %}
-                        <div class="tab-pane fade" id="p2d_param">
+                        <div class="tab-pane fade {% if ec_parameters|length < 1 %} in active {% endif %}" id="p2d_param">
                             <div class="table-responsive" id="table-div">
-                                <table class="table" id="parameter-estimates">
+                                <table class="table table-condensed" id="parameter-estimates">
                                     <tr>
                                         <th>
                                             Parameter
@@ -694,6 +703,7 @@
         <script type="text/javascript">
             var sorted_results = {{ p2d_residuals|tojson|safe }};
             var simulations = {{ p2d_simulations|tojson|safe }};
+            var p2d_names = {{ p2d_names|tojson|safe }}
 
             outerWidth = $(window).width();
             outerHeight = $(window).height()*.5;
@@ -793,6 +803,8 @@
 
             var residuals = g_res.selectAll("circle").data(sorted_results);
 
+            var last_p = p2d_names
+
             residuals.enter().append('circle');
             residuals
                 .attr("class", "default-circle")
@@ -802,6 +814,8 @@
                 .on("mouseover", function(d, i) {
                     impedance = simulations.find( function(data) { return data[0] == d[0]; });
                     scale = d[1];
+                    parameters = get_parameters(impedance)
+
                     plot_impedance(impedance, scale)
 
                     d3.select(this).style("fill", "red")
@@ -816,12 +830,57 @@
                         'Run: '+ d[0])
                         .style("left", width + "px")
                         .style("top", (height-20) + "px");
+
+                    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+                        .data(parameters)
+                        .enter()
+                        .append("tr")
+                        .attr("class", "dataRow")
+
+
+                    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+                        .data(parameters)
+                        .attr("class", "dataRow")
+                        .classed("warning", function(d, i) {
+                            return last_p[i].value != parameters[i].value;
+                        })
+
+                    d3.selectAll("#parameter-estimates tbody .dataRow")
+                       .selectAll("td")
+                       .data([0,1])
+                       .enter()
+                       .append("td")
+
+                   d3.selectAll("#parameter-estimates tbody .dataRow")
+                      .selectAll("td")
+                      .data(
+                          function(row) {
+                          return ["name", "value"].map(function(d) {
+                              return {value: row[d]};
+                          });
+                      })
+                      .html(function(d) { return d.value; });
+
+                      last_p = parameters
+
                     })
                     .on("mouseout", function(d) {
                         d3.select(this).transition().duration(150).style("fill", "#009688");
                     });
 
             initialize_impedance();
+
+            function get_parameters(data) {
+                parameters = []
+
+                p2d_names.forEach(function(d,i) {
+                    parameters[i] = {
+                        name: d,
+                        value: impedance[4].split(',')[i]
+                    }
+                })
+                return parameters
+            }
 
             function plot_impedance(data, scale) {
                 impedance = [];

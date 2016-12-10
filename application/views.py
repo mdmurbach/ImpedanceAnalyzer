@@ -6,13 +6,14 @@ import scipy
 import sys, os
 import pandas as pd
 import numpy as np
+import json
 
 # main webpage
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
 def index():
 
-    default_context = {'upload': False, 'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': ""}
+    default_context = {'upload': False, 'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': "", 'p2d_names': ""}
 
     #### if POST request triggered by form-data button ####
     if request.method == 'POST' and 'data' in request.files:
@@ -50,20 +51,44 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit, sorted_results = fitP2D(uploaded_data)
+                p2dFit, sorted_results  = fitP2D(uploaded_data)
+
+                Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
+                Z.index = range(len(Z))
+
+                Z = Z.loc[sorted_results['run'].map(int).values]
+                p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
+
+                p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
+                p2d_simulations['imag'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.imag(x))).values.tolist()), axis=1)
+                p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
+                p2d_simulations['run'] = Z.index
 
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+                P = parameters.loc[sorted_results['run'].map(int).values]
 
-                param_Series = parameters.loc[best_fit-1]
+                p2d_simulations['param'] =P.apply(lambda y: ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
+
+                p2d_simulations = p2d_simulations.values.tolist()
+
+                p2d_names = P.columns.values.tolist()
+
+                best_fit = sorted_results['run'].iloc[0]
+                param_Series = parameters.loc[best_fit]
+
+                p2d_residuals = sorted_results.values.tolist()
 
                 p2d_parameters = []
-                for parameter in range(len(param_Series)):
-                    p2d_parameters.append({'name': param_Series.index[parameter].split('[')[0], "value": param_Series.iloc[parameter], "sensitivity": "x"})
+                for i, parameter in enumerate(param_Series.index):
+                    p2d_parameters.append({'name': parameter.split('[')[0], "value": param_Series.iloc[i], "sensitivity": "x"})
             else:
                 p2d_parameters = ""
                 p2dFit = False
+                p2d_residuals = ""
+                p2d_simulations = ""
+                p2d_names = ""
 
-            context = {'upload': True, 'data': uploaded_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit}
+            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
 
             return render_template('index.html', **context)
 
@@ -94,7 +119,6 @@ def index():
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D(example_data)
 
-                parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
                 Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
                 Z.index = range(len(Z))
 
@@ -106,9 +130,14 @@ def index():
                 p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
                 p2d_simulations['run'] = Z.index
 
+                parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+                P = parameters.loc[sorted_results['run'].map(int).values]
+
+                p2d_simulations['param'] =P.apply(lambda y: ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
+
                 p2d_simulations = p2d_simulations.values.tolist()
 
-                # print(p2d_simulations, file=sys.stderr)
+                p2d_names = P.columns.values.tolist()
 
                 best_fit = sorted_results['run'].iloc[0]
                 param_Series = parameters.loc[best_fit]
@@ -123,8 +152,9 @@ def index():
                 p2dFit = False
                 p2d_residuals = ""
                 p2d_simulations = ""
+                p2d_names = ""
 
-            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations}
+            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
 
             return render_template('index.html', **context)
 
@@ -143,3 +173,10 @@ def to_array(input):
     col2 = [float(x) for x in input.split(',')[2:-1:3]]
 
     return zip(col0, col1,col2)
+
+def jsonify(names, values):
+    d = {}
+    for name, value in zip(names, values):
+        d[name] = value
+
+    return json.dumps(d)
