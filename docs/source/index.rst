@@ -11,15 +11,54 @@ Welcome to Impedance Analyzer's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-==========================
+    local setup
+
+Impedance Analyzer is an open-source tool for the analysis of electrochemical impedance spectroscopy (EIS) data.
+
+It is currently hosted here: http://35.163.98.131
+
+
+Local Setup
+------------------
+
+Recommended minimum environment:
+
+* `Python <https://www.python.org/>`_
+* `git <https://git-scm.com/>`_
+* `virtualenv <https://python-guide.readthedocs.io/en/latest/dev/virtualenvs/#virtualenv>`_
+
+The following assumes you have all of the above tools installed already.
+
+Windows
+^^^^^^^^
+
+1. Clone the project:
+::
+    > git clone https://github.com/mdmurbach/ImpedanceAnalyzer.git
+    > cd ImpedanceAnalyzer
+
+2. Create and initialize the virtual environment for the project:
+::
+    > virtualenv flask
+    > cd flask/Scripts
+    > activate
+    > cd ../..
+    > pip install -r requirements.txt
+
+3. Run the python flask server
+::
+    > python application.py
+
+4. Open http://localhost:5000
+
 Flask Application Structure
-==========================
+-------------------------------------------
 
 ImpedanceAnalyzer's structure is a Flask application with the structure shown below.
 
 .. code-block:: python
 
-    \impedance-analyzer
+    \ImpedanceAnalyzer
         \.ebextensions      <-- setup files for executing code on EC2 instances
         \.elasticbeanstalk  <-- config files for setting up Elastic Beanstalk environment
         \application        <-- main module
@@ -33,6 +72,7 @@ ImpedanceAnalyzer's structure is a Flask application with the structure shown be
         config.py           <-- config file for Flask app
         requirements.txt    <-- list of python packages used to setup environment
 
+At the heart of the flask application is the application module:
 
 .. automodule:: application
 
