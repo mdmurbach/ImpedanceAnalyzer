@@ -98,7 +98,7 @@ def fitP2D(data):
     sorted_results['residual'] = sorted_results['residual'].map(lambda x: x*100/(to_fit['mag'].mean()))
 
     best_fit =int(sorted_results['run'].iloc[0])
-    Z11_model = sorted_results['scale'].iloc[0]*Z.iloc[best_fit]
+    Z11_model = sorted_results['scale'].iloc[0]*Z.iloc[best_fit, mask]
 
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     return fit, sorted_results.iloc[0:100]
