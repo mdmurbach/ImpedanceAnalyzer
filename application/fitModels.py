@@ -103,6 +103,9 @@ def fitP2D(data):
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     return fit, sorted_results.iloc[0:100]
 
+def defineCircuit():
+    pass
+
 def fitEquivalentCircuit(data, p0):
     # print("fitting circuit")
 
