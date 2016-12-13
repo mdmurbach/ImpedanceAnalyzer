@@ -72,7 +72,23 @@ ImpedanceAnalyzer's structure is a Flask application with the structure shown be
         config.py           <-- config file for Flask app
         requirements.txt    <-- list of python packages used to setup environment
 
-At the heart of the flask application is the application module:
+Flask API Backend
+- main webpage: `POST` request to index.html
+    - request contains:
+        - 
+
+    - response contains:
+        - 'upload': False
+        - 'data': example_data
+        - 'ec_parameters': ec_parameters
+        - 'ecFit': ecFit
+        - 'p2d_parameters': p2d_parameters
+        - 'p2dFit': p2dFit
+        - 'p2d_residuals': p2d_residuals
+        - 'p2d_simulations': p2d_simulations
+        - 'p2d_names': p2d_names
+
+At the heart of ImpedanceAnalyzer is the application module:
 
 .. automodule:: application
 
