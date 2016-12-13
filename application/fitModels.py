@@ -1,3 +1,7 @@
+""" Provides functions for fitting equivalent circuit and physics-based models
+
+"""
+
 from __future__ import print_function
 import sys
 import cmath
@@ -8,6 +12,23 @@ from scipy.interpolate import interp1d
 
 def fitP2D(data):
     """ Fit physics-based model
+
+    Parameters
+    -----------------
+    data : list of tuples
+        list of tuples containing (frequency, real impedance, imaginary impedance)
+
+    Returns
+    ------------
+    fit : list of tuples
+        list of tuples (frequency, real impedance, imaginary impedance) containing the best fit
+
+    sorted_results : pandas DataFrame
+        sorted DataFrame with columns of ['run', 'scale', 'residual']
+
+    Notes
+    ---------
+
 
     """
 
@@ -103,8 +124,38 @@ def fitP2D(data):
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     return fit, sorted_results.iloc[0:100]
 
-def defineCircuit():
-    pass
+def calculateRsquared(ydata, ymodel):
+    """ Returns the coefficient of determination (:math:`R^2`)
+
+    Parameters
+    -----------------
+    ydata : numpy array
+        values of the experimental data
+    ymodel : numpy array
+        values of the fit model
+
+    Returns
+    ------------
+    r_squared : float
+        the coefficient of determination (:math:`R^2`)
+
+    Notes
+    ---------
+    :math:`R^2` is calculated as [1]_:
+
+    .. math::
+
+            R^2 = \\frac{\\text{Regression Sum of Squares}}{\\text{Total Sum of Squares}} =
+            \\frac{ \\sum_{i=1}^{N} (\hat{y}_i - \\bar{y})^2 }{ \\sum_{i=1}^{N} (y_i - \\bar{y})^2 }
+
+    where :math:`\hat{y}` is the model fit, :math:`y_i` is the experimental data, and :math:`\\bar{y}` is the mean of :math:`y`
+
+    .. [1] Casella, G. & Berger, R. L. Statistical inference. (Thomson Learning, 2002), pp. 556.
+
+    """
+    # SStot = (ydata - ydata.mean())**2).sum()
+    # SSres =
+    return 1 #- SSres/SStot
 
 def fitEquivalentCircuit(data, p0):
     # print("fitting circuit")

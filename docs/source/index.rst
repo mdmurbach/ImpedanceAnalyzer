@@ -11,8 +11,6 @@ Welcome to Impedance Analyzer's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-    local setup
-
 Impedance Analyzer is an open-source tool for the analysis of electrochemical impedance spectroscopy (EIS) data.
 
 It is currently hosted here: http://35.163.98.131
@@ -34,11 +32,13 @@ Windows
 
 1. Clone the project:
 ::
+
     > git clone https://github.com/mdmurbach/ImpedanceAnalyzer.git
     > cd ImpedanceAnalyzer
 
 2. Create and initialize the virtual environment for the project:
 ::
+
     > virtualenv flask
     > cd flask/Scripts
     > activate
@@ -47,6 +47,7 @@ Windows
 
 3. Run the python flask server
 ::
+
     > python application.py
 
 4. Open http://localhost:5000
@@ -74,10 +75,13 @@ ImpedanceAnalyzer's structure is a Flask application with the structure shown be
 
 Flask API Backend
 - main webpage: `POST` request to index.html
+
     - request contains:
-        - 
+
+        - a
 
     - response contains:
+
         - 'upload': False
         - 'data': example_data
         - 'ec_parameters': ec_parameters
@@ -88,9 +92,15 @@ Flask API Backend
         - 'p2d_simulations': p2d_simulations
         - 'p2d_names': p2d_names
 
-At the heart of ImpedanceAnalyzer is the application module:
+At the heart of ImpedanceAnalyzer is the application package:
 
 .. automodule:: application
+    :members:
+    :undoc-members:
+
+.. autofunction:: application.fitModels.fitP2D
+
+.. autofunction:: application.fitModels.calculateRsquared
 
 Indices and tables
 ==================
