@@ -420,17 +420,25 @@
                                             Parameter
                                         </th>
                                         <th>
+                                            Units
+                                        </th>
+                                        <th>
                                             Best Estimate
                                         </th>
                                         <th data-toggle="tooltip" title="The error is given as the estimated one-sigma standard deviation">
                                             Error
                                         </th>
+                                        <th>
+                                            % Error
+                                        </th>
                                     </tr>
                                     {% for parameter in ec_parameters %}
                                         <tr>
                                             <td><p>{{ parameter.name }}</p></td>
+                                            <td>{{ parameter.units }}</td>
                                             <td>{{ parameter.value }}</td>
                                             <td>{{ parameter.sensitivity }}</td>
+                                            <td>{{ parameter.percent_error }}</td>
                                         </tr>
                                     {% endfor %}
                                 </table>
@@ -515,6 +523,11 @@
                 .attr('value', $('#ECtab .tab-pane.active').attr('circuit'))
                 .appendTo('#fileinput');
 
+                $('<input />').attr('type', 'hidden')
+                .attr('name', "parameter_units")
+                .attr('value', $('#ECtab .tab-pane.active').attr('units'))
+                .appendTo('#fileinput');
+
                 $('#loadingDiv').show();
             }
 
@@ -562,15 +575,7 @@
         circuits = [
             {"name": "Randles Circuit",
             "id": "randles",
-            "image": "randles_cpe.png",
-            "parameters": ["R1", "R2"],
-            "values": ["0.01", "0.01"],
-            "units": ["Ohms", "Ohms"],
-            "circuit": "s(R1,R2)"
-            },
-            {"name": "Single Time Constant Circuit",
-            "id": "one_constant_warburg",
-            "image": "randles_cpe.png",
+            "image": "randles.png",
             "parameters": ["R0", "R1", "C1", "W1", "W2"],
             "values": ["0.01", "0.005", ".1", ".0001", ".001"],
             "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
@@ -578,7 +583,7 @@
             },
             {"name": "Two Time Constant Circuit",
             "id": "two_constant_warburg",
-            "image": "randles_cpe.png",
+            "image": "two_time_constants.png",
             "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
             "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", ".001"],
             "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
@@ -619,7 +624,7 @@
 
                 // append tab-content
                 $("#modal_EC div.modal-body #ECtab").append(
-                    "<div class='tab-pane' id='" + d.id + "' + circuit='" + d.circuit + "'>" +
+                    "<div class='tab-pane' id='" + d.id + "' circuit='" + d.circuit  + "' units='"+ d.units + "'>" +
                         "<form class='form-horizontal' id='defineECparam'>" +
                             groups +
                         "</form>" +

@@ -108,14 +108,20 @@ def index():
             if fit_equivalent_circuit:
                 p_results, p_error, ecFit = fitCircuit(example_data, circuit_string, p0)
 
+                parameter_units = request.values["parameter_units"].split(",")
+
+                print(parameter_units, file=sys.stderr)
+
                 ec_parameters = []
 
                 p_string = [p for p in circuit_string if p not in 'ps(),-/']
 
                 for i, (a, b) in enumerate(zip(p_string[::2], p_string[1::2])):
                     ec_parameters.append({"name": str(a+b),
+                                                        "units": parameter_units[i],
                                                         "value": format(p_results[i], '.4f'),
-                                                        "sensitivity": format(p_error[i], '.4f')})
+                                                        "sensitivity": format(p_error[i], '.4f'),
+                                                        "percent_error": format(100*p_error[i]/p_results[i], '.2f')})
 
             else:
                 ec_parameters = ""
