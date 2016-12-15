@@ -94,13 +94,9 @@ Flask API Backend
 
 At the heart of ImpedanceAnalyzer is the application package:
 
-.. automodule:: application
+.. automodule:: application.fitModels
     :members:
-    :undoc-members:
 
-.. autofunction:: application.fitModels.fitP2D
-
-.. autofunction:: application.fitModels.calculateRsquared
 
 Indices and tables
 ==================
