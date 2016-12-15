@@ -271,109 +271,20 @@
         </nav>
 
         <!-- Modal for defining Equivalent Circuit-->
-        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
+        <div class="modal fade" id="modal_EC" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" onclick="uncheckEC();" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="myModalLabel">Define your equivalent circuit</h4>
+                        <h4 class="modal-title">Define your equivalent circuit</h4>
                     </div>
                     <div class="modal-body">
                         <p class="danger">Note: only Randles w/ CPE currently works</p>
                         <ul class="nav nav-tabs" role="tablist">
-                            <!-- <li role="presentation" class="nav active"><a href="#randles" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles.png') }}" alt="" /></a></li> -->
-                            <li role="presentation" class="nav active"><a href="#randles_cpe" role="tab" data-toggle="tab" onclick="initializeEC();"><img src="{{ url_for('static', filename='images/randles_cpe.png') }}" alt="" /></a></li>
-                            <li role="presentation" class="nav"><a href="#self_define" role="tab" data-toggle="tab" onclick="initializeEC();"><p style="text-align: center; font-weight: bold;">Define <br> custom <br> circuit</p></a></li>
+                            <!-- Auto populated from circuits variable below -->
                         </ul>
                         <div class="tab-content" id="ECtab">
-                            <!-- <div class="tab-pane active" id="randles">
-                                <form class="form-horizontal" action="" id="defineECparam">
-                                    <div class="form-group">
-                                        <label for="R1" class="col-sm-2 control-label">R1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="R1" value="0.01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="R2" class="col-sm-2 control-label">R2</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="R2" value="0.01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="W1" class="col-sm-2 control-label">W1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="W1" value=".01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="W2" class="col-sm-2 control-label">W2</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="W2" value="10" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="C1" class="col-sm-2 control-label">C1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="C1" value="0.01" class="form-control" >
-                                                <div class="input-group-addon">F</div>
-                                            </div>
-                                    </div>
-                                </form>
-                            </div> -->
-                            <div class="tab-pane active" id="randles_cpe">
-                                <form class="form-horizontal" action="" id="defineECparam">
-                                    <div class="form-group">
-                                        <label for="R1" class="col-sm-2 control-label">R1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="R1" value="0.01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="R2" class="col-sm-2 control-label">R2</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="R2" value="0.01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="W1" class="col-sm-2 control-label">W1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="W1" value=".01" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="W2" class="col-sm-2 control-label">W2</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="W2" value="10" class="form-control">
-                                                <div class="input-group-addon">Ohms</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="C1" class="col-sm-2 control-label">C1</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="C1" value="0.01" class="form-control" >
-                                                <div class="input-group-addon">F</div>
-                                            </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="C2" class="col-sm-2 control-label">C2</label>
-                                            <div class="col-sm-8 input-group">
-                                                <input type="text" name="C2" value="0.8" class="form-control">
-                                                <div class="input-group-addon"></div>
-                                            </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="tab-pane" id="self_define">
-                                TODO:
-                            </div>
+                            <!-- Auto populated from circuits variable below-->
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -460,7 +371,7 @@
                                     <div class="checkbox">
                                         <label>
                                             <input type="checkbox" id="ecinput" name="fitting-ec" value="ec" onchange="ecdefine();"/>Equivalent Circuit
-                                            <button type="button" id="ecmodal" style="display: none;" data-toggle="modal" data-target="#myModal" onclick="initializeEC();"></button>
+                                            <button type="button" id="btn_ecmodal" style="display: none;" data-toggle="modal" data-target="#modal_EC" onclick="initializeEC();"></button>
                                         </label>
                                     </div>
                                     <div class="checkbox">
@@ -471,7 +382,7 @@
                                 </div>
                             </div>
                             <div class="col-md-1">
-                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" onclick="submitECparams()" value="Plot" id="plot" >
+                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" onclick="prepareSubmission()" value="Plot" id="plot_btn" >
                             </div>
                         </div>
                     </form>
@@ -585,50 +496,142 @@
         <!-- d3 -->
         <script src="https://d3js.org/d3.v3.min.js"></script>
 
-        <!-- submit form -->
+        <!-- Functions for loading impedance data and selecting options/inputs -->
         <script type="text/javascript">
-        function submitECparams() {
-            $('#loadingDiv').show();
+            function prepareSubmission() {
+                /* Prepare to submit form:
+                    1. appends parameter inputs from active equivalent circuit tab to the input form
+                    2. shows the loading spinner
+                */
+                var inputs = $('#ECtab .tab-pane.active #defineECparam :input');
+                inputs.each(function() {
+                    $(this).appendTo('#fileinput');
+                    $(this).hide();
 
-            var inputs = $('#ECtab .tab-pane.active #defineECparam :input');
-            inputs.each(function() {
-                $(this).appendTo('#fileinput');
-                $(this).hide();
-            });
+                });
 
-        }
-        </script>
+                $('<input />').attr('type', 'hidden')
+                .attr('name', "circuit_string")
+                .attr('value', $('#ECtab .tab-pane.active').attr('circuit'))
+                .appendTo('#fileinput');
 
-        <script type="text/javascript">
+                $('#loadingDiv').show();
+            }
+
             function initializeEC() {
+                /* Initialize the equivalent circuit inputs
+
+                MAY NOT BE NECESSARY
+                */
                 var inputs = $('#ECtab #defineECparam :input');
                 inputs.each(function() {
                     $(this).show();
                 });
             }
-        </script>
 
-        <script type="text/javascript">
             function uncheckEC() {
+                /* Unchecks the equivalent circuit selection box if modal is closed */
                 $('#ecinput').prop('checked', false);
+            }
+
+            function ecdefine() {
+                /* Opens the equivalent circuit modal when the checkbox is checked */
+                if($('#ecinput').is(':checked')) {
+                    document.getElementById('btn_ecmodal').click();
+                }
+            }
+
+            /* ensure plot button is disabled until file is selected */
+            $('#fileselect').on('change', function() {
+                $('#fileselectbutton').val($(this).val());
+                $('#plot_btn').prop('disabled', false);
+                $('#modelFieldset').removeProp('disabled');
+            });
+            $('#exampleselect').on('change', function() {
+                $('#plot_btn').prop('disabled', false);
+                $('#modelFieldset').removeProp('disabled');
+            });
+            window.reset = function (e) {
+                e.wrap('<form>').closest('form').get(0).reset();
+                e.unwrap();
             }
         </script>
 
-        <!-- file input button -->
         <script type="text/javascript">
-        $('#fileselect').on('change', function() {
-            $('#fileselectbutton').val($(this).val());
-            $('#plot').prop('disabled', false);
-            $('#modelFieldset').removeProp('disabled');
-        });
-        $('#exampleselect').on('change', function() {
-            $('#plot').prop('disabled', false);
-            $('#modelFieldset').removeProp('disabled');
-        });
-        window.reset = function (e) {
-            e.wrap('<form>').closest('form').get(0).reset();
-            e.unwrap();
-        }
+        /* create pre-populated equivalent circuit modal */
+        circuits = [
+            {"name": "Randles Circuit",
+            "id": "randles",
+            "image": "randles_cpe.png",
+            "parameters": ["R1", "R2"],
+            "values": ["0.01", "0.01"],
+            "units": ["Ohms", "Ohms"],
+            "circuit": "s(R1,R2)"
+            },
+            {"name": "Single Time Constant Circuit",
+            "id": "one_constant_warburg",
+            "image": "randles_cpe.png",
+            "parameters": ["R0", "R1", "C1", "W1", "W2"],
+            "values": ["0.01", "0.005", ".1", ".0001", ".001"],
+            "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
+            "circuit": "R0-p(R1,C1)-W1/W2"
+            },
+            {"name": "Two Time Constant Circuit",
+            "id": "two_constant_warburg",
+            "image": "randles_cpe.png",
+            "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
+            "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", ".001"],
+            "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
+            "circuit": "R0-p(R1,C1)-p(R2,C2)-W1/W2"
+            },
+            {"name": "Single Time Constant Circuit w/ CPE",
+            "id": "one_constant_warburg_cpe",
+            "image": "randles_cpe.png",
+            "parameters": ["R0", "R1", "E1", "E2", "W1", "W2"],
+            "values": ["0.01", "0.005", ".1", "1", ".0001", ".001"],
+            "units": ["Ohms", "Ohms", "F", "", "Ohms", "Sec"],
+            "circuit": "R0-p(R1,E1/E2)-W1/W2"
+            }];
+
+        circuits.forEach(function(d) {
+                // append tab
+                $("#modal_EC div.modal-body ul").append(
+                    "<li class='nav' role='presentation'>" +
+                        "<a role='tab' data-toggle='tab' onclick='initializeEC();' href='#" + d.id + "'>" +
+                            "<img src='impedance-application/static/images/" + d.image + "' alt='' />" +
+                        "</a>" +
+                    "</li>"
+                );
+
+                // create form groups for ECtabs
+                groups = ""
+
+                d.parameters.forEach(function(p, i) {
+                    groups = groups +
+                        "<div class='form-group'>" +
+                            "<label for='" + p + "' class='col-sm-2 control-label'>" + p + "</label>" +
+                            "<div class='col-sm-8 input-group'>" +
+                                "<input type='text' name='" + p + "' value='" + d.values[i] + "' class='form-control'>" +
+                                "<div class='input-group-addon'>" + d.units[i] + "</div>" +
+                            "</div>" +
+                        "</div>"
+                });
+
+                // append tab-content
+                $("#modal_EC div.modal-body #ECtab").append(
+                    "<div class='tab-pane' id='" + d.id + "' + circuit='" + d.circuit + "'>" +
+                        "<form class='form-horizontal' id='defineECparam'>" +
+                            groups +
+                        "</form>" +
+                    "</div>"
+                );
+
+            });
+
+            $("#modal_EC div.modal-body ul li:first").addClass('active')
+            $("#modal_EC div.modal-body #ECtab div.tab-pane:first").addClass('active')
+
+
         </script>
 
         <!-- bootstrap tooltips -->
@@ -642,15 +645,6 @@
         $(function () {
             $('[data-toggle="tooltip"]').tooltip({ placement: 'bottom'})
         })
-        </script>
-
-        <!-- define equivalent circuit -->
-        <script type="text/javascript">
-        function ecdefine() {
-            if($('#ecinput').is(':checked')) {
-                document.getElementById('ecmodal').click();
-            }
-        }
         </script>
 
         <!-- add svg button -->
