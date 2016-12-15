@@ -1,7 +1,7 @@
 from __future__ import print_function
 from application import application
 from flask import render_template, request
-from application.fitModels import fitEquivalentCircuit, fitP2D
+from application.fitModels import fitCircuit, fitP2D
 import scipy
 import sys, os
 import pandas as pd
@@ -22,11 +22,14 @@ def index():
         fit_p2d = 'fitting-p2d' in request.values
 
         if fit_equivalent_circuit:
-            param_string = [request.values['R1'], request.values['R2'],
-                                        request.values['W1'], request.values['W2'],
-                                        request.values['C1'], request.values['C2']]
+            circuit_string = request.values["circuit_string"]
 
-            p0 = [float(p) for p in param_string]
+            p_string = [p for p in circuit_string if p not in 'ps(),-/']
+
+            p0 = []
+
+            for a, b in zip(p_string[::2], p_string[1::2]):
+                p0.append(float(request.values[str(a + b)]))
 
         #### if POST request contains an uploaded file #####
         if request.files['data'].filename != "":
@@ -37,7 +40,7 @@ def index():
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, p_error, ecFit = fitEquivalentCircuit(uploaded_data, p0)
+                p_results, p_error, ecFit = fitCircuit(uploaded_data, circuit_string, p0)
 
                 ec_parameters = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
                                                 {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
@@ -103,14 +106,17 @@ def index():
 
             # check if equivalent circuit check box is checked
             if fit_equivalent_circuit:
-                p_results, p_error, ecFit = fitEquivalentCircuit(example_data, p0)
+                p_results, p_error, ecFit = fitCircuit(example_data, circuit_string, p0)
 
-                ec_parameters = [{"name": u"R1",  "value": format(p_results[0], '.4f'), "sensitivity": format(p_error[0], '.4f')},
-                                                {"name": u"R2", "value": format(p_results[1], '.4f'), "sensitivity": format(p_error[1], '.4f')},
-                                                {"name":u"W1", "value": format(p_results[2], '.4f'), "sensitivity": format(p_error[2], '.4f')},
-                                                {"name": u"W2",  "value": format(p_results[3], '.4f'), "sensitivity": format(p_error[3], '.4f')},
-                                                {"name": u"CPE1", "value": format(p_results[4], '.4f'), "sensitivity": format(p_error[4], '.4f')},
-                                                {"name":u"CPE2", "value": format(p_results[5], '.4f'), "sensitivity": format(p_error[5], '.4f')}]
+                ec_parameters = []
+
+                p_string = [p for p in circuit_string if p not in 'ps(),-/']
+
+                for i, (a, b) in enumerate(zip(p_string[::2], p_string[1::2])):
+                    ec_parameters.append({"name": str(a+b),
+                                                        "value": format(p_results[i], '.4f'),
+                                                        "sensitivity": format(p_error[i], '.4f')})
+
             else:
                 ec_parameters = ""
                 ecFit = False
