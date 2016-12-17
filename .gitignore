@@ -4,3 +4,5 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 docs/build/*
+
+*.pyc

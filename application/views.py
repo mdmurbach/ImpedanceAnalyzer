@@ -110,8 +110,6 @@ def index():
 
                 parameter_units = request.values["parameter_units"].split(",")
 
-                print(parameter_units, file=sys.stderr)
-
                 ec_parameters = []
 
                 p_string = [p for p in circuit_string if p not in 'ps(),-/']
@@ -131,10 +129,13 @@ def index():
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D(example_data)
 
+
                 Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
                 Z.index = range(len(Z))
 
-                Z = Z.loc[sorted_results['run'].map(int).values]
+                mask = [f for f, r, i in p2dFit]
+                
+                Z = Z.loc[sorted_results['run'].map(int).values, mask]
                 p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
 
                 p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
@@ -158,7 +159,8 @@ def index():
 
                 p2d_parameters = []
                 for i, parameter in enumerate(param_Series.index):
-                    p2d_parameters.append({'name': parameter.split('[')[0], "value": param_Series.iloc[i], "sensitivity": "x"})
+                    p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
+                                                            "value": param_Series.iloc[i], "sensitivity": "x"})
             else:
                 p2d_parameters = ""
                 p2dFit = False

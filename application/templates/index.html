@@ -296,7 +296,7 @@
 
         <!-- Explore Fit Modal -->
         <div class="modal fade" id="exploreFitModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-lg" role="document" style="width: 75%">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -316,6 +316,7 @@
                                 <tbody>
                                     <tr>
                                         <th>Parameter</th>
+                                        <th>Units</th>
                                         <th>Value</th>
                                     </tr>
                                 </tbody>
@@ -416,21 +417,11 @@
                             <div class="table-responsive" id="table-div">
                                 <table class="table table-condensed" id="parameter-estimates">
                                     <tr>
-                                        <th>
-                                            Parameter
-                                        </th>
-                                        <th>
-                                            Units
-                                        </th>
-                                        <th>
-                                            Best Estimate
-                                        </th>
-                                        <th data-toggle="tooltip" title="The error is given as the estimated one-sigma standard deviation">
-                                            Error
-                                        </th>
-                                        <th>
-                                            % Error
-                                        </th>
+                                        <th>Parameter</th>
+                                        <th>Units</th>
+                                        <th>Best Estimate</th>
+                                        <th data-toggle="tooltip" title="The error is given as the estimated one-sigma standard deviation">Error</th>
+                                        <th>% Error</th>
                                     </tr>
                                     {% for parameter in ec_parameters %}
                                         <tr>
@@ -450,19 +441,15 @@
                             <div class="table-responsive" id="table-div">
                                 <table class="table table-condensed" id="parameter-estimates">
                                     <tr>
-                                        <th>
-                                            Parameter
-                                        </th>
-                                        <th>
-                                            Best Estimate
-                                        </th>
-                                        <th>
-                                            Sensitivity
-                                        </th>
+                                        <th>Parameter</th>
+                                        <th>Unit</th>
+                                        <th>Best Estimate</th>
+                                        <th>Sensitivity</th>
                                     </tr>
                                     {% for parameter in p2d_parameters %}
                                         <tr>
                                             <td><p>{{ parameter.name }}</p></td>
+                                            <td><p>{{ parameter.units }}</p></td>
                                             <td>{{ parameter.value }}</td>
                                             <td>{{ parameter.sensitivity }}</td>
                                         </tr>
@@ -707,7 +694,6 @@
             outerWidth = $(window).width();
             outerHeight = $(window).height()*.5;
 
-            console.log(simulations);
             // console.log("height: " + outerHeight);
             // console.log("width: " + outerWidth);
 
@@ -840,13 +826,13 @@
                     d3.select("#parameter-estimates tbody").selectAll(".dataRow")
                         .data(parameters)
                         .attr("class", "dataRow")
-                        .classed("warning", function(d, i) {
+                        .classed("info", function(d, i) {
                             return last_p[i].value != parameters[i].value;
                         })
 
                     d3.selectAll("#parameter-estimates tbody .dataRow")
                        .selectAll("td")
-                       .data([0,1])
+                       .data([0,1,2])
                        .enter()
                        .append("td")
 
@@ -854,7 +840,7 @@
                       .selectAll("td")
                       .data(
                           function(row) {
-                          return ["name", "value"].map(function(d) {
+                          return ["name", "units", "value"].map(function(d) {
                               return {value: row[d]};
                           });
                       })
@@ -874,7 +860,8 @@
 
                 p2d_names.forEach(function(d,i) {
                     parameters[i] = {
-                        name: d,
+                        name: d.split("[")[0],
+                        units: d.split("[")[d.split("[").length-1].replace("]", ""),
                         value: impedance[4].split(',')[i]
                     }
                 })
