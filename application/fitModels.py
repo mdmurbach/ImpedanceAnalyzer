@@ -41,7 +41,7 @@ def fitP2D(data):
     exp_data.index = range(len(exp_data))
 
     # read in all of the simulation results
-    Z = pd.read_pickle('application/static/data/17190-Z.pkl')
+    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
 
     # find the frequencies that fall within the experimental data and create
     # the DataFrame, to_fit, to store interpolated experimental data for fitting
@@ -118,8 +118,227 @@ def fitP2D(data):
     sorted_results = results.sort_values(['residual'])
     sorted_results['residual'] = sorted_results['residual'].map(lambda x: x*100/(to_fit['mag'].mean()))
 
-    best_fit =int(sorted_results['run'].iloc[0])
+    best_fit = int(sorted_results['run'].iloc[0])
     Z11_model = sorted_results['scale'].iloc[0]*Z.iloc[best_fit, mask]
+
+    fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
+    return fit, sorted_results.iloc[0:100]
+
+def fitP2D_Rohmic(data):
+    """ Fit physics-based model using estimation of ohmic resistance
+
+    Parameters
+    -----------------
+    data : list of tuples
+        list of tuples containing (frequency, real impedance, imaginary impedance)
+
+    """
+
+    # take incoming list of tuples and create a dataframe
+    # sorted by descending frequency
+    exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
+    exp_data['mag'] = exp_data.apply(lambda x: np.sqrt(x[1]**2 + x[2]**2), axis=1)
+    exp_data['phase'] = exp_data.apply(lambda x: np.arctan2(x[2], x[1]), axis=1)
+    exp_data.sort_values(by='f', ascending=False, inplace=True)
+    exp_data.index = range(len(exp_data))
+
+    # read in all of the simulation results
+    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
+
+    # find the frequencies that fall within the experimental data and create
+    # the DataFrame, to_fit, to store interpolated experimental data for fitting
+    min_f, max_f = min(exp_data['f']), max(exp_data['f'])
+    freq_mask = sorted([f for f in Z.columns if min_f <= f <= max_f], reverse=True)
+
+    to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
+
+    parameters = pd.read_csv('application/static/data/model_runs-full.txt', nrows = len(Z))
+
+    def calc_hf(p):
+        kappaeff_sep = p['kappa_0[S/m]']*p['epsilon_sep[1]']**1.5
+        kappaeff_pos = p['kappa_0[S/m]']*p['epsilon_pos[1]']**1.5
+        kappaeff_neg = p['kappa_0[S/m]']*p['epsilon_neg[1]']**1.5
+
+        sigmaeff_pos = p['sigma_pos[S/m]']*(1-p['epsilon_pos[1]']-p['epsilon_f_pos[1]'])**1.5
+        sigmaeff_neg = p['sigma_neg[S/m]']*(1-p['epsilon_neg[1]']-p['epsilon_f_neg[1]'])**1.5
+
+
+        R_sep = p['l_sep[m]']/kappaeff_sep
+        R_pos = p['l_pos[m]']/(kappaeff_pos + sigmaeff_pos)
+        R_neg = p['l_pos[m]']/(kappaeff_neg + sigmaeff_neg)
+
+        R_ohmic = R_sep + R_pos + R_neg
+
+        return R_ohmic
+
+    predicted = parameters.apply(calc_hf, axis=1)
+
+    # if the frequency isn't already within 1% of the simulation frequencies,
+    # quadratically interpolate the nearest four points in the magnitude and phase
+    for frequency in to_fit.index:
+        exact = exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]
+        if not exact.empty:
+            to_fit.loc[frequency, 'mag'] = np.asscalar(exact['mag'])
+            to_fit.loc[frequency, 'ph'] = np.asscalar(exact['phase'])
+        else:
+            idx = np.argmin(np.abs(frequency - exp_data['f']))
+
+            x = exp_data['f'].iloc[idx-2:idx+3]
+            y_mag = exp_data['mag'].iloc[idx-2:idx+3]
+            y_phase = exp_data['phase'].iloc[idx-2:idx+3]
+
+            mag = interp1d(x, y_mag, kind='quadratic')
+            phase = interp1d(x, y_phase, kind='quadratic')
+
+            to_fit.loc[frequency, 'mag'] = mag(frequency)
+            to_fit.loc[frequency, 'ph'] = phase(frequency)
+
+    to_fit['real'] = to_fit.mag*(to_fit.ph.map(np.cos))
+    to_fit['imag'] = to_fit.mag*(to_fit.ph.map(np.sin))
+
+    crossover = exp_data[exp_data['imag'] > 0]
+
+    if crossover.index.tolist():
+        index = crossover.index.tolist()[-1]
+
+        x = exp_data['imag'].loc[index-2:index+3]
+        y = exp_data['real'].loc[index-2:index+3]
+
+        hf = interp1d(x,y, kind='quadratic')
+
+        Zreal_hf = np.asscalar(hf(0))
+
+        to_fit.drop(to_fit[to_fit['ph'] > 0].index, inplace=True)
+
+        to_fit = pd.concat([pd.DataFrame(data={'mag': Zreal_hf, 'ph': 0.0, 'real': Zreal_hf, 'imag': 0.0},
+                                index=[1e5], columns=to_fit.columns), to_fit])
+
+    hf_real = Z.loc[:,1e5].map(np.real)
+
+    scale = Zreal_hf/predicted
+    scale.index = range(1,len(scale)+1)
+
+    Z11_exp = np.array(to_fit.real.tolist()) + 1j*np.array(to_fit.imag.tolist())
+
+    mask = [i for i, f in enumerate(Z.columns) if f in to_fit.index]
+
+    results_array = np.ndarray(shape=(len(Z),3))
+
+    for run, impedance in enumerate(Z.iloc[:,mask].values):
+        scaled = impedance*scale.values[run]
+
+        residual = 1./len(scaled)*np.sqrt(sum((np.real(Z11_exp) - np.real(scaled))**2 + (np.imag(Z11_exp) - np.imag(scaled))**2))
+
+        results_array[run,0] = run
+        results_array[run,1] = scale.values[run]
+        results_array[run,2] = residual
+
+    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
+
+    sorted_results = results.sort_values(['residual'])
+    sorted_results['residual'] = sorted_results['residual'].map(lambda x: x*100/(to_fit['mag'].mean()))
+
+    best_fit_idx = int(sorted_results['run'].iloc[0])
+    Z11_model = sorted_results['scale'].iloc[0]*Z.iloc[best_fit_idx, Z.columns >= min(freq)]
+
+    fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
+    return fit, sorted_results.iloc[0:100]
+
+def fitP2D_matchHF(data):
+    """ Fit physics-based model by matching the hf intercept
+
+    Parameters
+    -----------------
+    data : list of tuples
+        list of tuples containing (frequency, real impedance, imaginary impedance)
+
+    """
+
+    # take incoming list of tuples and create a dataframe
+    # sorted by descending frequency
+    exp_data = pd.DataFrame(data, columns=['f', 'real', 'imag'])
+    exp_data['mag'] = exp_data.apply(lambda x: np.sqrt(x[1]**2 + x[2]**2), axis=1)
+    exp_data['phase'] = exp_data.apply(lambda x: np.arctan2(x[2], x[1]), axis=1)
+    exp_data.sort_values(by='f', ascending=False, inplace=True)
+    exp_data.index = range(len(exp_data))
+
+    # read in all of the simulation results
+    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
+
+    # find the frequencies that fall within the experimental data and create
+    # the DataFrame, to_fit, to store interpolated experimental data for fitting
+    min_f, max_f = min(exp_data['f']), max(exp_data['f'])
+    freq_mask = sorted([f for f in Z.columns if min_f <= f <= max_f], reverse=True)
+
+    to_fit = pd.DataFrame(index=freq_mask, columns=['mag', 'ph'])
+
+    # if the frequency isn't already within 1% of the simulation frequencies,
+    # quadratically interpolate the nearest four points in the magnitude and phase
+    for frequency in to_fit.index:
+        exact = exp_data[exp_data['f'].between(.99*frequency, 1.01*frequency)]
+        if not exact.empty:
+            to_fit.loc[frequency, 'mag'] = np.asscalar(exact['mag'])
+            to_fit.loc[frequency, 'ph'] = np.asscalar(exact['phase'])
+        else:
+            idx = np.argmin(np.abs(frequency - exp_data['f']))
+
+            x = exp_data['f'].iloc[idx-2:idx+3]
+            y_mag = exp_data['mag'].iloc[idx-2:idx+3]
+            y_phase = exp_data['phase'].iloc[idx-2:idx+3]
+
+            mag = interp1d(x, y_mag, kind='quadratic')
+            phase = interp1d(x, y_phase, kind='quadratic')
+
+            to_fit.loc[frequency, 'mag'] = mag(frequency)
+            to_fit.loc[frequency, 'ph'] = phase(frequency)
+
+    to_fit['real'] = to_fit.mag*(to_fit.ph.map(np.cos))
+    to_fit['imag'] = to_fit.mag*(to_fit.ph.map(np.sin))
+
+    crossover = exp_data[exp_data['imag'] > 0]
+
+    if crossover.index.tolist():
+        index = crossover.index.tolist()[-1]
+
+        x = exp_data['imag'].loc[index-2:index+3]
+        y = exp_data['real'].loc[index-2:index+3]
+
+        hf = interp1d(x,y, kind='quadratic')
+
+        Zreal_hf = np.asscalar(hf(0))
+
+        to_fit.drop(to_fit[to_fit['ph'] > 0].index, inplace=True)
+
+        to_fit = pd.concat([pd.DataFrame(data={'mag': Zreal_hf, 'ph': 0.0, 'real': Zreal_hf, 'imag': 0.0},
+                                index=[1e5], columns=to_fit.columns), to_fit])
+
+    hf_real = Z.loc[:,1e5].map(np.real)
+
+    scale = hf_real/Zreal_hf # m^2
+    scale.index = range(1,len(scale)+1)
+
+    Z11_exp = np.array(to_fit.real.tolist()) + 1j*np.array(to_fit.imag.tolist())
+
+    mask = [i for i, f in enumerate(Z.columns) if f in to_fit.index]
+
+    results_array = np.ndarray(shape=(len(Z),3))
+
+    for run, impedance in enumerate(Z.iloc[:,mask].values):
+        scaled = impedance/scale.values[run]
+
+        residual = 1./len(scaled)*np.sqrt(sum((np.real(Z11_exp) - np.real(scaled))**2 + (np.imag(Z11_exp) - np.imag(scaled))**2))
+
+        results_array[run,0] = run
+        results_array[run,1] = scale.values[run]
+        results_array[run,2] = residual
+
+    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
+
+    sorted_results = results.sort_values(['residual'])
+    sorted_results['residual'] = sorted_results['residual'].map(lambda x: x*100/(to_fit['mag'].mean()))
+
+    best_fit_idx = int(sorted_results['run'].iloc[0])
+    Z11_model = Z.iloc[best_fit_idx, Z.columns >= min(exp_data['f'])]/sorted_results['scale'].iloc[0]
 
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     return fit, sorted_results.iloc[0:100]

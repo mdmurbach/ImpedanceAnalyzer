@@ -1,7 +1,7 @@
 from __future__ import print_function
 from application import application
 from flask import render_template, request
-from application.fitModels import fitCircuit, fitP2D
+from application.fitModels import fitCircuit, fitP2D, fitP2D_Rohmic, fitP2D_matchHF
 import scipy
 import sys, os
 import pandas as pd
@@ -12,6 +12,15 @@ import json
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
 def index():
+    """ Impedance Analyzer Main Page
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
 
     default_context = {'upload': False, 'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': "", 'p2d_names': ""}
 
@@ -56,7 +65,7 @@ def index():
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D(uploaded_data)
 
-                Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
+                Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
                 Z.index = range(len(Z))
 
                 Z = Z.loc[sorted_results['run'].map(int).values]
@@ -127,15 +136,17 @@ def index():
 
             # check if p2d check box is checked
             if fit_p2d:
-                p2dFit, sorted_results  = fitP2D(example_data)
+                p2dFit, sorted_results  = fitP2D_matchHF(example_data)
 
 
-                Z = pd.read_pickle('./application/static/data/17190-Z.pkl')
+                Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
                 Z.index = range(len(Z))
 
                 mask = [f for f, r, i in p2dFit]
-                
-                Z = Z.loc[sorted_results['run'].map(int).values, mask]
+
+                freq = [f for f, r, i in example_data]
+
+                Z = Z.loc[sorted_results['run'].map(int).values, Z.columns >= min(freq)]
                 p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
 
                 p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
@@ -146,11 +157,13 @@ def index():
                 parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
                 P = parameters.loc[sorted_results['run'].map(int).values]
 
-                p2d_simulations['param'] =P.apply(lambda y: ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
+                p2d_simulations['param'] = P.apply(lambda y: str(sorted_results['scale'].loc[int(y['run'])]*1e4) + ',' + ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
 
                 p2d_simulations = p2d_simulations.values.tolist()
 
-                p2d_names = P.columns.values.tolist()
+                print(sorted_results, file=sys.stderr)
+
+                p2d_names = ['fit parameter[cm^2]'] + (P.columns.values.tolist())
 
                 best_fit = sorted_results['run'].iloc[0]
                 param_Series = parameters.loc[best_fit]
@@ -158,6 +171,9 @@ def index():
                 p2d_residuals = sorted_results.values.tolist()
 
                 p2d_parameters = []
+                p2d_parameters.append({"name": "fit parameter", "units": "cm^2",
+                                        "value": sorted_results['scale'].iloc[0]*1e4, "sensitivity": "x"})
+
                 for i, parameter in enumerate(param_Series.index):
                     p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
                                                             "value": param_Series.iloc[i], "sensitivity": "x"})
