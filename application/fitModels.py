@@ -474,7 +474,7 @@ def residuals(param, y, x):
 def valid(circuit_string, param):
     """ checks to see if parameters are all > 0 """
 
-    print(circuit_string, fil=sys.stderr)
+    print(circuit_string, file=sys.stderr)
 
     p_string = [p for p in circuit_string if p not in 'ps(),-/']
 
