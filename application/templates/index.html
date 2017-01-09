@@ -697,83 +697,88 @@
 
                 function plotModels(data) {
 
-                    var models = $('#modal-analysis div.modal-body #ECtab .tab-pane')
+                    var models = $('#modal-analysis div.modal-body #ECtab .tab-pane').toArray()
 
-                    models.each(function(i,d) {
+                    while(models.length > 0) {
+                        model = models.shift();
+                        makeRequest(model, data);
+                    }
+                };
 
-                        var formData = new FormData();
+                function makeRequest(model, data) {
+                    var formData = new FormData();
 
-                        var id = d.getAttribute('id')
-                        var name = d.getAttribute('name')
-                        var modelType = d.getAttribute('model-type')
+                    var id = model.getAttribute('id')
+                    var name = model.getAttribute('name')
+                    var modelType = model.getAttribute('model-type')
 
-                        var example = 'true'
-                        var filename = $('#exampleselect option:selected')[0].value
+                    var example = 'true'
+                    var filename = $('#exampleselect option:selected')[0].value
 
-                        console.log(id + modelType);
+                    console.log(id + modelType);
 
-                        if (modelType == "ec") {
+                    if (modelType == "ec") {
 
-                            var circuit = d.getAttribute('circuit')
-                            var units = d.getAttribute('units')
+                        var circuit = model.getAttribute('circuit')
+                        var units = model.getAttribute('units')
 
-                            var inputs = $('#modal-analysis div.modal-body #ECtab .tab-pane#' + id + " :input:not(:button)")
+                        var inputs = $('#modal-analysis div.modal-body #ECtab .tab-pane#' + id + " :input:not(:button)")
 
-                            // p0 = {}
-                            var p0 = []
+                        // p0 = {}
+                        var p0 = []
 
-                            inputs.each(function(i,p) {
-                                // p0[p.name] = p.value;
-                                p0[i] = p.value;
-                            })
+                        inputs.each(function(i,p) {
+                            // p0[p.name] = p.value;
+                            p0[i] = p.value;
+                        })
 
-                            formData.append('p0', p0.toString())
+                        formData.append('p0', p0.toString())
 
-                            formData.append('example', example)
-                            formData.append('filename', filename)
-                            formData.append('circuit', circuit)
+                        formData.append('example', example)
+                        formData.append('filename', filename)
+                        formData.append('circuit', circuit)
 
-                            $.ajax({
-                                url: $SCRIPT_ROOT + '/fitCircuit',
-                                type: "POST",
-                                data: formData,
-                                processData: false,
-                                contentType: false,
-                                cache: false,
-                                success: function(response) {
-                                    addData(response.ecFit, id, data);
-                                    createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
-                                },
-                                error: function(error) {
-                                    console.log(error);
-                                }
-                            });
-                        } else if (modelType == "pb") {
+                        $.ajax({
+                            url: $SCRIPT_ROOT + '/fitCircuit',
+                            type: "POST",
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            async: false,
+                            cache: false,
+                            success: function(response) {
+                                addData(response.ecFit, id, data);
+                                createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
+                            },
+                            error: function(error) {
+                                console.log(error);
+                            }
+                        });
+                    } else if (modelType == "pb") {
 
-                            formData.append('example', example)
-                            formData.append('filename', filename)
+                        formData.append('example', example)
+                        formData.append('filename', filename)
 
-                            $.ajax({
-                                url: $SCRIPT_ROOT + '/fitPhysics',
-                                type: "POST",
-                                data: formData,
-                                processData: false,
-                                contentType: false,
-                                cache: false,
-                                success: function(response) {
-                                    addData(response.pbFit, id, data);
-                                    createParameterTab(id, name, response.names, response.units, response.values, response.errors);
-                                    populateModule(response.results, response.simulations, response.names, data);
-                                    addP2dexploreButton();
-                                },
-                                error: function(error) {
-                                    console.log(error);
-                                }
-                            });
-                        }
-                    })
+                        $.ajax({
+                            url: $SCRIPT_ROOT + '/fitPhysics',
+                            type: "POST",
+                            data: formData,
+                            async: false,
+                            processData: false,
+                            contentType: false,
+                            cache: false,
+                            success: function(response) {
+                                addData(response.pbFit, id, data);
+                                createParameterTab(id, name, response.names, response.units, response.values, response.errors);
+                                populateModule(response.results, response.simulations, response.names, data);
+                                addP2dexploreButton();
+                            },
+                            error: function(error) {
+                                console.log(error);
+                            }
+                        });
+                    }
                 }
-
             }
 
             function uncheckEC() {
