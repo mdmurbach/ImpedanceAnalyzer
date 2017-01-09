@@ -125,9 +125,24 @@
         }
 
         .p2d-fit {
-          fill: none;
-          stroke: #000;
-          stroke-width: 2px;
+            fill: none;
+            stroke: #000;
+            stroke-width: 2px;
+        }
+
+        .randles-legend {
+            stroke: #FF5722;
+            font-family: monospace;
+        }
+
+        .two_constant_warburg-legend {
+            stroke: #03A9F4;
+            font-family: monospace;
+        }
+
+        .p2d-legend {
+            stroke: #000;
+            font-family: monospace;
         }
 
         .default-circle {
@@ -673,15 +688,13 @@
             }
 
             function submitAnalysis() {
-                /*
-
-                */
 
                 $('#grid-impedance div#bode').empty()
                 $('#grid-impedance div#nyquist').empty()
                 $('#grid-parameters ul').empty()
                 $("#grid-parameters div.tab-content").empty()
-
+                $('#explore-residuals').empty()
+                $('#explore-nyquist').empty()
 
                 var filename = $('#exampleselect option:selected')[0].value
 
@@ -747,7 +760,7 @@
                             async: false,
                             cache: false,
                             success: function(response) {
-                                addData(response.ecFit, id, data);
+                                addData(response.ecFit, id, name, data);
                                 createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
                             },
                             error: function(error) {
@@ -768,7 +781,7 @@
                             contentType: false,
                             cache: false,
                             success: function(response) {
-                                addData(response.pbFit, id, data);
+                                addData(response.pbFit, id, name, data);
                                 createParameterTab(id, name, response.names, response.units, response.values, response.errors);
                                 populateModule(response.results, response.simulations, response.names, data);
                                 addP2dexploreButton();
@@ -1151,7 +1164,7 @@
                     .call(nyquist);
 
         }
-            function addData(ec, id, data) {
+            function addData(ec, id, name, data) {
 
                 outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
                 outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
@@ -1192,6 +1205,7 @@
                     g_ph.append("path")
                       .datum(ec)
                       .attr("class", id + "-fit")
+                      .attr("name", name)
                       .attr("d", line_phase);
 
                 g_mag = d3.select('#bode svg#magnitude g')
@@ -1212,6 +1226,29 @@
               d3.select("#nyquist")
                   .datum(data)
                   .call(nyquist);
+
+            // add legend
+
+            var paths = []
+
+            $('#bode svg#phase path').not('.domain').each(function(i,d) {
+                paths[i] = {name: d.getAttribute('name'),
+                            id: d.getAttribute('class').split('-')[0]}
+            });
+
+            var legend = d3.select("#nyquist svg").selectAll("circle#legend")
+                            .data(paths);
+
+
+            legend.enter().append('text');
+
+            legend
+                .attr("id", "legend")
+                .attr('r', 5)
+                .attr('x', margin.left + 40)
+                .attr('y', function(d,i) {return 40 + 20*(i+1) + "px";})
+                .attr('class', function(d) {return d.id + '-legend';})
+                .text(function(d) {return d.name;});
 
             }
         </script>
