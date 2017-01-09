@@ -437,7 +437,7 @@ def fitEC(data, circuit, initial_guess):
                                             ftol=1E-13,  full_output=True)
 
     p_error = []
-    if covar != None:
+    if covar.any():
         s_sq = ((residuals(p_values, zrzi, freq)**2).sum())/(len(zrzi) - len(p_values))
         p_cov = covar * s_sq
         for i, __ in enumerate(covar):
@@ -473,8 +473,6 @@ def residuals(param, y, x):
 
 def valid(circuit_string, param):
     """ checks to see if parameters are all > 0 """
-
-    print(circuit_string, file=sys.stderr)
 
     p_string = [p for p in circuit_string if p not in 'ps(),-/']
 
