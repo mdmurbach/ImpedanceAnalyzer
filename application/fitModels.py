@@ -343,42 +343,40 @@ def fitP2D_matchHF(data):
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     return fit, sorted_results.iloc[0:100]
 
-def calculateRsquared(ydata, ymodel):
-    """ Returns the coefficient of determination (:math:`R^2`)
+def calculateChisquared(Zdata, Zmodel, sigma):
+    """ Returns the (:math:`\\chi^2`) goodness of fit statistic
 
     Parameters
     -----------------
-    ydata : numpy array
+    Zdata : numpy array
         values of the experimental data
-    ymodel : numpy array
+    Zmodel : numpy array
         values of the fit model
+    sigma : numpy array
+        standard deviation of measurement
 
     Returns
     ------------
-    r_squared : float
-        the coefficient of determination (:math:`R^2`)
+    chi_squared : float
+        goodness of fit statistic (:math:`\\chi^2`)
 
     Notes
     ---------
-    :math:`R^2` is calculated as [1]_:
+    :math:`\\chi^2` is calculated as [1]_:
 
     .. math::
 
-            R^2 = \\frac{\\text{Regression Sum of Squares}}{\\text{Total Sum of Squares}} =
-            \\frac{ \\sum_{i=1}^{N} (\hat{y}_i - \\bar{y})^2 }{ \\sum_{i=1}^{N} (y_i - \\bar{y})^2 }
+            \\chi^2 = \\sum_{i=1}^{N_{dat}} \\frac{ \left(Z_i - \\hat{Z}(x_i | P) \\right)^2 }{ \\sigma^2_i }
 
-    where :math:`\hat{y}` is the model fit, :math:`y_i` is the experimental data, and :math:`\\bar{y}` is the mean of :math:`y`
+    where :math:`\hat{Z}(x_i | P)` is the model fit, :math:`Z_i` is the experimental data, and :math:`\\sigma_i` is the standard deviation of measurement :math:`i`
 
-    .. [1] Casella, G. & Berger, R. L. Statistical inference. (Thomson Learning, 2002), pp. 556.
+    .. [1] Orazem, M. E. & Tribollet, B. Electrochemical impedance spectroscopy. (Wiley, 2008).
 
     """
-    ybar = ydata.mean()
-    SSreg = ((ymodel - ybar)**2).sum()
-    SStot = ((ydata - ybar)**2).sum()
-    return 1 - SSreg/SStot
+    return sum(((Zdata - Zmodel)**2)/sigma**2)
 
 
-def fitCircuit(data, circuit, initial_guess):
+def fitEC(data, circuit, initial_guess):
     """ Fits an equivalent circuit to data
 
     Parameters

@@ -112,9 +112,15 @@
             transform: scale(1.2);
         }
 
-        .ec-fit {
+        .randles-fit {
           fill: none;
           stroke: #FF5722;
+          stroke-width: 2px;
+        }
+
+        .two_constant_warburg-fit {
+          fill: none;
+          stroke: #03A9F4;
           stroke-width: 2px;
         }
 
@@ -241,6 +247,22 @@
             border-radius: 12px;
         }
 
+        div.checkbox {
+            padding-left: 5px;
+        }
+
+        .btn-next, .btn-save {
+            margin-right: 20px;
+        }
+
+        label.disabled {
+            color: #757575;
+        }
+
+        #grid-parameters ul {
+            font-size: .8em;
+        }
+
         </style>
 
     </head>
@@ -268,13 +290,13 @@
             </div>
         </nav>
 
-        <!-- Modal for defining Equivalent Circuit-->
-        <div class="modal fade" id="modal_EC" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
+        <!-- Modal for defining options based on selected analyses-->
+        <div class="modal fade" id="modal-analysis" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" onclick="uncheckEC();" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Define your equivalent circuit</h4>
+                        <h4 class="modal-title">Input options for model fits</h4>
                     </div>
                     <div class="modal-body">
                         <ul class="nav nav-tabs" role="tablist">
@@ -285,7 +307,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+
                     </div>
                 </div>
             </div>
@@ -337,22 +359,22 @@
                     </div>
                     <h5>an open-source tool for analyzing EIS data.</h5>
                 </div>
-                <div class="col-md-9"  id="grid-load">
+                <div class="col-md-9"  id="grid-load" style="overflow-y: visible">
                     <h4>Upload a file<i id="info-fileupload" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i> or choose an example</h3>
                     <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="{{ url_for('index') }}" id="fileinput">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="fileselectbutton"> Select File </label>
+                                    <label for="fileselectbutton"> Select a file to upload </label>
                                     <input style="display: none;" type="file" name="data" id="fileselect" />
                                     <input class="btn btn-browse form-control" type="button" value="Browse..." onclick="document.getElementById('fileselect').click();" id="fileselectbutton">
-                                    <button class="btn" onclick="reset($('#fileselect'))"><span aria-hidden="true">&times; remove file</span></button></input>
+                                    <button class="pull-right" onclick="reset($('#fileselect'))"><span aria-hidden="true">&times; remove file</span></button></input>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="exampleselect">
-                                        Select Example Dataset
+                                        Select an example dataset
                                     </label>
                                     <select class="form-control" name="example" id="exampleselect">
                                         <option value="null">Select a dataset</option>
@@ -363,24 +385,70 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Model(s) to fit: </label>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" id="ecinput" name="fitting-ec" value="ec" onchange="ecdefine();"/>Equivalent Circuit
-                                            <button type="button" id="btn_ecmodal" style="display: none;" data-toggle="modal" data-target="#modal_EC" onclick="initializeEC();"></button>
-                                        </label>
-                                    </div>
-                                    <div class="checkbox">
-                                        <label style="">
-                                            <input type="checkbox" name="fitting-p2d" value="p2d" id="p2d-checkbox" data-toggle="tooltip" />Pseudo 2-Dimensional
-                                        </label>
-                                    </div>
+                            <div class="col-md-4">
+                                <div class="dropdown form-group" id="dropdown-analysis">
+                                    <label for="dropdown-btn">
+                                        Select analysis to perform
+                                    </label>
+                                    <button class="btn btn-info form-control" id="dropdown-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Analysis
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdown-btn" style="padding: 10px">
+                                        <li>
+                                            <div class="form-group">
+                                                <label>Equivalent circuits</label>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="checkbox-randles" name="EC-randles" value=""/>Randles' circuit
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label style="">
+                                                        <input type="checkbox" name="EC-two_constant_warburg" value="" id="checkbox-twoConstantWarburg"/>Two time constant w/ Warburg
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="form-group">
+                                                <label>Physics-based models</label>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="checkbox-P2D" name="pb-p2d" value=""/>P2D battery model
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox disabled">
+                                                    <label class=disabled>
+                                                        <input disabled="disabled" type="checkbox" id="checkbox-add" name="" value=""/>Your model?
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="form-group">
+                                                <label>Validation</label>
+                                                <div class="checkbox disabled">
+                                                    <label class="disabled">
+                                                        <input disabled="disabled" type="checkbox" id="checkbox-add" name="" value=""/>Kramer-Kronig
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox disabled">
+                                                    <label class="disabled">
+                                                        <input disabled="disabled" type="checkbox" id="checkbox-add" name="" value=""/>Measurement Model
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
-                            <div class="col-md-1">
-                                <input class="btn btn-plot pull-right" disabled="disabled" type="submit" onclick="prepareSubmission()" value="Plot" id="plot_btn" >
+                            <div class="col-md-2">
+                                <div class="dropdown form-group">
+                                    <label for="plot_btn">
+                                    </label>
+                                    <input class="btn btn-plot pull-right form-control" disabled="disabled" type="" onclick="submitAnalysis()" value="Go" id="plot_btn" >
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -401,60 +469,11 @@
                 <div class="col-md-4" id="grid-parameters">
                     <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
                     <ul class="nav nav-tabs" role="tablist">
-                        {% if ec_parameters %}
-                        <li role="presentation" class="nav active"><a href="#ec_param" aria-controls="EC parameters" role="tab" data-toggle="tab">EC</a></li>
-                        {% endif %}
-                        {% if p2d_parameters %}
-                        <li role="presentation" class="nav {% if ec_parameters|length < 1 %} active {% endif %}"><a href="#p2d_param" aria-controls="P2D parameters" role="tab" data-toggle="tab">P2D</a></li>
-                        {% endif %}
+                        <!-- filled in after ajax request -->
                     </ul>
                     <div class="tab-content">
-                        {% if ec_parameters %}
-                        <div class="tab-pane fade in active" id="ec_param">
-                            <div class="table-responsive" id="table-div">
-                                <table class="table table-condensed" id="parameter-estimates">
-                                    <tr>
-                                        <th>Parameter</th>
-                                        <th>Units</th>
-                                        <th>Best Estimate</th>
-                                        <th data-toggle="tooltip" title="The error is given as the estimated one-sigma standard deviation">Error</th>
-                                        <th>% Error</th>
-                                    </tr>
-                                    {% for parameter in ec_parameters %}
-                                        <tr>
-                                            <td><p>{{ parameter.name }}</p></td>
-                                            <td>{{ parameter.units }}</td>
-                                            <td>{{ parameter.value }}</td>
-                                            <td>{{ parameter.sensitivity }}</td>
-                                            <td>{{ parameter.percent_error }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </table>
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if p2d_parameters %}
-                        <div class="tab-pane fade {% if ec_parameters|length < 1 %} in active {% endif %}" id="p2d_param">
-                            <div class="table-responsive" id="table-div">
-                                <table class="table table-condensed" id="parameter-estimates">
-                                    <tr>
-                                        <th>Parameter</th>
-                                        <th>Unit</th>
-                                        <th>Best Estimate</th>
-                                        <th>Sensitivity</th>
-                                    </tr>
-                                    {% for parameter in p2d_parameters %}
-                                        <tr>
-                                            <td><p>{{ parameter.name }}</p></td>
-                                            <td><p>{{ parameter.units }}</p></td>
-                                            <td>{{ parameter.value }}</td>
-                                            <td>{{ parameter.sensitivity }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </table>
-                            </div>
-                        </div>
-                        {% endif %}
+                        <!-- filled in dynamically -->
+                    </div>
                 </div>
             </div>
 
@@ -472,14 +491,14 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
         <script type="text/javascript">
-        var $loading = $('#loadingDiv').hide();
-        $(document)
-            .ajaxStart(function () {
-            $loading.show();
-            })
-            .ajaxStop(function () {
-                $loading.hide();
-            });
+        $('#loadingDiv').hide();
+        $(document).ajaxStart(function() {
+            $("#loadingDiv").show();
+        });
+
+        $(document).ajaxStop(function() {
+            $("#loadingDiv").hide();
+        });
         </script>
 
         <!-- Latest compiled and minified JavaScript -->
@@ -488,42 +507,273 @@
         <!-- d3 -->
         <script src="https://d3js.org/d3.v3.min.js"></script>
 
+        <script type=text/javascript>
+            $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        </script>
+
         <!-- Functions for loading impedance data and selecting options/inputs -->
         <script type="text/javascript">
-            function prepareSubmission() {
-                /* Prepare to submit form:
-                    1. appends parameter inputs from active equivalent circuit tab to the input form
-                    2. shows the loading spinner
-                */
-                var inputs = $('#ECtab .tab-pane.active #defineECparam :input');
-                inputs.each(function() {
-                    $(this).appendTo('#fileinput');
-                    $(this).hide();
+            $('.dropdown-toggle').dropdown()
+            $('.dropdown-menu').click(function(e) {
+                e.stopPropagation();
+            });
+            $('#dropdown-analysis').on('hidden.bs.dropdown', function() {
+                var selected = $('input[type="checkbox"]:checked');
+                // var names = "Plot";
+                // selected.each(function(i,d){
+                //     names += d.name;
+                // }
+                // )
+                // if (names != "") {
+                //     $('#dropdown-btn').text(names);
+                // } else {
+                //     $('#dropdown-btn').text("Select")
+                // }
 
-                });
+                optionsModal(selected);
+            });
 
-                $('<input />').attr('type', 'hidden')
-                .attr('name', "circuit_string")
-                .attr('value', $('#ECtab .tab-pane.active').attr('circuit'))
-                .appendTo('#fileinput');
-
-                $('<input />').attr('type', 'hidden')
-                .attr('name', "parameter_units")
-                .attr('value', $('#ECtab .tab-pane.active').attr('units'))
-                .appendTo('#fileinput');
-
-                $('#loadingDiv').show();
+            function optionsModal(selected) {
+                $("#modal-analysis div.modal-body ul").empty();
+                $("#modal-analysis div.modal-body #ECtab").empty();
+                loadModal(selected);
             }
 
-            function initializeEC() {
-                /* Initialize the equivalent circuit inputs
+            function loadModal(selected) {
+                var circuits =
+                    {"randles":
+                        {"name": "Randles Circuit",
+                        "id": "randles",
+                        "type": "ec",
+                        "image": "randles.png",
+                        "parameters": ["R0", "R1", "C1", "W1", "W2"],
+                        "values": ["0.01", "0.005", ".1", ".0001", ".001"],
+                        "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
+                        "circuit": "R0-p(R1,C1)-W1/W2"
+                    },
+                    "two_constant_warburg" :
+                        {"name": "Two Time Constant Circuit",
+                        "id": "two_constant_warburg",
+                        "type": "ec",
+                        "image": "two_time_constants.png",
+                        "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
+                        "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", ".001"],
+                        "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
+                        "circuit": "R0-p(R1,C1)-p(R2,C2)-W1/W2"
+                    }
+                };
 
-                MAY NOT BE NECESSARY
+                var physics =
+                    {"p2d":
+                        {"id": "p2d",
+                        "name": "P2D",
+                        "type": "pb",
+                        "image": "p2d.png"
+                        }
+                    };
+
+                if (selected.length > 0) {
+
+                    selected.each(function(i,d) {
+                        console.log(d.name);
+                        if (d.name.startsWith('EC')) {
+                            name = d.name.split('-')[1]
+                            console.log(name);
+                            circuit = circuits[name]
+                            // append tab
+                            $("#modal-analysis div.modal-body ul").append(
+                                "<li class='nav' role='presentation'>" +
+                                    "<a role='tab' data-toggle='tab' href='#" + circuit.id + "'>" +
+                                        "<img src='impedance-application/static/images/" + circuit.image + "' alt='' />" +
+                                    "</a>" +
+                                "</li>"
+                            );
+
+                            // create form groups for ECtabs
+                            groups = ""
+
+                            circuit.parameters.forEach(function(p, i) {
+                                groups = groups +
+                                    "<div class='form-group'>" +
+                                        "<label for='" + p + "' class='col-sm-2 control-label'>" + p + "</label>" +
+                                        "<div class='col-sm-8 input-group'>" +
+                                            "<input type='text' name='" + p + "' value='" + circuit.values[i] + "' class='form-control'>" +
+                                            "<div class='input-group-addon'>" + circuit.units[i] + "</div>" +
+                                        "</div>" +
+                                    "</div>"
+                            });
+
+                            // append tab-content
+                            $("#modal-analysis div.modal-body #ECtab").append(
+                                "<div class='tab-pane' id='" + circuit.id +
+                                                "' name= '" + circuit.name +
+                                                "' circuit='" + circuit.circuit  +
+                                                "' units='"+ circuit.units +
+                                                "' model-type='" + circuit.type + "'>" +
+                                    "<h5>Initial Guesses</h5>" +
+                                    "<form class='form-horizontal' id='defineECparam'>" +
+                                        groups +
+                                        "<div class='form-group'>" +
+                                            "<button type='button' class='btn btn-primary btn-next pull-right'>Next</button>" +
+                                        "</div>" +
+                                    "</form>" +
+                                "</div>"
+                            );
+                        }
+
+                        if (d.name.startsWith('pb')) {
+                            name = d.name.split('-')[1]
+                            console.log(name);
+                            model = physics[name]
+
+                            // append tab
+                            $("#modal-analysis div.modal-body ul").append(
+                                "<li class='nav' role='presentation'>" +
+                                    "<a role='tab' data-toggle='tab' href='#" + model.id + "'>" +
+                                        "<img src='impedance-application/static/images/" + model.image + "' alt='' />" +
+                                    "</a>" +
+                                "</li>"
+                            );
+
+                            // create form groups for ECtabs
+                            groups = "test"
+
+                            // append tab-content
+                            $("#modal-analysis div.modal-body #ECtab").append(
+                                "<div class='tab-pane' id='" + model.id +
+                                                    "' name= '" + model.name +
+                                                    "' model-type='" + model.type + "'>" +
+                                    "<form class='form-horizontal' id='defineECparam'>" +
+                                        groups +
+                                        "<div class='form-group'>" +
+                                            "<button type='button' class='btn btn-primary btn-next pull-right'>Next</button>" +
+                                        "</div>" +
+                                    "</form>" +
+                                "</div>"
+                            );
+                        }
+
+                    });
+
+                    $("#modal-analysis div.modal-body .tab-pane:last .btn-next")
+                        .removeClass('btn-next')
+                        .addClass('btn-save')
+                        .attr('data-dismiss', 'modal')
+                        .text('Finished');
+
+                    $('.btn-next').click(function(){
+                        $('.nav-tabs > .active').next('li').find('a').trigger('click');
+                    });
+
+                    $("#modal-analysis div.modal-body ul li:first").addClass('active')
+                    $("#modal-analysis div.modal-body #ECtab div.tab-pane:first").addClass('active')
+
+                    $('#modal-analysis').modal('show')
+                }
+            }
+
+            function submitAnalysis() {
+                /*
+
                 */
-                var inputs = $('#ECtab #defineECparam :input');
-                inputs.each(function() {
-                    $(this).show();
-                });
+
+                $('#grid-impedance div#bode').empty()
+                $('#grid-impedance div#nyquist').empty()
+                $('#grid-parameters ul').empty()
+                $("#grid-parameters div.tab-content").empty()
+
+
+                var filename = $('#exampleselect option:selected')[0].value
+
+                $.getJSON($SCRIPT_ROOT + '/getData', {
+                        data_type: "example",
+                        filename: filename
+                    },function(response) {
+                        console.log(response.data);
+                        initializeCharts(response.data);
+                        plotModels(response.data);
+                    }
+                );
+
+                function plotModels(data) {
+
+                    var models = $('#modal-analysis div.modal-body #ECtab .tab-pane')
+
+                    models.each(function(i,d) {
+
+                        var formData = new FormData();
+
+                        var id = d.getAttribute('id')
+                        var name = d.getAttribute('name')
+                        var modelType = d.getAttribute('model-type')
+
+                        var example = 'true'
+                        var filename = $('#exampleselect option:selected')[0].value
+
+                        console.log(id + modelType);
+
+                        if (modelType == "ec") {
+
+                            var circuit = d.getAttribute('circuit')
+                            var units = d.getAttribute('units')
+
+                            var inputs = $('#modal-analysis div.modal-body #ECtab .tab-pane#' + id + " :input:not(:button)")
+
+                            // p0 = {}
+                            var p0 = []
+
+                            inputs.each(function(i,p) {
+                                // p0[p.name] = p.value;
+                                p0[i] = p.value;
+                            })
+
+                            formData.append('p0', p0.toString())
+
+                            formData.append('example', example)
+                            formData.append('filename', filename)
+                            formData.append('circuit', circuit)
+
+                            $.ajax({
+                                url: $SCRIPT_ROOT + '/fitCircuit',
+                                type: "POST",
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                cache: false,
+                                success: function(response) {
+                                    addData(response.ecFit, id, data);
+                                    createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
+                                },
+                                error: function(error) {
+                                    console.log(error);
+                                }
+                            });
+                        } else if (modelType == "pb") {
+
+                            formData.append('example', example)
+                            formData.append('filename', filename)
+
+                            $.ajax({
+                                url: $SCRIPT_ROOT + '/fitPhysics',
+                                type: "POST",
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                cache: false,
+                                success: function(response) {
+                                    addData(response.pbFit, id, data);
+                                    createParameterTab(id, name, response.names, response.units, response.values, response.errors);
+                                    populateModule(response.results, response.simulations, response.names, data);
+                                    addP2dexploreButton();
+                                },
+                                error: function(error) {
+                                    console.log(error);
+                                }
+                            });
+                        }
+                    })
+                }
+
             }
 
             function uncheckEC() {
@@ -554,75 +804,6 @@
             }
         </script>
 
-        <script type="text/javascript">
-        /* create pre-populated equivalent circuit modal */
-        circuits = [
-            {"name": "Randles Circuit",
-            "id": "randles",
-            "image": "randles.png",
-            "parameters": ["R0", "R1", "C1", "W1", "W2"],
-            "values": ["0.01", "0.005", ".1", ".0001", ".001"],
-            "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
-            "circuit": "R0-p(R1,C1)-W1/W2"
-            },
-            {"name": "Two Time Constant Circuit",
-            "id": "two_constant_warburg",
-            "image": "two_time_constants.png",
-            "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
-            "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", ".001"],
-            "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
-            "circuit": "R0-p(R1,C1)-p(R2,C2)-W1/W2"
-            },
-            {"name": "Single Time Constant Circuit w/ CPE",
-            "id": "one_constant_warburg_cpe",
-            "image": "randles_cpe.png",
-            "parameters": ["R0", "R1", "E1", "E2", "W1", "W2"],
-            "values": ["0.01", "0.005", ".1", "1", ".0001", ".001"],
-            "units": ["Ohms", "Ohms", "F", "", "Ohms", "Sec"],
-            "circuit": "R0-p(R1,E1/E2)-W1/W2"
-            }];
-
-        circuits.forEach(function(d) {
-                // append tab
-                $("#modal_EC div.modal-body ul").append(
-                    "<li class='nav' role='presentation'>" +
-                        "<a role='tab' data-toggle='tab' onclick='initializeEC();' href='#" + d.id + "'>" +
-                            "<img src='impedance-application/static/images/" + d.image + "' alt='' />" +
-                        "</a>" +
-                    "</li>"
-                );
-
-                // create form groups for ECtabs
-                groups = ""
-
-                d.parameters.forEach(function(p, i) {
-                    groups = groups +
-                        "<div class='form-group'>" +
-                            "<label for='" + p + "' class='col-sm-2 control-label'>" + p + "</label>" +
-                            "<div class='col-sm-8 input-group'>" +
-                                "<input type='text' name='" + p + "' value='" + d.values[i] + "' class='form-control'>" +
-                                "<div class='input-group-addon'>" + d.units[i] + "</div>" +
-                            "</div>" +
-                        "</div>"
-                });
-
-                // append tab-content
-                $("#modal_EC div.modal-body #ECtab").append(
-                    "<div class='tab-pane' id='" + d.id + "' circuit='" + d.circuit  + "' units='"+ d.units + "'>" +
-                        "<form class='form-horizontal' id='defineECparam'>" +
-                            groups +
-                        "</form>" +
-                    "</div>"
-                );
-
-            });
-
-            $("#modal_EC div.modal-body ul li:first").addClass('active')
-            $("#modal_EC div.modal-body #ECtab div.tab-pane:first").addClass('active')
-
-
-        </script>
-
         <!-- bootstrap tooltips -->
         <!-- TODO: Add tooltip help here -->
         <script type="text/javascript">
@@ -643,19 +824,320 @@
         <script type="text/javascript" src="{{ url_for('static', filename='nyquist-models.js') }}"> </script>
 
         <script type="text/javascript">
-            var data = {{ data|tojson|safe }}; // 1 x N frequencys Array of 1 x 3 arrays (real, imag, freq)
-            if (data == 0) {
-                d3.select('#nyquist')
-            	.append('div')
-            	.text('<-- Upload a file')
-            } else {
-                var ecmodel = {{ ecFit|tojson|safe }};
-                var p2dmodel = {{ p2dFit|tojson|safe }};
+            function addP2dexploreButton() {
+                var svg = d3.select("#nyquist svg")
 
                 outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
                 outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
-                var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: ecmodel, p2d: p2dmodel})
+                var g = svg.append('g')
+                    .attr('class', 'button')
+                    .attr('transform', 'translate(' + outerWidth*.75 + ',' + outerHeight*.1 + ')')
+
+                var text = g.append('text')
+                    .text('Explore P2D Fit')
+
+                button()
+                    .container(g)
+                    .text(text)
+                    .count(0)
+                    .cb(function() { $('#exploreFitModal').modal('show') })();
+            }
+        </script>
+
+        <script type="text/javascript">
+            function createParameterTab(id, name, parameters, units, values, errors) {
+
+                $("#grid-parameters ul").append(
+                    "<li class='nav' role='presentation'>" +
+                        "<a role='tab' data-toggle='tab' href='#" + "parameters-" + id + "'>" + name +
+                        "</a>" +
+                    "</li>"
+                );
+
+                var rows = ""
+
+                parameters.forEach(function(p, i) {
+                    rows = rows +
+                        "<tr>" +
+                            "<td>" + p.split('[')[0] + "</td>" +
+                            "<td>" + units[i] + "</td>" +
+                            "<td>" + Math.round(values[i]*10000)/10000.0 + "</td>" +
+                            "<td>" + Math.round(errors[i]*10000)/10000.0 + "</td>" +
+                            "<td>" + Math.round(errors[i]/values[i]*10000)/100.0  + "</td>"
+                        "</tr>"
+                });
+
+                // append tab-content
+                $("#grid-parameters div.tab-content").append(
+                    "<div class='tab-pane' id='" + "parameters-" + id + "'>" +
+                        "<div class='table-responsive' id='table-div'>"+
+                            "<table class='table table-condensed' id='parameter-estimates'>" +
+                                "<tr>" +
+                                    "<th>Parameter</th>" +
+                                    "<th>Units</th>" +
+                                    "<th>Best Estimate</th>" +
+                                    "<th data-toggle='tooltip' title='The error is given as the estimated one-sigma standard deviation'>Error</th>" +
+                                    "<th>% Error</th>" +
+                                "</tr>" +
+                                rows +
+                            "</table>" +
+                        "</div>" +
+                    "</div>"
+                );
+
+                $("#grid-parameters ul li:first").addClass('active')
+                $("#grid-parameters div.tab-content div.tab-pane:first").addClass('active')
+
+            }
+        </script>
+        <script type="text/javascript">
+
+        function phase(real, imag) {
+            return Math.atan2(imag,real)*180/Math.PI;
+        }
+
+        function mag(real, imag) {
+            return Math.sqrt(Math.pow(imag, 2) + Math.pow(real, 2));
+        }
+
+        function initializeCharts(data) {
+            outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
+            outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
+
+            var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
+            var width = outerWidth - margin.left - margin.right;
+            var height = outerHeight/2 - margin.top - margin.bottom;
+
+            var xScale_ph = d3.scale.log();
+            var yScale_ph = d3.scale.linear();
+
+            var xScale_mag = d3.scale.log();
+            var yScale_mag = d3.scale.log();
+
+            var xAxis_ph = d3.svg.axis()
+                .scale(xScale_ph)
+                .ticks(5)
+                .orient('bottom');
+
+            var yAxis_ph = d3.svg.axis()
+                .scale(yScale_ph)
+                .ticks(5)
+                .orient('left');
+
+            var xAxis_mag = d3.svg.axis()
+                .scale(xScale_mag)
+                .ticks(5)
+                .orient('bottom');
+
+            var yAxis_mag = d3.svg.axis()
+                .scale(yScale_mag)
+                .ticks(5)
+                .orient('left');
+
+            xScale_ph
+                .range([0, width])
+                .domain(d3.extent(data, function(d, i) { return d[0]} ));
+
+            yScale_ph
+                .range([height, 0])
+                .domain([0, d3.min(data, function(d, i) { return phase(d[1], d[2])} )]);
+
+            xScale_mag
+                .range([0, width])
+                .domain(d3.extent(data, function(d, i) { return d[0]} ));
+
+            yScale_mag
+                .range([height, 0])
+                .domain(d3.extent(data, function(d, i) { return mag(d[1], d[2])} ))
+                .nice();
+
+            // Select the svg element, if it exists.
+            var svg_ph = d3.select('#bode').append("svg").attr("id", "phase")
+            var svg_mag = d3.select('#bode').append("svg").attr("id", "magnitude")
+
+
+            var plot_ph = svg_ph.append("g");
+            var plot_mag = svg_mag.append("g");
+
+            plot_ph.append("g").attr("class", "x axis");
+            plot_ph.append("g").attr("class", "y axis");
+
+            plot_mag.append("g").attr("class", "x axis");
+            plot_mag.append("g").attr("class", "y axis");
+
+            // Update the outer dimensions.
+            svg_ph
+                .attr("width", outerWidth)
+                .attr("height", outerHeight/2);
+
+            svg_mag
+                .attr("width", outerWidth)
+                .attr("height", outerHeight/2);
+
+            var g_ph = svg_ph.select("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var g_mag = svg_mag.select("g")
+                .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
+
+            var tooltip_ph = g_ph.append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            var tooltip_mag = g_mag.append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            g_ph.select(".x.axis")
+                .attr('transform', 'translate(0,' + height + ')')
+                .call(xAxis_ph)
+
+            g_ph.select(".y.axis")
+                .attr('transform', 'translate(0,' + 0 + ')')
+                .call(yAxis_ph)
+
+            g_mag.select(".x.axis")
+                .attr('transform', 'translate(0,' + height + ')')
+                .call(xAxis_mag)
+
+            g_mag.select(".y.axis")
+                .attr('transform', 'translate(0,' + 0 + ')')
+                .call(yAxis_mag)
+
+            g_ph.append("text")
+                .attr("class", "label")
+                .attr("transform", "translate(" + (width/2) + " ," +
+                                                (height + margin.bottom - 10) + ")")
+                .style("text-anchor", "middle")
+                .text("Frequency [Hz]");
+
+            g_ph.append("text")
+                .attr("class", "label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left - 1)
+                .attr("x",0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("-Phase [deg]");
+
+            g_mag.append("text")
+                .attr("class", "label")
+                .attr("transform", "translate(" + (width/2) + " ," +
+                                                (height + margin.bottom - 10) + ")")
+                .style("text-anchor", "middle")
+                .text("Frequency [Hz]");
+
+            g_mag.append("text")
+                .attr("class", "label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left - 1)
+                .attr("x",0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Magnitude [Ohms]");
+
+            var phases = g_ph.selectAll("circle").data(data);
+
+            phases.enter().append('circle');
+            phases
+                .attr("class", "default-circle")
+                .attr("cx", function (d) { return xScale_ph( d[0] ); } )
+                .attr("cy", function (d) { return yScale_ph( phase(d[1], d[2]) ); } )
+                .attr("r", 5)
+                .on("mouseover", function(d,i) {
+                    d3.select(this)
+                        .classed("selected-circle", true)
+                        .attr("r", 10);
+
+                    g_mag.selectAll("circle")
+                        .data(data)
+                        .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                        .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    d3.select("#nyquist").selectAll("circle")
+                        .data(data)
+                        .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                        .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    tooltip_ph.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+
+                    tooltip_ph.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                                        'Phase: ' + Math.round(phase(d[1], d[2])*1000)/1000)
+                                        .style("left", 30 + "px")
+                                        .style("top", 30 + "px");
+
+                })
+                .on("mouseout", function(d,i) {
+                    d3.select(this)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+
+                    g_mag.selectAll("circle")
+                        .data(data)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+
+                    d3.select("#nyquist").selectAll("circle")
+                        .data(data)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+                });
+
+            var mags = g_mag.selectAll("circle").data(data);
+
+            mags.enter().append('circle');
+            mags
+                .attr("class", "default-circle")
+                .attr("cx", function (d) { return xScale_mag( d[0] ); } )
+                .attr("cy", function (d) { return yScale_mag( mag(d[1], d[2]) );  } )
+                .attr("r", 5)
+                .on("mouseover", function(d,i) {
+                    d3.select(this)
+                        .classed("selected-circle", true)
+                        .attr("r", 10);
+
+                    // console.log(phases);
+                    g_ph.selectAll("circle")
+                        .data(data)
+                        .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                        .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    d3.select("#nyquist").selectAll("circle")
+                        .data(data)
+                        .classed("selected-circle", function(d2, i2) {return i2 == i; })
+                        .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+
+                    // tooltip.transition()
+                    //     .duration(200)
+                    //     .style("opacity", .9);
+                    //
+                    // tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
+                    //                     'Mag: ' + Math.round(mag(d[1], d[2])*1000)/1000)
+                    //                     .style("left", (outerWidth - 30) + "px")
+                    //                     .style("top", outerHeight*3/4 + "px");
+
+                })
+                .on("mouseout", function(d,i) {
+                    d3.select(this)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+
+                    g_ph.selectAll("circle")
+                        .data(data)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+
+                    d3.select("#nyquist").selectAll("circle")
+                        .data(data)
+                        .attr("class", "default-circle")
+                        .attr("r", 5);
+
+                });
+
+                var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: "", p2d: "", ecid: ""})
                     .x(function(d) { return d[1] })
                     .y(function(d) { return -d[2] });
 
@@ -663,367 +1145,21 @@
                     .datum(data)
                     .call(nyquist);
 
-                if (p2dmodel) {
-                    var svg = d3.select("#nyquist svg")
-
-                    var g = svg.append('g')
-                        .attr('class', 'button')
-                        .attr('transform', 'translate(' + outerWidth*.75 + ',' + outerHeight*.1 + ')')
-
-                    var text = g.append('text')
-                        .text('Explore P2D Fit')
-
-                    button()
-                        .container(g)
-                        .text(text)
-                        .count(0)
-                        .cb(function() { $('#exploreFitModal').modal('show') })();
-                }
-
-            }
-        </script>
-
-        <script type="text/javascript">
-            var sorted_results = {{ p2d_residuals|tojson|safe }};
-            var simulations = {{ p2d_simulations|tojson|safe }};
-            var p2d_names = {{ p2d_names|tojson|safe }}
-
-            outerWidth = $(window).width();
-            outerHeight = $(window).height()*.5;
-
-            // console.log("height: " + outerHeight);
-            // console.log("width: " + outerWidth);
-
-            var svg_res = d3.select('#explore-residuals').append("svg")
-            var svg_nyq = d3.select('#explore-nyquist').append("svg")
-
-            var margin = {top: 10, right: 10, bottom: 60, left: 60};
-            var width = outerWidth/3 - margin.left - margin.right;
-            var height = outerHeight - margin.top - margin.bottom;
-
-            var xScale_res = d3.scale.linear()
-            var yScale_res = d3.scale.linear()
-
-            var xScale_nyq = d3.scale.linear()
-            var yScale_nyq = d3.scale.linear()
-
-            var xAxis_res = d3.svg.axis()
-                .scale(xScale_res)
-                .ticks(5)
-                .orient('bottom');
-
-            var yAxis_res = d3.svg.axis()
-                .scale(yScale_res)
-                .ticks(5)
-                .orient('left');
-
-            xScale_res
-                .range([0, width])
-                .domain(d3.extent(sorted_results, function(d, i) { return i} ));
-
-            yScale_res
-                .range([height, 0])
-                .domain(d3.extent(sorted_results, function(d, i) { return d[2]} ));
-
-            var plot_res = svg_res.append("g");
-            var plot_nyq = svg_nyq.append("g");
-
-            plot_res.append("g").attr("class", "x axis");
-            plot_res.append("g").attr("class", "y axis");
-
-            // Update the outer dimensions.
-            svg_res
-                .attr("width", outerWidth/3)
-                .attr("height", outerHeight);
-
-            svg_nyq
-                .attr("width", d3.min([outerWidth/3, outerHeight]))
-                .attr("height", d3.min([outerWidth/3, outerHeight]));
-
-            var g_res = svg_res.select("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            var g_nyq = svg_nyq.select("g")
-                .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
-
-            // var tooltip_ph = g_ph.append("div")
-            //     .attr("class", "tooltip")
-            //     .style("opacity", 0);
-            //
-            // var tooltip_mag = g_mag.append("div")
-            //     .attr("class", "tooltip")
-            //     .style("opacity", 0);
-
-            g_res.select(".x.axis")
-                .attr('transform', 'translate(0,' + height + ')')
-                .call(xAxis_res)
-
-            g_res.select(".y.axis")
-                .attr('transform', 'translate(0,' + 0 + ')')
-                .call(yAxis_res)
-
-
-            g_res.append("text")
-                .attr("class", "label")
-                .attr("transform", "translate(" + (width/2) + " ," +
-                                                (height + margin.bottom - 10) + ")")
-                .style("text-anchor", "middle")
-                .text("Number #");
-
-            g_res.append("text")
-                .attr("class", "label")
-                .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left - 0)
-                .attr("x",0 - (height / 2))
-                .attr("dy", "1em")
-                .style("text-anchor", "middle")
-                .text("Avg. % Error");
-
-            var div = d3.select("#explore-residuals").append("div")
-                .attr("class", "explore-tooltip")
-                .style("opacity", 0);
-
-            var residuals = g_res.selectAll("circle").data(sorted_results);
-
-            var last_p = p2d_names
-
-            residuals.enter().append('circle');
-            residuals
-                .attr("class", "default-circle")
-                .attr("cx", function (d, i) { return xScale_res(i); } )
-                .attr("cy", function (d) { return yScale_res(d[2]); } )
-                .attr("r", 5)
-                .on("mouseover", function(d, i) {
-                    impedance = simulations.find( function(data) { return data[0] == d[0]; });
-                    console.log(impedance);
-                    scale = d[1];
-                    parameters = get_parameters(impedance)
-
-                    plot_impedance(impedance, scale)
-
-                    d3.select(this).style("fill", "red")
-
-                    div.transition()
-                        .duration(200)
-                        .style("opacity", 1);
-
-                    div.html(
-                        'Rank: ' + (i+1) + '<br>' +
-                        'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
-                        'Run: '+ d[0])
-                        .style("left", width + "px")
-                        .style("top", (height-20) + "px");
-
-                    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
-                        .data(parameters)
-                        .enter()
-                        .append("tr")
-                        .attr("class", "dataRow")
-
-
-                    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
-                        .data(parameters)
-                        .attr("class", "dataRow")
-                        .classed("info", function(d, i) {
-                            return last_p[i].value != parameters[i].value;
-                        })
-
-                    d3.selectAll("#parameter-estimates tbody .dataRow")
-                       .selectAll("td")
-                       .data([0,1,2])
-                       .enter()
-                       .append("td")
-
-                   d3.selectAll("#parameter-estimates tbody .dataRow")
-                      .selectAll("td")
-                      .data(
-                          function(row) {
-                          return ["name", "units", "value"].map(function(d) {
-                              return {value: row[d]};
-                          });
-                      })
-                      .html(function(d) { return d.value; });
-
-                      last_p = parameters
-
-                    })
-                    .on("mouseout", function(d) {
-                        d3.select(this).transition().duration(150).style("fill", "#009688");
-                    });
-
-            initialize_impedance();
-
-            function get_parameters(data) {
-                parameters = []
-
-                p2d_names.forEach(function(d,i) {
-                    parameters[i] = {
-                        name: d.split("[")[0],
-                        units: d.split("[")[d.split("[").length-1].replace("]", ""),
-                        value: impedance[4].split(',')[i]
-                    }
-                })
-                return parameters
-            }
-
-            function plot_impedance(data, scale) {
-                impedance = [];
-
-                data[1].split(',').forEach(function(d,i) {
-                    impedance[i] = {
-                        f: +d,
-                        real: +data[2].split(',')[i],
-                        imag: -1*(+data[3].split(',')[i])
-                    }
-                })
-
-                impedances = g_nyq.selectAll(".circles").data(impedance)
-
-                // define the line
-                var line = d3.svg.line()
-                    .x(function(d) { return xScale_nyq(d.real/scale); })
-                    .y(function(d) { return yScale_nyq(d.imag/scale); });
-
-                g_nyq.selectAll("path")
-                  .datum(impedance)
-                  .attr("class", "p2d-fit")
-                  .transition().duration(100)
-                  .attr("d", line);
-
-                impedances
-                        .enter().append("circle")
-                        .attr("class", "circles")
-                        .attr("r", 5)
-
-                impedances
-                        .transition().duration(100)
-                        .attr("cx", function(d) {return xScale_nyq(d.real/scale)})
-                        .attr("cy", function(d) { return yScale_nyq(d.imag/scale)})
-
-                impedances
-                    .exit().remove();
-
-                };
-
-                function initialize_impedance() {
-
-                    var data = {{ data|tojson|safe }};
-
-                    plot_nyq.append("g").attr("class", "x axis");
-                    plot_nyq.append("g").attr("class", "y axis");
-
-                    max = d3.max( [d3.max(data, function(d, i) { return d[1]} ) - d3.min(data, function(d, i) { return d[1]} ),
-                                            d3.max(data, function(d, i) { return -d[2]} ) - d3.min(data, function(d, i) { return -d[2]} )]);
-
-                    xScale_nyq
-                        .range([0, d3.min([outerWidth/3, outerHeight]) - margin.left - margin.right ])
-                        .domain([ d3.min(data, function(d, i) { return d[1]} ) - max*.1,  d3.min(data, function(d, i) { return d[1]} ) + max*1.4]);
-
-                    yScale_nyq
-                        .range([d3.min([outerWidth/3, outerHeight]) - margin.top - margin.bottom , 0])
-                        .domain([0, max*1.5]);
-
-                    var xAxis_nyq = d3.svg.axis()
-                        .scale(xScale_nyq)
-                        .ticks(5)
-                        .orient('bottom');
-
-                    var yAxis_nyq = d3.svg.axis()
-                        .scale(yScale_nyq)
-                        .ticks(5)
-                        .orient('left');
-
-                    g_nyq.select(".x.axis")
-                        .attr('transform', 'translate(0,' + height + ')')
-                        .call(xAxis_nyq)
-
-                    g_nyq.select(".y.axis")
-                        .attr('transform', 'translate(0,' + 0 + ')')
-                        .call(yAxis_nyq)
-
-                    g_nyq.append("text")
-                        .attr("class", "label")
-                        .attr("transform", "translate(" + (width/2) + " ," +
-                                                        (height + margin.bottom - 10) + ")")
-                        .style("text-anchor", "middle")
-                        .text("Z' [Ohms]");
-
-                    g_nyq.append("text")
-                        .attr("class", "label")
-                        .attr("transform", "rotate(-90)")
-                        .attr("y", -margin.left - 1)
-                        .attr("x",0 - (height / 2))
-                        .attr("dy", "1em")
-                        .style("text-anchor", "middle")
-                        .text("-Z'' [Ohms]");
-
-                    var nyquist = g_nyq.selectAll("circle").data(data);
-
-                    nyquist.enter().append('circle');
-                    nyquist
-                        .attr("class", "default-circle")
-                        .attr("cx", function (d, i) { return xScale_nyq(d[1]); } )
-                        .attr("cy", function (d) { return yScale_nyq(-d[2]); } )
-                        .attr("r", 5)
-
-                }
-
-        </script>
-
-        <!-- draw bode plot  with d3 -->
-        <script type="text/javascript">
-            var data = {{ data|tojson|safe }}; // 1 x N frequencys Array of 1 x 3 arrays (real, imag, freq)
-
-            function phase(real, imag) {
-                return Math.atan2(imag,real)*180/Math.PI;
-            }
-
-            function mag(real, imag) {
-                return Math.sqrt(Math.pow(imag, 2) + Math.pow(real, 2));
-            }
-
-            if (data == 0) {
-                d3.select('#bode')
-            	.append('div')
-            	.text('<-- Upload a file')
-            } else {
-                var ecmodel = {{ ecFit|tojson|safe }};
-                var p2dmodel = {{ p2dFit|tojson|safe }};
+        }
+            function addData(ec, id, data) {
 
                 outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
                 outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
-
-                console.log(outerHeight);
 
                 var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
                 var width = outerWidth - margin.left - margin.right;
                 var height = outerHeight/2 - margin.top - margin.bottom;
 
-                var xScale_ph = d3.scale.log()
-                var yScale_ph = d3.scale.linear()
+                var xScale_ph = d3.scale.log();
+                var yScale_ph = d3.scale.linear();
 
-                var xScale_mag = d3.scale.log()
-                var yScale_mag = d3.scale.log()
-
-                var xAxis_ph = d3.svg.axis()
-                    .scale(xScale_ph)
-                    .ticks(5)
-                    .orient('bottom');
-
-                var yAxis_ph = d3.svg.axis()
-                    .scale(yScale_ph)
-                    .ticks(5)
-                    .orient('left');
-
-                var xAxis_mag = d3.svg.axis()
-                    .scale(xScale_mag)
-                    .ticks(5)
-                    .orient('bottom');
-
-                var yAxis_mag = d3.svg.axis()
-                    .scale(yScale_mag)
-                    .ticks(5)
-                    .orient('left');
+                var xScale_mag = d3.scale.log();
+                var yScale_mag = d3.scale.log();
 
                 xScale_ph
                     .range([0, width])
@@ -1042,233 +1178,318 @@
                     .domain(d3.extent(data, function(d, i) { return mag(d[1], d[2])} ))
                     .nice();
 
-                // Select the svg element, if it exists.
-                var svg_ph = d3.select('#bode').append("svg").attr("id", "phase")
-                var svg_mag = d3.select('#bode').append("svg").attr("id", "magnitude")
+                g_ph = d3.select('#bode svg#phase g')
 
+                var line_phase = d3.svg.line()
+                    .x(function(d) { return xScale_ph( d[0] ); })
+                    .y(function(d) { return yScale_ph( phase(d[1], d[2]) ); });
 
-                var plot_ph = svg_ph.append("g");
-                var plot_mag = svg_mag.append("g");
+                    g_ph.append("path")
+                      .datum(ec)
+                      .attr("class", id + "-fit")
+                      .attr("d", line_phase);
 
-                plot_ph.append("g").attr("class", "x axis");
-                plot_ph.append("g").attr("class", "y axis");
+                g_mag = d3.select('#bode svg#magnitude g')
 
-                plot_mag.append("g").attr("class", "x axis");
-                plot_mag.append("g").attr("class", "y axis");
+                var line_mag = d3.svg.line()
+                    .x(function(d) { return xScale_mag( d[0] ); })
+                    .y(function(d) { return yScale_mag( mag(d[1], d[2]) ); });
+
+                g_mag.append("path")
+                    .datum(ec)
+                    .attr("class", id + "-fit")
+                    .attr("d", line_mag);
+
+              var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: ec, p2d: "", ecid: id})
+                  .x(function(d) { return d[1] })
+                  .y(function(d) { return -d[2] });
+
+              d3.select("#nyquist")
+                  .datum(data)
+                  .call(nyquist);
+
+            }
+        </script>
+
+        <script type="text/javascript">
+            function populateModule(sorted_results, simulations, names, data) {
+
+                outerWidth = $(window).width();
+                outerHeight = $(window).height()*.5;
+
+                // console.log("height: " + outerHeight);
+                // console.log("width: " + outerWidth);
+
+                var svg_res = d3.select('#explore-residuals').append("svg")
+                var svg_nyq = d3.select('#explore-nyquist').append("svg")
+
+                var margin = {top: 10, right: 10, bottom: 60, left: 60};
+                var width = outerWidth/3 - margin.left - margin.right;
+                var height = outerHeight - margin.top - margin.bottom;
+
+                var xScale_res = d3.scale.linear()
+                var yScale_res = d3.scale.linear()
+
+                var xScale_nyq = d3.scale.linear()
+                var yScale_nyq = d3.scale.linear()
+
+                var xAxis_res = d3.svg.axis()
+                    .scale(xScale_res)
+                    .ticks(5)
+                    .orient('bottom');
+
+                var yAxis_res = d3.svg.axis()
+                    .scale(yScale_res)
+                    .ticks(5)
+                    .orient('left');
+
+                xScale_res
+                    .range([0, width])
+                    .domain(d3.extent(sorted_results, function(d, i) { return i} ));
+
+                yScale_res
+                    .range([height, 0])
+                    .domain(d3.extent(sorted_results, function(d, i) { return d[2]} ));
+
+                var plot_res = svg_res.append("g");
+                var plot_nyq = svg_nyq.append("g");
+
+                plot_res.append("g").attr("class", "x axis");
+                plot_res.append("g").attr("class", "y axis");
 
                 // Update the outer dimensions.
-                svg_ph
-                    .attr("width", outerWidth)
-                    .attr("height", outerHeight/2);
+                svg_res
+                    .attr("width", outerWidth/3)
+                    .attr("height", outerHeight);
 
-                svg_mag
-                    .attr("width", outerWidth)
-                    .attr("height", outerHeight/2);
+                svg_nyq
+                    .attr("width", d3.min([outerWidth/3, outerHeight]))
+                    .attr("height", d3.min([outerWidth/3, outerHeight]));
 
-                var g_ph = svg_ph.select("g")
+                var g_res = svg_res.select("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                var g_mag = svg_mag.select("g")
+                var g_nyq = svg_nyq.select("g")
                     .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
 
-                var tooltip_ph = g_ph.append("div")
-                    .attr("class", "tooltip")
-                    .style("opacity", 0);
+                // var tooltip_ph = g_ph.append("div")
+                //     .attr("class", "tooltip")
+                //     .style("opacity", 0);
+                //
+                // var tooltip_mag = g_mag.append("div")
+                //     .attr("class", "tooltip")
+                //     .style("opacity", 0);
 
-                var tooltip_mag = g_mag.append("div")
-                    .attr("class", "tooltip")
-                    .style("opacity", 0);
-
-                g_ph.select(".x.axis")
+                g_res.select(".x.axis")
                     .attr('transform', 'translate(0,' + height + ')')
-                    .call(xAxis_ph)
+                    .call(xAxis_res)
 
-                g_ph.select(".y.axis")
+                g_res.select(".y.axis")
                     .attr('transform', 'translate(0,' + 0 + ')')
-                    .call(yAxis_ph)
+                    .call(yAxis_res)
 
-                g_mag.select(".x.axis")
-                    .attr('transform', 'translate(0,' + height + ')')
-                    .call(xAxis_mag)
 
-                g_mag.select(".y.axis")
-                    .attr('transform', 'translate(0,' + 0 + ')')
-                    .call(yAxis_mag)
-
-                g_ph.append("text")
+                g_res.append("text")
                     .attr("class", "label")
                     .attr("transform", "translate(" + (width/2) + " ," +
                                                     (height + margin.bottom - 10) + ")")
                     .style("text-anchor", "middle")
-                    .text("Frequency [Hz]");
+                    .text("Number #");
 
-                g_ph.append("text")
+                g_res.append("text")
                     .attr("class", "label")
                     .attr("transform", "rotate(-90)")
-                    .attr("y", -margin.left - 1)
+                    .attr("y", -margin.left - 0)
                     .attr("x",0 - (height / 2))
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
-                    .text("-Phase [deg]");
+                    .text("Avg. % Error");
 
-                g_mag.append("text")
-                    .attr("class", "label")
-                    .attr("transform", "translate(" + (width/2) + " ," +
-                                                    (height + margin.bottom - 10) + ")")
-                    .style("text-anchor", "middle")
-                    .text("Frequency [Hz]");
+                var div = d3.select("#explore-residuals").append("div")
+                    .attr("class", "explore-tooltip")
+                    .style("opacity", 0);
 
-                g_mag.append("text")
-                    .attr("class", "label")
-                    .attr("transform", "rotate(-90)")
-                    .attr("y", -margin.left - 1)
-                    .attr("x",0 - (height / 2))
-                    .attr("dy", "1em")
-                    .style("text-anchor", "middle")
-                    .text("Magnitude [Ohms]");
+                var residuals = g_res.selectAll("circle").data(sorted_results);
 
-                var phases = g_ph.selectAll("circle").data(data);
+                var last_p = names
 
-                phases.enter().append('circle');
-                phases
+                residuals.enter().append('circle');
+                residuals
                     .attr("class", "default-circle")
-                    .attr("cx", function (d) { return xScale_ph( d[0] ); } )
-                    .attr("cy", function (d) { return yScale_ph( phase(d[1], d[2]) ); } )
+                    .attr("cx", function (d, i) { return xScale_res(i); } )
+                    .attr("cy", function (d) { return yScale_res(d[2]); } )
                     .attr("r", 5)
-                    .on("mouseover", function(d,i) {
-                        d3.select(this)
-                            .classed("selected-circle", true)
-                            .attr("r", 10);
+                    .on("mouseover", function(d, i) {
+                        impedance = simulations.find( function(data) { return data[0] == d[0]; });
+                        console.log(impedance);
+                        scale = d[1];
+                        parameters = get_parameters(impedance)
 
-                        g_mag.selectAll("circle")
-                            .data(data)
-                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
-                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+                        plot_impedance(impedance, scale)
 
-                        d3.select("#nyquist").selectAll("circle")
-                            .data(data)
-                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
-                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
+                        d3.select(this).style("fill", "red")
 
-                        tooltip_ph.transition()
+                        div.transition()
                             .duration(200)
-                            .style("opacity", .9);
+                            .style("opacity", 1);
 
-                        tooltip_ph.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
-                                            'Phase: ' + Math.round(phase(d[1], d[2])*1000)/1000)
-                                            .style("left", 30 + "px")
-                                            .style("top", 30 + "px");
+                        div.html(
+                            'Rank: ' + (i+1) + '<br>' +
+                            'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
+                            'Run: '+ d[0])
+                            .style("left", width + "px")
+                            .style("top", (height-20) + "px");
 
+                        d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+                            .data(parameters)
+                            .enter()
+                            .append("tr")
+                            .attr("class", "dataRow")
+
+
+                        d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+                            .data(parameters)
+                            .attr("class", "dataRow")
+                            .classed("info", function(d, i) {
+                                return last_p[i].value != parameters[i].value;
+                            })
+
+                        d3.selectAll("#parameter-estimates tbody .dataRow")
+                           .selectAll("td")
+                           .data([0,1,2])
+                           .enter()
+                           .append("td")
+
+                       d3.selectAll("#parameter-estimates tbody .dataRow")
+                          .selectAll("td")
+                          .data(
+                              function(row) {
+                              return ["name", "units", "value"].map(function(d) {
+                                  return {value: row[d]};
+                              });
+                          })
+                          .html(function(d) { return d.value; });
+
+                          last_p = parameters
+
+                        })
+                        .on("mouseout", function(d) {
+                            d3.select(this).transition().duration(150).style("fill", "#009688");
+                        });
+
+                initialize_impedance(data);
+
+                function get_parameters(data) {
+                    parameters = []
+
+                    names.forEach(function(d,i) {
+                        parameters[i] = {
+                            name: d.split("[")[0],
+                            units: d.split("[")[d.split("[").length-1].replace("]", ""),
+                            value: impedance[4].split(',')[i]
+                        }
                     })
-                    .on("mouseout", function(d,i) {
-                        d3.select(this)
-                            .attr("class", "default-circle")
-                            .attr("r", 5);
+                    return parameters
+                }
 
-                        g_mag.selectAll("circle")
-                            .data(data)
-                            .attr("class", "default-circle")
-                            .attr("r", 5);
+                function plot_impedance(data, scale) {
+                    impedance = [];
 
-                        d3.select("#nyquist").selectAll("circle")
-                            .data(data)
-                            .attr("class", "default-circle")
-                            .attr("r", 5);
-                    });
-
-                var mags = g_mag.selectAll("circle").data(data);
-
-                mags.enter().append('circle');
-                mags
-                    .attr("class", "default-circle")
-                    .attr("cx", function (d) { return xScale_mag( d[0] ); } )
-                    .attr("cy", function (d) { return yScale_mag( mag(d[1], d[2]) );  } )
-                    .attr("r", 5)
-                    .on("mouseover", function(d,i) {
-                        d3.select(this)
-                            .classed("selected-circle", true)
-                            .attr("r", 10);
-
-                        // console.log(phases);
-                        g_ph.selectAll("circle")
-                            .data(data)
-                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
-                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
-
-                        d3.select("#nyquist").selectAll("circle")
-                            .data(data)
-                            .classed("selected-circle", function(d2, i2) {return i2 == i; })
-                            .attr("r", function(d2, i2) { if(i2 == i) { return 10; } else { return 5;} });
-
-                        // tooltip.transition()
-                        //     .duration(200)
-                        //     .style("opacity", .9);
-                        //
-                        // tooltip.html('Freq: ' + Math.round(d[0]*1000)/1000 + "<br/>"  +
-                        //                     'Mag: ' + Math.round(mag(d[1], d[2])*1000)/1000)
-                        //                     .style("left", (outerWidth - 30) + "px")
-                        //                     .style("top", outerHeight*3/4 + "px");
-
+                    data[1].split(',').forEach(function(d,i) {
+                        impedance[i] = {
+                            f: +d,
+                            real: +data[2].split(',')[i],
+                            imag: -1*(+data[3].split(',')[i])
+                        }
                     })
-                    .on("mouseout", function(d,i) {
-                        d3.select(this)
+
+                    impedances = g_nyq.selectAll(".circles").data(impedance)
+
+                    // define the line
+                    var line = d3.svg.line()
+                        .x(function(d) { return xScale_nyq(d.real/scale); })
+                        .y(function(d) { return yScale_nyq(d.imag/scale); });
+
+                    g_nyq.selectAll("path")
+                      .datum(impedance)
+                      .attr("class", "p2d-fit")
+                      .transition().duration(100)
+                      .attr("d", line);
+
+                    impedances
+                            .enter().append("circle")
+                            .attr("class", "circles")
+                            .attr("r", 5)
+
+                    impedances
+                            .transition().duration(100)
+                            .attr("cx", function(d) {return xScale_nyq(d.real/scale)})
+                            .attr("cy", function(d) { return yScale_nyq(d.imag/scale)})
+
+                    impedances
+                        .exit().remove();
+
+                    };
+
+                    function initialize_impedance(data) {
+
+                        plot_nyq.append("g").attr("class", "x axis");
+                        plot_nyq.append("g").attr("class", "y axis");
+
+                        max = d3.max( [d3.max(data, function(d, i) { return d[1]} ) - d3.min(data, function(d, i) { return d[1]} ),
+                                                d3.max(data, function(d, i) { return -d[2]} ) - d3.min(data, function(d, i) { return -d[2]} )]);
+
+                        xScale_nyq
+                            .range([0, d3.min([outerWidth/3, outerHeight]) - margin.left - margin.right ])
+                            .domain([ d3.min(data, function(d, i) { return d[1]} ) - max*.1,  d3.min(data, function(d, i) { return d[1]} ) + max*1.4]);
+
+                        yScale_nyq
+                            .range([d3.min([outerWidth/3, outerHeight]) - margin.top - margin.bottom , 0])
+                            .domain([0, max*1.5]);
+
+                        var xAxis_nyq = d3.svg.axis()
+                            .scale(xScale_nyq)
+                            .ticks(5)
+                            .orient('bottom');
+
+                        var yAxis_nyq = d3.svg.axis()
+                            .scale(yScale_nyq)
+                            .ticks(5)
+                            .orient('left');
+
+                        g_nyq.select(".x.axis")
+                            .attr('transform', 'translate(0,' + height + ')')
+                            .call(xAxis_nyq)
+
+                        g_nyq.select(".y.axis")
+                            .attr('transform', 'translate(0,' + 0 + ')')
+                            .call(yAxis_nyq)
+
+                        g_nyq.append("text")
+                            .attr("class", "label")
+                            .attr("transform", "translate(" + (width/2) + " ," +
+                                                            (height + margin.bottom - 10) + ")")
+                            .style("text-anchor", "middle")
+                            .text("Z' [Ohms]");
+
+                        g_nyq.append("text")
+                            .attr("class", "label")
+                            .attr("transform", "rotate(-90)")
+                            .attr("y", -margin.left - 1)
+                            .attr("x",0 - (height / 2))
+                            .attr("dy", "1em")
+                            .style("text-anchor", "middle")
+                            .text("-Z'' [Ohms]");
+
+                        var nyquist = g_nyq.selectAll("circle").data(data);
+
+                        nyquist.enter().append('circle');
+                        nyquist
                             .attr("class", "default-circle")
-                            .attr("r", 5);
+                            .attr("cx", function (d, i) { return xScale_nyq(d[1]); } )
+                            .attr("cy", function (d) { return yScale_nyq(-d[2]); } )
+                            .attr("r", 5)
 
-                        g_ph.selectAll("circle")
-                            .data(data)
-                            .attr("class", "default-circle")
-                            .attr("r", 5);
-
-                        d3.select("#nyquist").selectAll("circle")
-                            .data(data)
-                            .attr("class", "default-circle")
-                            .attr("r", 5);
-
-                    });
-
-                    //  Add model fit if exists
-                    if(ecmodel.length > 0) {
-
-                        var line_ph = d3.svg.line()
-                            .x(function(d) { return xScale_ph( d[0] ); })
-                            .y(function(d) { return yScale_ph(phase(d[1], d[2])); });
-
-                        g_ph.append("path")
-                              .datum(ecmodel)
-                              .attr("class", "ec-fit")
-                              .attr("d", line_ph);
-
-                        var line_mag = d3.svg.line()
-                            .x(function(d) { return xScale_mag( d[0] ); })
-                            .y(function(d) { return yScale_mag(mag(d[1], d[2])); });
-
-                        g_mag.append("path")
-                            .datum(ecmodel)
-                            .attr("class", "ec-fit")
-                            .attr("d", line_mag);
-                    }
-
-                    //  Add model fit if exists
-                    if(p2dmodel.length > 0) {
-
-                        var line_ph = d3.svg.line()
-                            .x(function(d) { return xScale_ph( d[0] ); })
-                            .y(function(d) { return yScale_ph(phase(d[1], d[2])); });
-
-                        g_ph.append("path")
-                              .datum(p2dmodel)
-                              .attr("class", "p2d-fit")
-                              .attr("d", line_ph);
-
-                        var line_mag = d3.svg.line()
-                            .x(function(d) { return xScale_mag( d[0] ); })
-                            .y(function(d) { return yScale_mag(mag(d[1], d[2])); });
-
-                        g_mag.append("path")
-                            .datum(p2dmodel)
-                            .attr("class", "p2d-fit")
-                            .attr("d", line_mag);
                     }
 
             }

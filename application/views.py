@@ -1,7 +1,7 @@
 from __future__ import print_function
 from application import application
-from flask import render_template, request
-from application.fitModels import fitCircuit, fitP2D, fitP2D_Rohmic, fitP2D_matchHF
+from flask import render_template, request, jsonify
+from application.fitModels import fitEC, fitP2D, fitP2D_Rohmic, fitP2D_matchHF
 import scipy
 import sys, os
 import pandas as pd
@@ -12,17 +12,9 @@ import json
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
 def index():
-    """ Impedance Analyzer Main Page
+    "Impedance Analyzer Main Page"
 
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-
-    default_context = {'upload': False, 'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': "", 'p2d_names': ""}
+    default_context = {'data': "", 'ec_parameters': "", 'ecFit': False, 'p2d_parameters': "", 'p2dFit': False, 'p2d_residuals': "", 'p2d_simulations': "", 'p2d_names': ""}
 
     #### if POST request triggered by form-data button ####
     if request.method == 'POST' and 'data' in request.files:
@@ -100,7 +92,7 @@ def index():
                 p2d_simulations = ""
                 p2d_names = ""
 
-            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
+            context = {'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
 
             return render_template('index.html', **context)
 
@@ -137,7 +129,6 @@ def index():
             # check if p2d check box is checked
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D_matchHF(example_data)
-
 
                 Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
                 Z.index = range(len(Z))
@@ -184,16 +175,106 @@ def index():
                 p2d_simulations = ""
                 p2d_names = ""
 
-            context = {'upload': False, 'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
+            context = {'data': example_data, 'ec_parameters': ec_parameters, 'ecFit': ecFit, 'p2d_parameters': p2d_parameters, 'p2dFit': p2dFit, 'p2d_residuals': p2d_residuals, 'p2d_simulations': p2d_simulations, 'p2d_names': p2d_names}
 
             return render_template('index.html', **context)
 
     #### initial load + load after "remove file" button ####
     return render_template('index.html', **default_context)
 
-# @application.route('/mseviz')
-# def mseviz():
-#     return render_template('mse_viz_v4.html')
+@application.route('/getData', methods=['GET'])
+def getData():
+    data_type = request.values["data_type"]
+    filename = request.values["filename"]
+
+    if data_type == "example":
+        with open('./application/static/data/examples/' + filename, 'r') as f:
+            contents = f.read()
+    elif data_type == "upload":
+        f = request.files['data']
+        contents = f.read()
+
+    data = to_array(contents)
+
+    return jsonify(data=data)
+
+@application.route('/fitCircuit', methods=['POST'])
+def fitCircuit():
+    circuit = request.values["circuit"]
+    example = request.values["example"]
+    p0 = request.values["p0"]
+    p0 = [float(p) for p in p0.split(',')]
+
+    print(circuit, file=sys.stderr)
+    print(example, file=sys.stderr)
+    print(p0, file=sys.stderr)
+
+    if example:
+        filename = request.values["filename"]
+        with open('./application/static/data/examples/' + filename, 'r') as f:
+            contents = f.read()
+        data = to_array(contents)
+
+    p_results, p_error, ecFit = fitEC(data, circuit, p0)
+
+    names = [param.replace('(','').replace(')','').replace('p','') for param in circuit.replace(',', '-').replace('/', '-').split('-')]
+    return jsonify(names=names, values=p_results.tolist(), errors=p_error, ecFit=ecFit)
+
+@application.route('/fitPhysics', methods=['POST'])
+def fitPhysics():
+    example = request.values["example"]
+
+    if example:
+        filename = request.values["filename"]
+        with open('./application/static/data/examples/' + filename, 'r') as f:
+            contents = f.read()
+        data = to_array(contents)
+
+    p2dFit, sorted_results  = fitP2D_matchHF(data)
+
+    Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
+    Z.index = range(len(Z))
+
+    mask = [f for f, r, i in p2dFit]
+
+    freq = [f for f, r, i in data]
+
+    Z = Z.loc[sorted_results['run'].map(int).values, Z.columns >= min(freq)]
+    p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
+
+    p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
+    p2d_simulations['imag'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.imag(x))).values.tolist()), axis=1)
+    p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
+    p2d_simulations['run'] = Z.index
+
+    parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+    P = parameters.loc[sorted_results['run'].map(int).values]
+
+    p2d_simulations['param'] = P.apply(lambda y: str(sorted_results['scale'].loc[int(y['run'])]*1e4) + ',' + ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
+
+    p2d_simulations = p2d_simulations.values.tolist()
+
+    p2d_names = ['fit parameter[cm^2]'] + (P.columns.values.tolist())
+
+    best_fit = sorted_results['run'].iloc[0]
+    param_Series = parameters.loc[best_fit]
+
+    p2d_residuals = sorted_results.values.tolist()
+
+    p2d_parameters = []
+    p2d_parameters.append({"name": "fit parameter", "units": "cm^2",
+                            "value": sorted_results['scale'].iloc[0]*1e4, "sensitivity": "x"})
+
+    for i, parameter in enumerate(param_Series.index):
+        p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
+                                                "value": param_Series.iloc[i], "sensitivity": "x"})
+                                                
+    names = [x['name'] for x in p2d_parameters]
+    units = [x['units'] for x in p2d_parameters]
+    values = [x['value'] for x in p2d_parameters]
+
+    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors="", results=p2d_residuals, simulations=p2d_simulations)
+
 
 def to_array(input):
     input = input.replace('\r\n', ',')
@@ -204,9 +285,9 @@ def to_array(input):
 
     return zip(col0, col1,col2)
 
-def jsonify(names, values):
-    d = {}
-    for name, value in zip(names, values):
-        d[name] = value
+# def jsonify(names, values):
+#     d = {}
+#     for name, value in zip(names, values):
+#         d[name] = value
 
-    return json.dumps(d)
+    # return json.dumps(d)

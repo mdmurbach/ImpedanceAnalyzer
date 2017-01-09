@@ -135,7 +135,7 @@ function nyquistChart(config) {
 
                     g.append("path")
                       .datum(ec)
-                      .attr("class", "ec-fit")
+                      .attr("class", config.ecid + "-fit")
                       .attr("d", line);
             }
 
