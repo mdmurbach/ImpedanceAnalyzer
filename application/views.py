@@ -205,10 +205,6 @@ def fitCircuit():
     p0 = request.values["p0"]
     p0 = [float(p) for p in p0.split(',')]
 
-    print(circuit, file=sys.stderr)
-    print(example, file=sys.stderr)
-    print(p0, file=sys.stderr)
-
     if example:
         filename = request.values["filename"]
         with open('./application/static/data/examples/' + filename, 'r') as f:
@@ -268,7 +264,7 @@ def fitPhysics():
     for i, parameter in enumerate(param_Series.index):
         p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
                                                 "value": param_Series.iloc[i], "sensitivity": "x"})
-                                                
+
     names = [x['name'] for x in p2d_parameters]
     units = [x['units'] for x in p2d_parameters]
     values = [x['value'] for x in p2d_parameters]
