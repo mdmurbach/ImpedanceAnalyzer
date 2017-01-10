@@ -278,6 +278,16 @@
             font-size: .8em;
         }
 
+        #exploreFitModal-dialog {
+            width: 98%;
+            height: 92%;
+            padding: 0;
+        }
+
+        #exploreFitModal-content {
+            height: 99%;
+        }
+
         </style>
 
     </head>
@@ -330,31 +340,33 @@
 
         <!-- Explore Fit Modal -->
         <div class="modal fade" id="exploreFitModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog modal-lg" role="document" style="width: 75%">
-                <div class="modal-content">
+            <div class="modal-dialog modal-lg" role="document" id="exploreFitModal-dialog">
+                <div class="modal-content" id="exploreFitModal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title" id="myModalLabel">Explore P2D fit</h4>
                     </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
+                    <div class="modal-body" style="height: calc(100% - 120px);">
+                        <div class="row" style="height: 100%">
+                            <div class="col-md-4">
                                 <div id="explore-residuals"></div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div id="explore-nyquist"></div>
                             </div>
-                        </div>
-                        <div class="table-responsive" id="table-div" style="height: 20vh; overflow-y: auto">
-                            <table class="table table-condensed" id="parameter-estimates">
-                                <tbody>
-                                    <tr>
-                                        <th>Parameter</th>
-                                        <th>Units</th>
-                                        <th>Value</th>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="col-md-4" style="height: 100%">
+                                <div class="table-responsive" id="table-div" style="height: 100%">
+                                    <table class="table table-condensed" id="parameter-estimates" style="height: 100%; overflow-y: auto">
+                                        <tbody>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Units</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -590,10 +602,8 @@
                 if (selected.length > 0) {
 
                     selected.each(function(i,d) {
-                        console.log(d.name);
                         if (d.name.startsWith('EC')) {
                             name = d.name.split('-')[1]
-                            console.log(name);
                             circuit = circuits[name]
                             // append tab
                             $("#modal-analysis div.modal-body ul").append(
@@ -638,7 +648,6 @@
 
                         if (d.name.startsWith('pb')) {
                             name = d.name.split('-')[1]
-                            console.log(name);
                             model = physics[name]
 
                             // append tab
@@ -703,7 +712,6 @@
                         data_type: "example",
                         filename: filename
                     },function(response) {
-                        console.log(response.data);
                         initializeCharts(response.data);
                         plotModels(response.data);
                     }
@@ -728,8 +736,6 @@
 
                     var example = 'true'
                     var filename = $('#exampleselect option:selected')[0].value
-
-                    console.log(id + modelType);
 
                     if (modelType == "ec") {
 
@@ -1257,18 +1263,17 @@
         <script type="text/javascript">
             function populateModule(sorted_results, simulations, names, data) {
 
-                outerWidth = $(window).width();
-                outerHeight = $(window).height()*.5;
+                outerWidth = $(window).width()*.98/3;
+                outerHeight = $(window).height()*.9;
 
-                // console.log("height: " + outerHeight);
-                // console.log("width: " + outerWidth);
+                var size = d3.min([outerWidth,outerHeight]);
 
                 var svg_res = d3.select('#explore-residuals').append("svg")
                 var svg_nyq = d3.select('#explore-nyquist').append("svg")
 
                 var margin = {top: 10, right: 10, bottom: 60, left: 60};
-                var width = outerWidth/3 - margin.left - margin.right;
-                var height = outerHeight - margin.top - margin.bottom;
+                var width = size - margin.left - margin.right;
+                var height = size - margin.top - margin.bottom;
 
                 var xScale_res = d3.scale.linear()
                 var yScale_res = d3.scale.linear()
@@ -1294,20 +1299,28 @@
                     .range([height, 0])
                     .domain(d3.extent(sorted_results, function(d, i) { return d[2]} ));
 
-                var plot_res = svg_res.append("g");
-                var plot_nyq = svg_nyq.append("g");
-
-                plot_res.append("g").attr("class", "x axis");
-                plot_res.append("g").attr("class", "y axis");
 
                 // Update the outer dimensions.
                 svg_res
-                    .attr("width", outerWidth/3)
+                    .attr("width", outerWidth)
                     .attr("height", outerHeight);
 
                 svg_nyq
-                    .attr("width", d3.min([outerWidth/3, outerHeight]))
-                    .attr("height", d3.min([outerWidth/3, outerHeight]));
+                    .attr("width", outerWidth)
+                    .attr("height", outerHeight);
+
+                var plot_res = svg_res.append("g");
+                var plot_nyq = svg_nyq.append("g");
+
+                plot_res.append("g")
+                    .attr("class", "x axis")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                plot_res.append("g")
+                    .attr("class", "y axis")
+                    .attr("width", width)
+                    .attr("height", height);
 
                 var g_res = svg_res.select("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -1324,7 +1337,7 @@
                 //     .style("opacity", 0);
 
                 g_res.select(".x.axis")
-                    .attr('transform', 'translate(0,' + height + ')')
+                    .attr('transform', 'translate(0,' + height + margin.bottom + ')')
                     .call(xAxis_res)
 
                 g_res.select(".y.axis")
@@ -1364,7 +1377,6 @@
                     .attr("r", 5)
                     .on("mouseover", function(d, i) {
                         impedance = simulations.find( function(data) { return data[0] == d[0]; });
-                        console.log(impedance);
                         scale = d[1];
                         parameters = get_parameters(impedance)
 
@@ -1380,8 +1392,8 @@
                             'Rank: ' + (i+1) + '<br>' +
                             'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
                             'Run: '+ d[0])
-                            .style("left", width + "px")
-                            .style("top", (height-20) + "px");
+                            .style("left", 0.8*width + "px")
+                            .style("top", 0.8*height + "px");
 
                         d3.select("#parameter-estimates tbody").selectAll(".dataRow")
                             .data(parameters)
@@ -1483,11 +1495,11 @@
                                                 d3.max(data, function(d, i) { return -d[2]} ) - d3.min(data, function(d, i) { return -d[2]} )]);
 
                         xScale_nyq
-                            .range([0, d3.min([outerWidth/3, outerHeight]) - margin.left - margin.right ])
+                            .range([0, width])
                             .domain([ d3.min(data, function(d, i) { return d[1]} ) - max*.1,  d3.min(data, function(d, i) { return d[1]} ) + max*1.4]);
 
                         yScale_nyq
-                            .range([d3.min([outerWidth/3, outerHeight]) - margin.top - margin.bottom , 0])
+                            .range([height, 0])
                             .domain([0, max*1.5]);
 
                         var xAxis_nyq = d3.svg.axis()
