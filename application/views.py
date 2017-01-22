@@ -57,7 +57,7 @@ def index():
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D(uploaded_data)
 
-                Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
+                Z = pd.read_pickle('./application/static/data/20688-Z.pkl')
                 Z.index = range(len(Z))
 
                 Z = Z.loc[sorted_results['run'].map(int).values]
@@ -130,7 +130,7 @@ def index():
             if fit_p2d:
                 p2dFit, sorted_results  = fitP2D_matchHF(example_data)
 
-                Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
+                Z = pd.read_pickle('./application/static/data/20688-Z.pkl')
                 Z.index = range(len(Z))
 
                 mask = [f for f, r, i in p2dFit]
@@ -228,7 +228,7 @@ def fitPhysics():
 
     p2dFit, sorted_results  = fitP2D_matchHF(data)
 
-    Z = pd.read_pickle('./application/static/data/19203-Z.pkl')
+    Z = pd.read_pickle('./application/static/data/20688-Z.pkl')
     Z.index = range(len(Z))
 
     mask = [f for f, r, i in p2dFit]

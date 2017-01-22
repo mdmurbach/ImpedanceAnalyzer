@@ -41,7 +41,7 @@ def fitP2D(data):
     exp_data.index = range(len(exp_data))
 
     # read in all of the simulation results
-    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
+    Z = pd.read_pickle('application/static/data/20688-Z.pkl')
 
     # find the frequencies that fall within the experimental data and create
     # the DataFrame, to_fit, to store interpolated experimental data for fitting
@@ -143,7 +143,7 @@ def fitP2D_Rohmic(data):
     exp_data.index = range(len(exp_data))
 
     # read in all of the simulation results
-    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
+    Z = pd.read_pickle('application/static/data/20688-Z.pkl')
 
     # find the frequencies that fall within the experimental data and create
     # the DataFrame, to_fit, to store interpolated experimental data for fitting
@@ -263,7 +263,7 @@ def fitP2D_matchHF(data):
     exp_data.index = range(len(exp_data))
 
     # read in all of the simulation results
-    Z = pd.read_pickle('application/static/data/19203-Z.pkl')
+    Z = pd.read_pickle('application/static/data/20688-Z.pkl')
 
     # find the frequencies that fall within the experimental data and create
     # the DataFrame, to_fit, to store interpolated experimental data for fitting
