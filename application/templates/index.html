@@ -388,14 +388,14 @@
                 </div>
                 <div class="col-md-9"  id="grid-load" style="overflow-y: visible">
                     <h4>Upload a file<i id="info-fileupload" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i> or choose an example</h3>
-                    <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="{{ url_for('index') }}" id="fileinput">
+                    <form style="padding: 20px;" class="" method=POST enctype=multipart/form-data action="{{ url_for('index') }}" id="selection-form">
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="fileselectbutton"> Select a file to upload </label>
-                                    <input style="display: none;" type="file" name="data" id="fileselect" />
-                                    <input class="btn btn-browse form-control" type="button" value="Browse..." onclick="document.getElementById('fileselect').click();" id="fileselectbutton">
-                                    <button class="pull-right" onclick="reset($('#fileselect'))"><span aria-hidden="true">&times; remove file</span></button></input>
+                                    <label for="selection-form_upload-btn"> Select a file to upload </label>
+                                    <input style="display: none;" type="file" name="data" id="selection-form_input-data" />
+                                    <input class="btn btn-browse form-control" type="button" value="Browse..." onclick="document.getElementById('selection-form_input-data').click();" id="selection-form_upload-btn">
+                                    <input class="pull-right btn" type="button" onclick="removeFile()" value="&times; remove file"></input></input>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -661,7 +661,7 @@
 
                             // create form groups for ECtabs
                             groups = "<h5>Currently, fitting the P2D model requires no user-defined parameters.</h5>"
-                            groups += "<br></br><h5>Model runs: <emph>20,688</emph></h5>"
+                            groups += "<br></br><h5>Model runs: <emph>25,161</emph></h5>"
 
                             // append tab-content
                             $("#modal-analysis div.modal-body #ECtab").append(
@@ -706,16 +706,41 @@
                 $('#explore-residuals').empty()
                 $('#explore-nyquist').empty()
 
-                var filename = $('#exampleselect option:selected')[0].value
+                var exampleSelected = $('#exampleselect option:selected')[0].value != "null"
 
-                $.getJSON($SCRIPT_ROOT + '/getData', {
-                        data_type: "example",
-                        filename: filename
-                    },function(response) {
-                        initializeCharts(response.data);
-                        plotModels(response.data);
-                    }
-                );
+                var uploadSelected = $('#selection-form_input-data')[0].files.length > 0;
+
+                if(uploadSelected) {
+                    var formData = new FormData()
+                    var fileData = $('#selection-form_input-data')[0].files[0]
+                    formData.append('data', fileData);
+                    $.ajax({
+                        url: $SCRIPT_ROOT + '/getUploadData',
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        async: false,
+                        cache: false,
+                        success: function(response) {
+                            initializeCharts(response.data);
+                            plotModels(response.data);
+                        },
+                        error: function(error) {
+                            console.log(error);
+                        }
+                    });
+                } else if(exampleSelected){
+                    var filename = $('#exampleselect option:selected')[0].value;
+                    $.getJSON($SCRIPT_ROOT + '/getExampleData', {
+                            data_type: "example",
+                            filename: filename
+                        },function(response) {
+                            initializeCharts(response.data);
+                            plotModels(response.data);
+                        }
+                    );
+                };
 
                 function plotModels(data) {
 
@@ -753,8 +778,8 @@
                         })
 
                         formData.append('p0', p0.toString())
+                        formData.append('data', data)
 
-                        formData.append('example', example)
                         formData.append('filename', filename)
                         formData.append('circuit', circuit)
 
@@ -776,7 +801,7 @@
                         });
                     } else if (modelType == "pb") {
 
-                        formData.append('example', example)
+                        formData.append('data', data)
                         formData.append('filename', filename)
 
                         $.ajax({
@@ -814,8 +839,8 @@
             }
 
             /* ensure plot button is disabled until file is selected */
-            $('#fileselect').on('change', function() {
-                $('#fileselectbutton').val($(this).val());
+            $('#selection-form_input-data').on('change', function() {
+                $('#selection-form_upload-btn').val($(this).val());
                 $('#plot_btn').prop('disabled', false);
                 $('#modelFieldset').removeProp('disabled');
             });
@@ -823,9 +848,14 @@
                 $('#plot_btn').prop('disabled', false);
                 $('#modelFieldset').removeProp('disabled');
             });
-            window.reset = function (e) {
-                e.wrap('<form>').closest('form').get(0).reset();
-                e.unwrap();
+
+            function removeFile() {
+                $('#selection-form_input-data')[0].value = "";
+                $('#selection-form_upload-btn')[0].value = "Browse...";
+                var exampleSelected = $('#exampleselect option:selected')[0].value != "null"
+                if(!exampleSelected) {
+                    $('#plot_btn').prop('disabled', true);
+                }
             }
         </script>
 
