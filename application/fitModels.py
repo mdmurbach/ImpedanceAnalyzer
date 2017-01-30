@@ -78,6 +78,17 @@ def fitP2D_matchHF(data):
         to_fit = pd.concat([pd.DataFrame(data={'mag': Zreal_hf, 'ph': 0.0, 'real': Zreal_hf, 'imag': 0.0},
                                 index=[1e5], columns=to_fit.columns), to_fit])
 
+    else:
+
+        #Linearly extrapolate three highest frequencies to find Z_hf
+        x = exp_data['real'].iloc[0:3]
+        y = exp_data['imag'].iloc[0:3]
+
+        fit = np.polyfit(x,-y, 2)
+        func = np.poly1d(fit)
+
+        Zreal_hf = func.r[np.real(func.r) < min(x)]
+
     hf_real = Z.loc[:,1e5].map(np.real)
 
     scale = hf_real/Zreal_hf # m^2

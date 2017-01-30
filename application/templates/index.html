@@ -288,6 +288,11 @@
             height: 99%;
         }
 
+        table#parameter-estimates,
+        table#parameter-estimates th {
+            text-align: center;
+        }
+
         </style>
 
     </head>
@@ -912,34 +917,62 @@
 
                 var rows = ""
 
-                parameters.forEach(function(p, i) {
-                    rows = rows +
+                if(id=='p2d') {
+                    parameters.forEach(function(p, i) {
+                        rows = rows +
                         "<tr>" +
-                            "<td>" + p.split('[')[0] + "</td>" +
-                            "<td>" + units[i] + "</td>" +
-                            "<td>" + Math.round(values[i]*10000)/10000.0 + "</td>" +
-                            "<td>" + Math.round(errors[i]*10000)/10000.0 + "</td>" +
-                            "<td>" + Math.round(errors[i]/values[i]*10000)/100.0  + "</td>"
+                        "<td>" + p.split('[')[0] + "</td>" +
+                        "<td>" + units[i] + "</td>" +
+                        "<td>" + values[i].toPrecision(4) + "</td>" +
                         "</tr>"
-                });
+                    });
+                } else {
+                    parameters.forEach(function(p, i) {
+                        rows = rows +
+                        "<tr>" +
+                        "<td>" + p.split('[')[0] + "</td>" +
+                        "<td>" + units[i] + "</td>" +
+                        "<td>" + values[i].toPrecision(4) + "</td>" +
+                        "<td>" + errors[i].toPrecision(4) + "</td>" +
+                        "<td>" + (100*errors[i]/values[i]).toPrecision(4)  + "</td>"
+                        "</tr>"
+                    });
+                }
 
                 // append tab-content
-                $("#grid-parameters div.tab-content").append(
-                    "<div class='tab-pane' id='" + "parameters-" + id + "'>" +
-                        "<div class='table-responsive' id='table-div'>"+
-                            "<table class='table table-condensed' id='parameter-estimates'>" +
-                                "<tr>" +
-                                    "<th>Parameter</th>" +
-                                    "<th>Units</th>" +
-                                    "<th>Best Estimate</th>" +
-                                    "<th data-toggle='tooltip' title='The error is given as the estimated one-sigma standard deviation'>Error</th>" +
-                                    "<th>% Error</th>" +
-                                "</tr>" +
-                                rows +
-                            "</table>" +
-                        "</div>" +
-                    "</div>"
-                );
+                    if(id=='p2d') {
+                        $("#grid-parameters div.tab-content").append(
+                            "<div class='tab-pane' id='" + "parameters-" + id + "'>" +
+                                "<div class='table-responsive' id='table-div'>"+
+                                    "<table class='table table-condensed' id='parameter-estimates'>" +
+                                        "<tr>" +
+                                            "<th>Parameter</th>" +
+                                            "<th>Units</th>" +
+                                            "<th>Best Estimate</th>" +
+                                        "</tr>" +
+                                        rows +
+                                    "</table>" +
+                                "</div>" +
+                            "</div>"
+                        );
+                    } else {
+                        $("#grid-parameters div.tab-content").append(
+                            "<div class='tab-pane' id='" + "parameters-" + id + "'>" +
+                                "<div class='table-responsive' id='table-div'>"+
+                                    "<table class='table table-condensed' id='parameter-estimates'>" +
+                                        "<tr>" +
+                                            "<th>Parameter</th>" +
+                                            "<th>Units</th>" +
+                                            "<th>Best Estimate</th>" +
+                                            "<th data-toggle='tooltip' title='The error is given as the estimated one-sigma standard deviation'>Error</th>" +
+                                            "<th>% Error</th>" +
+                                        "</tr>" +
+                                        rows +
+                                    "</table>" +
+                                "</div>" +
+                            "</div>"
+                        );
+                    }
 
                 $("#grid-parameters ul li:first").addClass('active')
                 $("#grid-parameters div.tab-content div.tab-pane:first").addClass('active')

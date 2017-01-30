@@ -1,18 +1,15 @@
 from __future__ import print_function
 from application import application
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, redirect, url_for
 from application.fitModels import fitEC, fitP2D_matchHF
-import scipy
 import sys, os
 import pandas as pd
 import numpy as np
 import json
 
-# main webpage
 @application.route('/', methods=['GET'])
-@application.route('/index', methods=['GET'])
 def index():
-    "Impedance Analyzer Main Page"
+    """ Impedance Analyzer Main Page """
 
     return render_template('index.html')
 
@@ -28,6 +25,7 @@ def getExampleData():
     Returns
     -------
     data : jsonified data
+
     """
 
     filename = request.values["filename"]
@@ -41,6 +39,7 @@ def getExampleData():
 
 @application.route('/getUploadData', methods=['POST'])
 def getUploadData():
+    """ Gets uploaded data"""
     f = request.files['data']
     contents = f.read()
     data = to_array(contents)
@@ -49,6 +48,40 @@ def getUploadData():
 
 @application.route('/fitCircuit', methods=['POST'])
 def fitCircuit():
+    """ fits equivalent circuit
+
+    Parameters
+    ----------
+
+    circuit : str
+        string defining circuit to fit
+
+    data : str
+        string of data of comma separated values of freq, real, imag
+
+    p0 : str
+        comma deliminated string of initial parameter guesses
+
+    Returns
+    -------
+
+    names : list of strings
+        list of parameter names
+
+    values : list of strings
+        list of parameter values
+
+    errors : list of strings
+        list of parameter errors
+
+    ecFit :
+
+
+    Notes
+    -----
+
+
+    """
     data = request.values["data"].split(',')
     f = [float(f) for f in data[::3]]
     real = [float(r) for r in data[1::3]]
@@ -66,6 +99,7 @@ def fitCircuit():
 
 @application.route('/fitPhysics', methods=['POST'])
 def fitPhysics():
+    """ fits physics model """
     data = request.values["data"].split(',')
     f = [float(f) for f in data[::3]]
     real = [float(r) for r in data[1::3]]
@@ -107,18 +141,27 @@ def fitPhysics():
     p2d_parameters.append({"name": "fit parameter", "units": "cm^2",
                             "value": sorted_results['scale'].iloc[0]*1e4, "sensitivity": "x"})
 
+    parameters_to_skip = ['SOC_neg', 'SOC_pos', 'cs_max_neg', 'cs_max_pos', 'epsilon_sep',
+                            'd2Udcp2_neg', 'd2Udcp2_pos', 'd3Udcp3_neg', 'd3Udcp3_pos']
+
     for i, parameter in enumerate(param_Series.index):
-        p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
-                                                "value": param_Series.iloc[i], "sensitivity": "x"})
+        if parameter.split('[')[0] not in parameters_to_skip:
+            p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
+                                                    "value": param_Series.iloc[i], "sensitivity": "x"})
 
     names = [x['name'] for x in p2d_parameters]
     units = [x['units'] for x in p2d_parameters]
     values = [x['value'] for x in p2d_parameters]
+    errors = ['NaN' for x in p2d_parameters]
 
-    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors="", results=p2d_residuals, simulations=p2d_simulations)
+    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors=errors, results=p2d_residuals, simulations=p2d_simulations)
 
 
 def to_array(input):
+    """ parse strings of data from ajax requests to return
+
+    """
+
     input = input.replace('\r\n', ',')
     input = input.replace('\n', ',')
     col0 = [float(x) for x in input.split(',')[0:-1:3]]
