@@ -411,7 +411,7 @@
                                     <select class="form-control" name="example" id="exampleselect">
                                         <option value="null">Select a dataset</option>
                                         <!-- <option value="zhang_example.csv">Zhang, 2000</option> -->
-                                        <!-- <option value="imp-data.csv">EIS data</option> -->
+                                        <option value="calce-example.csv">CALCE (Ctr. for Adv. Life Cycle Eng.)</option>
                                         <option value="wu_example.csv">Wu</option>
                                         <option value="samsung_example.csv">Samsung NMC</option>
                                     </select>
@@ -1029,7 +1029,7 @@
 
             yScale_ph
                 .range([height, 0])
-                .domain([0, d3.min(data, function(d, i) { return phase(d[1], d[2])} )]);
+                .domain([0, 1.1*d3.min(data, function(d, i) { return phase(d[1], d[2])} )]);
 
             xScale_mag
                 .range([0, width])
