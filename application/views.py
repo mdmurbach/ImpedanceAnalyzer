@@ -1,11 +1,12 @@
 from __future__ import print_function
 from application import application
 from flask import render_template, request, jsonify, redirect, url_for
-from application.fitModels import fitEC, fitP2D_matchHF
+from application.fitModels import fitP2D_matchHF
 import sys, os
 import pandas as pd
 import numpy as np
 import json
+import EC.fit
 
 @application.route('/', methods=['GET'])
 def index():
@@ -92,7 +93,7 @@ def fitCircuit():
     p0 = request.values["p0"]
     p0 = [float(p) for p in p0.split(',')]
 
-    p_results, p_error, ecFit = fitEC(data, circuit, p0)
+    p_results, p_error, ecFit = ECfit.fit.equivalent_circuit(data, circuit, p0)
 
     names = [param.replace('(','').replace(')','').replace('p','') for param in circuit.replace(',', '-').replace('/', '-').split('-')]
     return jsonify(names=names, values=p_results.tolist(), errors=p_error, ecFit=ecFit)

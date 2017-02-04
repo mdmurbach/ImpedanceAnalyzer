@@ -6,9 +6,7 @@ from __future__ import print_function
 import sys
 import numpy as np
 import pandas as pd
-from scipy.optimize import leastsq
 from scipy.interpolate import interp1d
-from circuits import residuals, computeCircuit
 
 def fitP2D_matchHF(data):
     """ Fit physics-based model by matching the hf intercept
@@ -152,69 +150,3 @@ def calculateChisquared(Zdata, Zmodel, sigma):
 
     """
     return sum(((Zdata - Zmodel)**2)/sigma**2)
-
-
-def fitEC(data, circuit_string, initial_guess):
-    """ Fits an equivalent circuit to data
-
-    Parameters
-    -----------------
-    data : list of tuples
-        list of (frequency, real impedance, imaginary impedance)
-
-    circuit_string : string
-        string defining the equivalent circuit to be fit. see crossref for details
-
-    initial_guess : list of floats
-        initial guesses for the fit parameters
-
-    Returns
-    ------------
-    fit : list of tuples
-        list of (frequency, real impedance, imaginary impedance)
-
-    p_values : list of floats
-        best fit parameters for specified equivalent circuit
-
-    p_errors : list of floats
-        error estimates for fit parameters
-
-    Notes
-    ---------
-
-
-    """
-
-    freq = np.array([a for a,b,c in data])
-    zr = np.array([b for a,b,c in data])
-    zi =np.array([c for a,b,c in data])
-    zrzi = zr + 1j*zi
-
-    # Simulates Initial Conditions and Performs Least
-    # Squares fit of circuit(s)
-    # sim_data = compute_circuit(parameters, circuit_string, freq)
-
-    p_values, covar, info, errmsg, ier = leastsq(residuals, initial_guess, args=(zrzi, freq, circuit_string), maxfev=100000,
-                                            ftol=1E-13,  full_output=True)
-
-    p_error = []
-    if covar.any():
-        s_sq = ((residuals(p_values, zrzi, freq, circuit_string)**2).sum())/(len(zrzi) - len(p_values))
-        p_cov = covar * s_sq
-        for i, __ in enumerate(covar):
-            try:
-              p_error.append(np.absolute(p_cov[i][i])**0.5)
-            except:
-              p_error.append(0.0)
-    else:
-        p_error = len(p_values)*[-1]
-
-    fit_data_1 = computeCircuit(circuit_string, p_values.tolist(), freq.tolist())
-
-    fit_zrzi = [a[1] for a in fit_data_1]
-
-    fit = zip(freq, np.real(fit_zrzi), np.imag(fit_zrzi))
-
-    r_squared = 1
-
-    return p_values, p_error, fit#, r_squared
