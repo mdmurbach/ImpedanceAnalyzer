@@ -11,6 +11,10 @@
 
         <link rel="stylesheet" href="{{ url_for('static', filename='nyquist.css') }}">
 
+        <script type="text/javascript" async
+          src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+        </script>
+
         <style media="screen">
 
         /************** Customize NavBar ******************/
@@ -118,6 +122,12 @@
           stroke-width: 2px;
         }
 
+        .randles_cpe-fit {
+          fill: none;
+          stroke: #43a047;
+          stroke-width: 2px;
+        }
+
         .two_constant_warburg-fit {
           fill: none;
           stroke: #03A9F4;
@@ -132,6 +142,11 @@
 
         .randles-legend {
             stroke: #FF5722;
+            font-family: monospace;
+        }
+
+        .randles_cpe-legend {
+            stroke: #43a047;
             font-family: monospace;
         }
 
@@ -291,6 +306,10 @@
             text-align: center;
         }
 
+        table#parameter-estimates td {
+            vertical-align: middle;
+        }
+
         </style>
 
     </head>
@@ -434,6 +453,11 @@
                                                     </label>
                                                 </div>
                                                 <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="checkbox-randlesCPE" name="EC-randles_cpe" value=""/>Randles' circuit w/CPE
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
                                                     <label style="">
                                                         <input type="checkbox" name="EC-two_constant_warburg" value="" id="checkbox-twoConstantWarburg"/>Two time constant w/ Warburg
                                                     </label>
@@ -572,22 +596,32 @@
             function loadModal(selected) {
                 var circuits =
                     {"randles":
-                        {"name": "Randles Circuit",
+                        {"name": "Randles\'",
                         "id": "randles",
                         "type": "ec",
                         "image": "randles.png",
                         "parameters": ["R0", "R1", "C1", "W1", "W2"],
-                        "values": ["0.01", "0.005", ".1", ".0001", ".001"],
+                        "values": ["0.01", "0.005", ".1", ".0001", "200"],
                         "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
                         "circuit": "R0-p(R1,C1)-W1/W2"
                     },
+                    "randles_cpe":
+                        {"name": "Randles\' w/CPE",
+                        "id": "randles_cpe",
+                        "type": "ec",
+                        "image": "randles_cpe.png",
+                        "parameters": ["R0", "R1", "E1", "E2", "W1", "W2"],
+                        "values": ["0.01", "0.005", ".1", ".9", ".0001", "200"],
+                        "units": ["Ohms", "Ohms", "F", "1", "Ohms", "Sec"],
+                        "circuit": "R0-p(R1,E1/E2)-W1/W2"
+                    },
                     "two_constant_warburg" :
-                        {"name": "Two Time Constant Circuit",
+                        {"name": "Two Time Constants",
                         "id": "two_constant_warburg",
                         "type": "ec",
                         "image": "two_time_constants.png",
                         "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
-                        "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", ".001"],
+                        "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", "200"],
                         "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
                         "circuit": "R0-p(R1,C1)-p(R2,C2)-W1/W2"
                     }
@@ -797,6 +831,7 @@
                             success: function(response) {
                                 addData(response.ecFit, id, name, data);
                                 createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
+                                MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
                             },
                             error: function(error) {
                                 console.log(error);
@@ -820,6 +855,7 @@
                                 createParameterTab(id, name, response.names, response.units, response.values, response.errors);
                                 populateModule(response.results, response.simulations, response.names, data);
                                 addP2dexploreButton();
+                                MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
                             },
                             error: function(error) {
                                 console.log(error);
@@ -920,7 +956,7 @@
                         rows = rows +
                         "<tr>" +
                         "<td>" + p.split('[')[0] + "</td>" +
-                        "<td>" + units[i] + "</td>" +
+                        "<td>" + "$$" + units[i] + "$$" + "</td>" +
                         "<td>" + values[i].toPrecision(4) + "</td>" +
                         "</tr>"
                     });
@@ -929,7 +965,7 @@
                         rows = rows +
                         "<tr>" +
                         "<td>" + p.split('[')[0] + "</td>" +
-                        "<td>" + units[i] + "</td>" +
+                        "<td>" + "$$" + units[i] + "$$" + "</td>" +
                         "<td>" + values[i].toPrecision(4) + "</td>" +
                         "<td>" + errors[i].toPrecision(4) + "</td>" +
                         "<td>" + (100*errors[i]/values[i]).toPrecision(4)  + "</td>"

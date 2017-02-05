@@ -1,6 +1,8 @@
+from __future__ import print_function
 from utilities import parseData, computeCircuit, residuals
 from scipy.optimize import leastsq
 import numpy as np
+import sys
 
 def equivalent_circuit(data, circuit_string, initial_guess):
     """ Fits an equivalent circuit to data
@@ -40,7 +42,7 @@ def equivalent_circuit(data, circuit_string, initial_guess):
     p_values, covar, info, errmsg, ier = leastsq(residuals, initial_guess, args=(zrzi, f, circuit_string), maxfev=100000, ftol=1E-13,  full_output=True)
 
     p_error = []
-    if covar.any():
+    if ier in [1,2,3,4]:
         s_sq = ((residuals(p_values, zrzi, f, circuit_string)**2).sum())/(len(zrzi) - len(p_values))
         p_cov = covar * s_sq
         for i, __ in enumerate(covar):

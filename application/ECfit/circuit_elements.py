@@ -54,13 +54,31 @@ def R(p, f):
 def C(p, f):
     """ defines a capacitor
 
+    Parameters
+    ----------
+
+    p : list of floats
+        parameter values
+
+    f : list of floats
+        frequencies
+
+    Returns
+    -------
+
+    Z : array of complex floats
+        impedance of a capacitor
+
     .. math::
 
         Z = \\frac{1}{C \\times j 2 \\pi f}
 
      """
-    f = np.array(f)
-    return 1.0/(p[0]*1j*2*np.pi*f)
+
+    omega = 2*np.pi*np.array(f)
+    C = p[0]
+
+    return 1.0/(C*1j*omega)
 
 
 def W(p, f):
@@ -74,10 +92,12 @@ def W(p, f):
     where :math:`R` = p[0] (Ohms) and :math:`T` = p[1] (sec) = :math:`\\frac{L^2}{D}`
 
     """
-    f = np.array(f)
-    fx = np.vectorize(lambda y: p[0]/(np.sqrt(p[1]*1j*2*np.pi*y)*cmath.tanh(np.sqrt(p[1]*1j*2*np.pi*y))))
-    z = fx(f)
-    return z
+
+    omega = 2*np.pi*np.array(f)
+
+    Warburg = np.vectorize(lambda y: p[0]/(np.sqrt(p[1]*1j*y)*cmath.tanh(np.sqrt(p[1]*1j*y))))
+
+    return Warburg(omega)
 
 
 def E(p, f):
@@ -92,7 +112,12 @@ def E(p, f):
     where :math:`C` = p[0] is the capacitance and :math:`n` = p[1] is the exponential factor
 
     """
-    return np.array([1.0/(p[0]*(1j*2*np.pi*w)**p[1]) for w in f])
+
+    omega = 2*np.pi*np.array(f)
+    Q = p[0]
+    n = p[1]
+
+    return 1.0/(Q*(1j*omega)**n)
 
 
 def G(p, f):
@@ -105,4 +130,9 @@ def G(p, f):
         Z = \\frac{1}{Y \\times \\sqrt{K + j 2 \\pi f }}
 
      """
-    return np.array([1.0/(p[0]*np.sqrt(p[1] + 1j*2*np.pi*w)) for w in f])
+
+    omega = 2*np.pi*np.array(f)
+    Z0 = p[0]
+    k = p[1]
+
+    return Z0/np.sqrt(k + 1j*omega)

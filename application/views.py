@@ -6,7 +6,7 @@ import sys, os
 import pandas as pd
 import numpy as np
 import json
-import EC.fit
+import ECfit.fit
 
 @application.route('/', methods=['GET'])
 def index():
@@ -100,7 +100,9 @@ def fitCircuit():
 
 @application.route('/fitPhysics', methods=['POST'])
 def fitPhysics():
-    """ fits physics model """
+    """ fits physics model
+
+    """
     data = request.values["data"].split(',')
     f = [float(f) for f in data[::3]]
     real = [float(r) for r in data[1::3]]
@@ -170,3 +172,7 @@ def to_array(input):
     col2 = [float(x) for x in input.split(',')[2:-1:3]]
 
     return zip(col0, col1,col2)
+
+def unpack_request(data):
+    TODO = True
+    return TODO
