@@ -861,7 +861,7 @@
                             success: function(response) {
                                 addData(response.pbFit, id, name, data);
                                 createParameterTab(id, name, response.names, response.units, response.values, response.errors);
-                                populateModule(response.results, response.simulations, response.names, data);
+                                populateModule(response.results, response.simulations, response.names, data, response.exp_data);
                                 addP2dexploreButton();
                                 MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
                             },
@@ -1318,11 +1318,11 @@
                     .x(function(d) { return xScale_ph( d[0] ); })
                     .y(function(d) { return yScale_ph( phase(d[1], d[2]) ); });
 
-                    g_ph.append("path")
-                      .datum(ec)
-                      .attr("class", id + "-fit")
-                      .attr("name", name)
-                      .attr("d", line_phase);
+                g_ph.append("path")
+                  .datum(ec)
+                  .attr("class", id + "-fit")
+                  .attr("name", name)
+                  .attr("d", line_phase);
 
                 g_mag = d3.select('#bode svg#magnitude g')
 
@@ -1370,7 +1370,7 @@
         </script>
 
         <script type="text/javascript">
-            function populateModule(sorted_results, simulations, names, data) {
+            function populateModule(sorted_results, simulations, names, data, exp_data) {
 
                 outerWidth = $(window).width()*.98/3;
                 outerHeight = $(window).height()*.9;
@@ -1437,14 +1437,6 @@
                 var g_nyq = svg_nyq.select("g")
                     .attr("transform", "translate(" + margin.left + "," + (margin.top) +  ")");
 
-                // var tooltip_ph = g_ph.append("div")
-                //     .attr("class", "tooltip")
-                //     .style("opacity", 0);
-                //
-                // var tooltip_mag = g_mag.append("div")
-                //     .attr("class", "tooltip")
-                //     .style("opacity", 0);
-
                 g_res.select(".x.axis")
                     .attr('transform', 'translate(0,' + height + margin.bottom + ')')
                     .call(xAxis_res)
@@ -1452,7 +1444,6 @@
                 g_res.select(".y.axis")
                     .attr('transform', 'translate(0,' + 0 + ')')
                     .call(yAxis_res)
-
 
                 g_res.append("text")
                     .attr("class", "label")
@@ -1536,8 +1527,6 @@
 
                           last_p = parameters
 
-                          MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-
                         })
                         .on("mouseout", function(d) {
                             d3.select(this).transition().duration(150).style("fill", "#009688");
@@ -1576,21 +1565,23 @@
                         .x(function(d) { return xScale_nyq(d.real/scale); })
                         .y(function(d) { return yScale_nyq(d.imag/scale); });
 
-                    g_nyq.selectAll("path")
-                      .datum(impedance)
-                      .attr("class", "p2d-fit")
-                      .transition().duration(100)
-                      .attr("d", line);
+                    d3.selectAll('.p2d-fit').remove();
+
+                    g_nyq.append("path")
+                        .datum(impedance)
+                        .attr("class", "p2d-fit")
+                        .transition().duration(100)
+                        .attr("d", line);
 
                     impedances
-                            .enter().append("circle")
-                            .attr("class", "circles")
-                            .attr("r", 5)
+                        .enter().append("circle")
+                        .attr("class", "circles")
+                        .attr("r", 5)
 
                     impedances
-                            .transition().duration(100)
-                            .attr("cx", function(d) {return xScale_nyq(d.real/scale)})
-                            .attr("cy", function(d) { return yScale_nyq(d.imag/scale)})
+                        .transition().duration(100)
+                        .attr("cx", function(d) {return xScale_nyq(d.real/scale)})
+                        .attr("cy", function(d) { return yScale_nyq(d.imag/scale)})
 
                     impedances
                         .exit().remove();
