@@ -1,7 +1,6 @@
 To Do
 ======
 
-- [ ] Allow  fitting of multiple models
 - [ ] Add residual plots
 - [ ] Write up usage documentation
 - [ ] Develop tutorial for using
@@ -18,3 +17,4 @@ To Do
         - Measurement Model?
 - [x] Change model fitting (physics-based)
     - scale by ohmic resistance
+- [x] Allow  fitting of multiple models

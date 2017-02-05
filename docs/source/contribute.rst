@@ -59,37 +59,18 @@ ImpedanceAnalyzer's structure is a Flask application with the structure shown be
         requirements.txt    <-- list of python packages used to setup environment
 
 Flask API
+^^^^^^^^^
 
-..http:get:: / or /index
+The views module contains the routing structure for the flask application
 
-    The main webpage template
+.. automodule:: application.views
+    :members:
 
-..http:post:: / or /index
 
-    **POST *request* parameters**
-        *accessed by views.py using request.values dictionary*
+Functions for Model Fitting
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-        - "data": uploaded data from user file
-        - "example": name of selected example file
-        - "models": list of model objects to be fit
-            - each model object contains:
-                - name: "p2d, randles, etc."
-                - type: "pb or ec"
-                - parameters: "name/circuit/initial/units"
-
-    - response contains:
-
-        - "data": experimental_data
-        - "fits": array of fit objects
-            - each fit object contains:
-                - name:
-                - type:
-                - parameters:
-                - data:
-                - residuals (pb only)
-                - simulations (pb only)
-
-At the heart of ImpedanceAnalyzer is the application package:
+At the heart of ImpedanceAnalyzer is the fitModels module:
 
 .. automodule:: application.fitModels
     :members:

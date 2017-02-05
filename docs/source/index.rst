@@ -20,9 +20,6 @@ Impedance Analyzer is an open-source tool for the analysis of electrochemical im
 
 It is currently hosted here: http://35.163.98.131
 
-.. autoflask:: application:application
-    :modules: application.views
-
 Indices and tables
 ===================
 
