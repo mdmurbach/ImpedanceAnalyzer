@@ -11,6 +11,11 @@
 
         <link rel="stylesheet" href="{{ url_for('static', filename='nyquist.css') }}">
 
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({
+                tex2jax: {inlineMath: [['\\(','\\)']]}
+            });
+        </script>
         <script type="text/javascript" async
           src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
         </script>
@@ -339,7 +344,7 @@
 
         <!-- Modal for defining options based on selected analyses-->
         <div class="modal fade" id="modal-analysis" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" onclick="uncheckEC();" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -596,23 +601,23 @@
             function loadModal(selected) {
                 var circuits =
                     {"randles":
-                        {"name": "Randles\'",
+                        {"name": "Randles",
                         "id": "randles",
                         "type": "ec",
                         "image": "randles.png",
                         "parameters": ["R0", "R1", "C1", "W1", "W2"],
                         "values": ["0.01", "0.005", ".1", ".0001", "200"],
-                        "units": ["Ohms", "Ohms", "F", "Ohms", "Sec"],
+                        "units": ["\\Omega", "\\Omega", "F", "\\Omega", "Sec"],
                         "circuit": "R0-p(R1,C1)-W1/W2"
                     },
                     "randles_cpe":
-                        {"name": "Randles\' w/CPE",
+                        {"name": "Randles w/CPE",
                         "id": "randles_cpe",
                         "type": "ec",
                         "image": "randles_cpe.png",
                         "parameters": ["R0", "R1", "E1", "E2", "W1", "W2"],
                         "values": ["0.01", "0.005", ".1", ".9", ".0001", "200"],
-                        "units": ["Ohms", "Ohms", "F", "1", "Ohms", "Sec"],
+                        "units": ["\\Omega", "\\Omega", "F", "1", "\\Omega", "Sec"],
                         "circuit": "R0-p(R1,E1/E2)-W1/W2"
                     },
                     "two_constant_warburg" :
@@ -622,7 +627,7 @@
                         "image": "two_time_constants.png",
                         "parameters": ["R0", "R1", "C1", "R2", "C2", "W1", "W2"],
                         "values": ["0.01", "0.005", ".1", "0.005", ".1", ".0001", "200"],
-                        "units": ["Ohms", "Ohms", "F", "Ohms", "F", "Ohms", "Sec"],
+                        "units": ["\\Omega", "\\Omega", "F", "\\Omega", "F", "\\Omega", "Sec"],
                         "circuit": "R0-p(R1,C1)-p(R2,C2)-W1/W2"
                     }
                 };
@@ -660,7 +665,8 @@
                                         "<label for='" + p + "' class='col-sm-2 control-label'>" + p + "</label>" +
                                         "<div class='col-sm-8 input-group'>" +
                                             "<input type='text' name='" + p + "' value='" + circuit.values[i] + "' class='form-control'>" +
-                                            "<div class='input-group-addon'>" + circuit.units[i] + "</div>" +
+                                            "<div class='input-group-addon'>" +
+                                            "\\(" + circuit.units[i] + "\\)" + "</div>" +
                                         "</div>" +
                                     "</div>"
                             });
@@ -729,6 +735,8 @@
 
                     $("#modal-analysis div.modal-body ul li:first").addClass('active')
                     $("#modal-analysis div.modal-body #ECtab div.tab-pane:first").addClass('active')
+
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
 
                     $('#modal-analysis').modal('show')
                 }
@@ -951,11 +959,15 @@
 
                 var rows = ""
 
+
                 if(id=='p2d') {
+
+                    var formatted_names = ["fit", "run", "a_{neg}[m^{-1}]", "a_{pos}[m^{-1}]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i0_neg[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"]
+
                     parameters.forEach(function(p, i) {
                         rows = rows +
                         "<tr>" +
-                        "<td>" + p.split('[')[0] + "</td>" +
+                        "<td>" + "$$" + formatted_names[i].split('[')[0] + "$$" + "</td>" +
                         "<td>" + "$$" + units[i] + "$$" + "</td>" +
                         "<td>" + values[i].toPrecision(4) + "</td>" +
                         "</tr>"
@@ -1517,12 +1529,14 @@
                           .data(
                               function(row) {
                               return ["name", "units", "value"].map(function(d) {
-                                  return {value: row[d]};
+                                  return {value: row[d]}; // add inline \) for MathJax
                               });
                           })
                           .html(function(d) { return d.value; });
 
                           last_p = parameters
+
+                          MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
 
                         })
                         .on("mouseout", function(d) {
