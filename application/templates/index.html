@@ -81,6 +81,14 @@
             }
         }
 
+        /* Medium devices (desktops, 992px and up) */
+        @media screen and (max-device-width: 992px) {
+
+            #grid-impedance {
+                min-height: 500px;
+            }
+        }
+
         div #grid-impedance, #grid-parameters,
         #grid-introduction, #grid-load {
             height: 100%;
@@ -1039,6 +1047,8 @@
             outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
             outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
+            if(outerHeight < 500) { outerHeight = 500};
+
             var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
             var width = outerWidth - margin.left - margin.right;
             var height = outerHeight/2 - margin.top - margin.bottom;
@@ -1271,7 +1281,9 @@
 
                 });
 
-                var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: "", p2d: "", ecid: ""})
+                nyquist_length = d3.min([outerWidth,outerHeight])
+
+                var nyquist = nyquistChart({width: nyquist_length, height: nyquist_length, ec: "", p2d: "", ecid: ""})
                     .x(function(d) { return d[1] })
                     .y(function(d) { return -d[2] });
 
@@ -1284,6 +1296,8 @@
 
                 outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
                 outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
+
+                if(outerHeight < 500) { outerHeight = 500};
 
                 var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
                 var width = outerWidth - margin.left - margin.right;
@@ -1335,11 +1349,15 @@
                     .attr("class", id + "-fit")
                     .attr("d", line_mag);
 
-              var nyquist = nyquistChart({width: outerWidth, height: outerHeight, ec: ec, p2d: "", ecid: id})
-                  .x(function(d) { return d[1] })
-                  .y(function(d) { return -d[2] });
+                nyquist_length = d3.min([outerWidth,outerHeight])
 
-              d3.select("#nyquist")
+                var nyquist = nyquistChart({width: nyquist_length, height: nyquist_length, ec: ec, p2d: "", ecid: id})
+                    .x(function(d) { return d[1] })
+                    .y(function(d) { return -d[2] });
+
+                d3.selectAll('#nyquist text.label').remove()
+
+                d3.select("#nyquist")
                   .datum(data)
                   .call(nyquist);
 
