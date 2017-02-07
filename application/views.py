@@ -1,7 +1,7 @@
 from __future__ import print_function
 from application import application
 from flask import render_template, request, jsonify, redirect, url_for
-from application.fitModels import fitP2D_matchHF
+from application.fitPhysics import fit_P2D
 import sys, os
 import pandas as pd
 import numpy as np
@@ -109,7 +109,7 @@ def fitPhysics():
     imag = [float(i) for i in data[2::3]]
     data = zip(f,real,imag)
 
-    p2dFit, sorted_results  = fitP2D_matchHF(data)
+    exp_data, p2dFit, sorted_results  = fit_P2D(data)
 
     Z = pd.read_pickle('application/static/data/25227-Z.pkl')
     Z.index = range(len(Z))
@@ -157,7 +157,7 @@ def fitPhysics():
     values = [x['value'] for x in p2d_parameters]
     errors = ['NaN' for x in p2d_parameters]
 
-    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors=errors, results=p2d_residuals, simulations=p2d_simulations)
+    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors=errors, results=p2d_residuals, simulations=p2d_simulations, exp_data=exp_data)
 
 
 def to_array(input):
