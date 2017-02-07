@@ -8,13 +8,21 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-def fitP2D_matchHF(data):
+def fit_P2D(data):
     """ Fit physics-based model by matching the hf intercept
 
     Parameters
     ----------
     data : list of tuples
         list of tuples containing (frequency, real impedance, imaginary impedance)
+
+    Returns
+    -------
+    fit_exp :
+
+    fit_result :
+
+    sorted_results :
 
     """
 
@@ -115,9 +123,10 @@ def fitP2D_matchHF(data):
     best_fit_idx = int(sorted_results['run'].iloc[0])
     Z11_model = Z.iloc[best_fit_idx, Z.columns >= min(exp_data['f'])]/sorted_results['scale'].iloc[0]
 
-    fit_model = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
     fit = zip(Z11_model.index, Z11_model.map(np.real), Z11_model.map(np.imag))
-    return fit, sorted_results.iloc[0:200]
+    exp_data = zip(to_fit.index, to_fit.real, to_fit.imag)
+
+    return exp_data, fit, sorted_results.iloc[0:200]
 
 def calculateChisquared(Zdata, Zmodel, sigma):
     """ Returns the (:math:`\\chi^2`) goodness of fit statistic
