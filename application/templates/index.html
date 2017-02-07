@@ -81,14 +81,6 @@
             }
         }
 
-        /* Medium devices (desktops, 992px and up) */
-        @media screen and (max-device-width: 992px) {
-
-            #grid-impedance {
-                min-height: 500px;
-            }
-        }
-
         div #grid-impedance, #grid-parameters,
         #grid-introduction, #grid-load {
             height: 100%;
@@ -1047,7 +1039,7 @@
             outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
             outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
-            if(outerHeight < 500) { outerHeight = 500};
+            if(outerHeight == 0) { outerHeight = 500};
 
             var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
             var width = outerWidth - margin.left - margin.right;
@@ -1297,7 +1289,7 @@
                 outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
                 outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
-                if(outerHeight < 500) { outerHeight = 500};
+                // if(outerHeight < 500) { outerHeight = 500};
 
                 var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
                 var width = outerWidth - margin.left - margin.right;
