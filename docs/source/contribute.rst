@@ -66,11 +66,24 @@ The views module contains the routing structure for the flask application
 .. automodule:: application.views
     :members:
 
-
 Functions for Model Fitting
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
+At the heart of ImpedanceAnalyzer is the ability to fit models to data:
 
-At the heart of ImpedanceAnalyzer is the fitModels module:
+Physics-based Models
+^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: application.fitModels
+.. automodule:: application.fitPhysics
+    :members:
+
+Equivalent Circuit Models
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: application.ECfit.fit
+    :members:
+
+.. automodule:: application.ECfit.circuit_elements
+    :members:
+
+.. automodule:: application.ECfit.utilities
     :members:
