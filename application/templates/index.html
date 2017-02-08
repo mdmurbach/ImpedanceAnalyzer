@@ -526,7 +526,8 @@
                     </div>
                 </div>
                 <div class="col-md-4" id="grid-parameters">
-                    <h4>  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
+                    <h4 style="display: inline-block;">  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
+                    <button id="btn-download" class="btn btn-small pull-right hidden" onclick="download_csv()">Download Results</button>
                     <ul class="nav nav-tabs" role="tablist">
                         <!-- filled in after ajax request -->
                     </ul>
@@ -769,7 +770,7 @@
                         cache: false,
                         success: function(response) {
                             initializeCharts(response.data);
-                            plotModels(response.data);
+                            var results = plotModels(response.data);
                         },
                         error: function(error) {
                             console.log(error);
@@ -782,7 +783,7 @@
                             filename: filename
                         },function(response) {
                             initializeCharts(response.data);
-                            plotModels(response.data);
+                            var results = plotModels(response.data);
                         }
                     );
                 };
@@ -791,10 +792,15 @@
 
                     var models = $('#modal-analysis div.modal-body #ECtab .tab-pane').toArray()
 
+                    results = []
+
                     while(models.length > 0) {
                         model = models.shift();
-                        makeRequest(model, data);
+                        var result = makeRequest(model, data);
+                        results.push(result);
                     }
+
+                    return results
                 };
 
                 function makeRequest(model, data) {
@@ -806,6 +812,8 @@
 
                     var example = 'true'
                     var filename = $('#exampleselect option:selected')[0].value
+
+                    var result = ""
 
                     if (modelType == "ec") {
 
@@ -840,6 +848,12 @@
                                 addData(response.ecFit, id, name, data);
                                 createParameterTab(id, name, response.names, units.split(','), response.values, response.errors);
                                 MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+                                show_download();
+                                result =  { model: name,
+                                            names: response.names,
+                                            units: units.split(','),
+                                            values: response.values,
+                                            errors: response.errors};
                             },
                             error: function(error) {
                                 console.log(error);
@@ -864,12 +878,19 @@
                                 populateModule(response.results, response.simulations, response.names, data, response.exp_data);
                                 addP2dexploreButton();
                                 MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+                                result =  { model: name,
+                                            names: response.names,
+                                            units: response.units,
+                                            values: response.values,
+                                            errors: response.errors};
+                                show_download();
                             },
                             error: function(error) {
                                 console.log(error);
                             }
                         });
                     }
+                    return result
                 }
             }
 
@@ -902,6 +923,43 @@
                 var exampleSelected = $('#exampleselect option:selected')[0].value != "null"
                 if(!exampleSelected) {
                     $('#plot_btn').prop('disabled', true);
+                }
+            }
+
+            function show_download() {
+                $('#btn-download').removeClass('hidden')
+            }
+
+            function download_csv() {
+                console.log("Downloading!");
+
+                var csv = 'data:text/csv;charset=utf-8,'
+
+                results.forEach(function(result) {
+                    csv += result.model + "\n"
+
+                    csv += "Parameter,Units,Value,Error Estimate\n"
+
+                    for (p = 0; p < result.names.length; p++) {
+                        row = result.names[p] + ',' + result.units[p] + ',' +
+                              result.values[p] + ',' + result.errors[p] + "\n"
+                        csv += row
+                    }
+                    csv += "\n"
+                })
+
+                var encodedUri = encodeURI(csv)
+
+                var link = document.createElement('a');
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "data.csv");
+
+                if (typeof link.download != "undefined") {
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.appendChild(link);
+                } else {
+                    alert('Unable to download using this browser')
                 }
             }
         </script>
