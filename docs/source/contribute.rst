@@ -82,8 +82,9 @@ Equivalent Circuit Models
 .. automodule:: application.ECfit.fit
     :members:
 
-.. automodule:: application.ECfit.circuit_elements
+.. automodule:: application.ECfit.utilities
     :members:
 
-.. automodule:: application.ECfit.utilities
+Circuit elements can be added to the circuit_elements.py
+.. automodule:: application.ECfit.circuit_elements
     :members:

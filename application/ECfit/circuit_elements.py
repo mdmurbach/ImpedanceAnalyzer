@@ -1,13 +1,10 @@
+from __future__ import print_function
 import numpy as np
 import cmath
+import sys
 
 def s(series):
     """ sums elements in series
-
-    Parameters
-    ----------
-
-    series : list of circuit elements to be summed
 
     Notes
     ---------
@@ -54,21 +51,6 @@ def R(p, f):
 def C(p, f):
     """ defines a capacitor
 
-    Parameters
-    ----------
-
-    p : list of floats
-        parameter values
-
-    f : list of floats
-        frequencies
-
-    Returns
-    -------
-
-    Z : array of complex floats
-        impedance of a capacitor
-
     .. math::
 
         Z = \\frac{1}{C \\times j 2 \\pi f}
@@ -82,7 +64,7 @@ def C(p, f):
 
 
 def W(p, f):
-    """ defines a Finite-length Warburg Element
+    """ defines a blocked boundary Finite-length Warburg Element
 
     Notes
     ---------
@@ -95,29 +77,58 @@ def W(p, f):
 
     omega = 2*np.pi*np.array(f)
 
-    Warburg = np.vectorize(lambda y: p[0]/(np.sqrt(p[1]*1j*y)*cmath.tanh(np.sqrt(p[1]*1j*y))))
 
-    return Warburg(omega)
 
+    Zw = np.vectorize(lambda y: p[0]/(np.sqrt(p[1]*1j*y)*cmath.tanh(np.sqrt(p[1]*1j*y))))
+
+    return Zw(omega)
+
+def A(p, f):
+    """ defines a semi-infinite Warburg element
+
+    """
+
+    omega = 2*np.pi*np.array(f)
+    Aw = p[0]
+
+    Zw = Aw*(1-1j)*np.sqrt(omega)
+
+    return Zw
 
 def E(p, f):
     """ defines a constant phase element
 
     Notes
-    ---------
+    -----
     .. math::
 
-        Z = \\frac{1}{C \\times (j 2 \\pi f)^n}
+        Z = \\frac{1}{Q \\times (j \\omega)^\\alpha}
 
-    where :math:`C` = p[0] is the capacitance and :math:`n` = p[1] is the exponential factor
+    where :math:`Q` = p[0] and :math:`\\alpha` = p[1]. [1]_
+
+    References
+    ----------
+    .. [1] Equation (13.1) from Orazem, M. E. & Tribollet, B. Electrochemical impedance spectroscopy. (Wiley, 2008).
 
     """
 
+    # Parameters
+    # ----------
+    # p : list
+    #     parameters for the circuit element
+    # f : list
+    #     frequencies for calculating the element impedance
+    #
+    # Returns
+    # -------
+    # Z : array
+    #     impedance of the circuit element with the given parameters and frequency
+
     omega = 2*np.pi*np.array(f)
     Q = p[0]
-    n = p[1]
+    alpha = p[1]
 
-    return 1.0/(Q*(1j*omega)**n)
+    return 1.0/(Q*(1j*omega)**alpha)
 
 
 def G(p, f):
