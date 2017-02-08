@@ -526,8 +526,10 @@
                     </div>
                 </div>
                 <div class="col-md-4" id="grid-parameters">
-                    <h4 style="display: inline-block;">  Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h3>
-                    <button id="btn-download" class="btn btn-small pull-right hidden" onclick="download_csv()">Download Results</button>
+                    <span style="display: inline-block; width: 100%">
+                        <h4 style="display: inline-block;">Parameter Estimates<i class="glyphicon glyphicon-question-sign" id="info-parameters" data-toggle="tooltip" title="Additional information" aria-hidden="true"></i></h4>
+                        <button id="btn-download" class="btn btn-sm pull-right hidden" style="position: absolute; right: 5%; transform: translateY(25%);" onclick="download_csv()">Download Results</button>
+                    </span>
                     <ul class="nav nav-tabs" role="tablist">
                         <!-- filled in after ajax request -->
                     </ul>
@@ -959,7 +961,7 @@
                     link.click();
                     document.body.appendChild(link);
                 } else {
-                    alert('Unable to download using this browser')
+                    alert('Unable to download using this browser. Please try using Firefox.')
                 }
             }
         </script>
