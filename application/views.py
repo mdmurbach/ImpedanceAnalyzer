@@ -159,7 +159,7 @@ def fitPhysics():
                        "sensitivity": "x"})
 
     for i, parameter in enumerate(param_Series.index):
-        if parameter.split('[')[0] not in parameters_to_skip:
+        if parameter.split('[')[0] not in to_skip:
             parameters.append({"name": parameter.split('[')[0],
                                "units": parameter.split('[')[-1].strip("]"),
                                "value": param_Series.iloc[i],
