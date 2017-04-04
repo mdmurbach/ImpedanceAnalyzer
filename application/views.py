@@ -90,7 +90,7 @@ def fitCircuit():
     f = [float(f) for f in data[::3]]
     real = [float(r) for r in data[1::3]]
     imag = [float(i) for i in data[2::3]]
-    data = list(zip(f,real,imag))
+    data = list(zip(f, real, imag))
 
     circuit = request.values["circuit"]
     p0 = request.values["p0"]
@@ -98,7 +98,9 @@ def fitCircuit():
 
     p_results, p_error, ecFit = fitEC.equivalent_circuit(data, circuit, p0)
 
-    names = [param.replace('(','').replace(')','').replace('p','') for param in circuit.replace(',', '-').replace('/', '-').split('-')]
+    params = circuit.replace(',', '-').replace('/', '-').split('-')
+    names = [param.replace('(', '').replace(')', '').replace('p', '') for param in params]
+
     return jsonify(names=names, values=p_results.tolist(), errors=p_error, ecFit=ecFit)
 
 
@@ -111,9 +113,9 @@ def fitPhysics():
     f = [float(f) for f in data[::3]]
     real = [float(r) for r in data[1::3]]
     imag = [float(i) for i in data[2::3]]
-    data = list(zip(f,real,imag))
+    data = list(zip(f, real, imag))
 
-    exp_data, p2dFit, sorted_results  = fit_P2D(data)
+    exp_data, p2dFit, sorted_results = fit_P2D(data)
 
     Z = pd.read_pickle('application/static/data/29000-Z.pkl')
     Z.index = range(len(Z))
@@ -130,13 +132,15 @@ def fitPhysics():
     p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
     p2d_simulations['run'] = Z.index
 
-    parameters=pd.read_csv('./application/static/data/model_runs-full.txt')
+    parameters = pd.read_csv('./application/static/data/model_runs-full.txt')
     P = parameters.loc[sorted_results['run'].map(int).values]
 
-    parameters_to_skip = ['SOC_neg', 'SOC_pos', 'cs_max_neg', 'cs_max_pos', 'epsilon_sep',
-                            'd2Udcp2_neg', 'd2Udcp2_pos', 'd3Udcp3_neg', 'd3Udcp3_pos']
+    to_skip = ['SOC_neg', 'SOC_pos', 'cs_max_neg', 'cs_max_pos',
+                          'epsilon_sep', 'd2Udcp2_neg', 'd2Udcp2_pos',
+                          'd3Udcp3_neg', 'd3Udcp3_pos']
 
-    P = P.loc[:,[c for c in P.columns if c.split('[')[0] not in parameters_to_skip]]
+    mask = [c for c in P.columns if c.split('[')[0] not in to_skip]
+    P = P.loc[:, mask]
 
     p2d_simulations['param'] = P.apply(lambda y: str(sorted_results['scale'].loc[int(y['run'])]*1e4) + ',' + ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
 
@@ -149,28 +153,37 @@ def fitPhysics():
 
     p2d_residuals = sorted_results.values.tolist()
 
-    p2d_parameters = []
-    p2d_parameters.append({"name": "fit parameter", "units": "cm^2",
-                            "value": sorted_results['scale'].iloc[0]*1e4, "sensitivity": "x"})
-
+    parameters = []
+    parameters.append({"name": "fit parameter", "units": "cm^2",
+                       "value": sorted_results['scale'].iloc[0]*1e4,
+                       "sensitivity": "x"})
 
     for i, parameter in enumerate(param_Series.index):
         if parameter.split('[')[0] not in parameters_to_skip:
-            p2d_parameters.append({"name": parameter.split('[')[0], "units": parameter.split('[')[-1].strip("]"),
-                                                    "value": param_Series.iloc[i], "sensitivity": "x"})
+            parameters.append({"name": parameter.split('[')[0],
+                               "units": parameter.split('[')[-1].strip("]"),
+                               "value": param_Series.iloc[i],
+                               "sensitivity": "x"})
 
-    names = [x['name'] for x in p2d_parameters]
-    units = [x['units'] for x in p2d_parameters]
-    values = [x['value'] for x in p2d_parameters]
-    errors = ['NaN' for x in p2d_parameters]
+    names = [x['name'] for x in parameters]
+    units = [x['units'] for x in parameters]
+    values = [x['value'] for x in parameters]
+    errors = ['NaN' for x in parameters]
 
-    return jsonify(pbFit=p2dFit, names=names, units=units, values=values, errors=errors, results=p2d_residuals, simulations=p2d_simulations, exp_data=exp_data)
+    return jsonify(pbFit=p2dFit, names=names, units=units,
+                   values=values, errors=errors, results=p2d_residuals,
+                   simulations=p2d_simulations, exp_data=exp_data)
 
 
 def to_array(input):
     """ parse strings of data from ajax requests to return
 
     """
+
+    try:
+        input = input.decode("utf-8")
+    except AttributeError:
+        pass
 
     input = input.replace('\r\n', ',')
     input = input.replace('\n', ',')
