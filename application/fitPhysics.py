@@ -140,7 +140,7 @@ def fit_P2D(data):
 
     sorted_results = results.sort_values(['residual'])
 
-    def normalize_residual(x):
+    def norm_residual(x):
         return x*100/(to_fit['mag'].mean())
 
     sorted_results['residual'] = sorted_results['residual'].map(norm_residual)
