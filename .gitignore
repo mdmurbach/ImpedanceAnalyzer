@@ -1,0 +1,14 @@
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Docs
+docs/build/*
+
+#Compiled Python
+*.pyc
+__pycache__/
+
+# To-Do Notes
+*.todo

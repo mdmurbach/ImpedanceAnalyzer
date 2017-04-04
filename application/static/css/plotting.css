@@ -1,0 +1,90 @@
+#randles-fit {
+  fill: none;
+  stroke: #FF5722;
+  stroke-width: 2px;
+}
+
+#randles_cpe-fit {
+  fill: none;
+  stroke: #673AB7;
+  stroke-width: 2px;
+}
+
+#two_constant_warburg-fit {
+  fill: none;
+  stroke: #03A9F4;
+  stroke-width: 2px;
+}
+
+#p2d-fit,
+.explore-nyquist-path {
+    fill: none;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.explore-nyquist-selected {
+    fill: none;
+    stroke-width: 2px;
+}
+
+circle.explore-nyquist-path {
+    fill: #000;
+}
+
+.error_lines {
+    fill: none;
+    stroke: #000;
+    stroke-width: 1px;
+}
+
+.randles-legend {
+    stroke: #FF5722;
+    font-family: monospace;
+}
+
+.randles_cpe-legend {
+    stroke: #673AB7;
+    font-family: monospace;
+}
+
+.two_constant_warburg-legend {
+    stroke: #03A9F4;
+    font-family: monospace;
+}
+
+.p2d-legend {
+    stroke: #000;
+    font-family: monospace;
+}
+
+.default-circle {
+    fill: #009688;
+}
+
+.selected-circle {
+    fill: #FF5722;
+}
+
+.hovered-circle {
+    fill: #21FFF5;
+}
+
+.fit_points {
+    fill: #ffffff;
+}
+
+.label {
+    font-size: 1em;
+}
+
+.axis line, .axis path {
+    shape-rendering: crispEdges;
+    stroke: black;
+    fill: none;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}

@@ -1,0 +1,48 @@
+.navbar-custom {
+    margin-bottom: 0px;
+    background-color: #009688;
+    color:#009688;
+}
+
+/*  Link colors     */
+.navbar-custom .navbar-nav > li > a {
+    color:#fff;
+    font-weight: bold;
+}
+
+.navbar-custom .navbar-nav > .active > a, .navbar-nav > .active > a:hover, .navbar-nav > .active > a:focus {
+    color: #fff;
+    background-color:transparent;
+}
+
+/* Hover background */
+.navbar-custom .navbar-nav > li > a:hover, .nav > li > a:focus {
+    text-decoration: none;
+    background-color: #B2DFDB;
+    color: #FF5722;
+    font-weight: bold;
+}
+
+.navbar-custom .navbar-brand {
+    color:#fff;
+    font-weight: bold;
+}
+.navbar-custom .navbar-toggle {
+    background-color:#eeeeee;
+}
+.navbar-custom .icon-bar {
+    background-color:#009688;
+}
+
+/*@media (min-width:768px){
+    .navbar-custom .navbar-nav > li:last-child {
+        border-left:2px solid #fff;
+    }
+}*/
+
+/*******  Footer  ***************/
+.navbar-fixed-bottom {
+    min-height: 40px;
+    background-color: #80cbc4;
+    /*border-top: 1px solid #BDBDBD;*/
+}

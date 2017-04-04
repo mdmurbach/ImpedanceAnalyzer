@@ -1,0 +1,180 @@
+/*************  Overall Grid Layout  ***********/
+
+html, body {
+    height:100%;
+}
+
+/* Medium devices (desktops, 992px and up) */
+@media screen and (min-device-width: 992px) {
+    #first-row {
+        height: 30%;
+    }
+
+    #second-row {
+        height: 70%;
+    }
+}
+
+div #grid-impedance, #grid-parameters,
+#grid-introduction, #grid-load {
+    height: 100%;
+    background-color: #FFFFFF;
+    border: 2px #BDBDBD solid;
+    padding: 0px 10px;
+    overflow-y: auto;;
+    }
+
+div #grid-impedance {
+    overflow: hidden;
+}
+
+@media screen and (max-width: 992px) {
+    #grid-parameters { padding-bottom: 40px; }
+}
+
+#grid-parameters ul {
+    font-size: .8em;
+}
+
+/***************  Modals  ******************/
+
+#exploreFitModal-dialog {
+    width: 98%;
+    height: 92%;
+    padding: 0;
+}
+
+#exploreFitModal-content {
+    height: 99%;
+}
+
+
+/*************  Parameter Tables  ************/
+table#parameter-estimates,
+table#parameter-estimates th {
+    text-align: center;
+}
+
+table#parameter-estimates td {
+    vertical-align: middle;
+}
+
+/************* Tooltips ********************/
+.tooltip {
+    position: absolute;;
+    height: 28px;
+    pointer-events: none;
+    position: absolute;
+    text-align: left;
+    padding: 7px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    opacity: .7;
+    border: 0px;
+    border-radius: 12px;
+}
+
+
+div.explore-tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 7px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    opacity: .7;
+    border: 0px;
+    border-radius: 12px;
+}
+
+
+/****** Buttons  **********/
+.btn-browse {
+    background-color: #80cbc4;
+}
+
+.btn-plot {
+
+    transition: all 0.3s ease 0s;
+    background-color: #FF5722;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.btn-plot:hover:enabled {
+    transition: all 0.3s ease 0s;
+    background-color: #FF5722;
+    font-weight: bold;
+    color: #FFFFFF;
+    -webkit-transform: scale(1.2);
+    -ms-transform: scale(1.2);
+    transform: scale(1.2);
+}
+
+.btn-next, .btn-save {
+    margin-right: 20px;
+}
+
+.button rect {
+  stroke: #ff5722;
+  stroke-width: 1px;
+}
+
+.button #gradient-start {
+/*  stop-color: #3498db; */
+  stop-color: #ff5722; /* 70% */
+  stop-opacity: 1;
+}
+
+.button #gradient-stop {
+/*  stop-color: #2980b9; */
+  stop-color: #ff5722; /* 100% */
+  stop-opacity: 1;
+}
+
+.button #gradient-start.active {
+/*  stop-color: #3cb0fd; */
+  stop-color: #ff5722; /* 40% */
+}
+
+.button #gradient-stop.active {
+/*  stop-color: #3498db; */
+  stop-color: #ff5722; /* 70% */
+}
+
+.button text {
+  font-size: 1em;
+  fill: #eee;
+  pointer-events: none;
+  text-anchor: middle;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+/************** Dropdown Menu *************/
+
+div.checkbox {
+    padding-left: 5px;
+}
+
+
+label.disabled {
+    color: #757575;
+}
+
+/*********  Help glyphicons *************/
+
+.glyphicon-question-sign {
+    font-size: .5em;
+    vertical-align: top;
+}
+
+/*********  Math Rendering *************/
+label .katex {
+    font-size: 1em !important;
+}
+
+label .katex-display {
+    text-align: right;
+    margin: 0;
+}
