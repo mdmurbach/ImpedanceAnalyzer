@@ -40,7 +40,7 @@ def fit_P2D(data_string):
     data = prepare_data(data_string)
 
     # read in all of the simulation results
-    Z = pd.read_pickle('application/static/data/29000-Z.pkl')
+    Z = pd.read_pickle('./application/static/data/29000-Z.pkl')
 
     # interpolate data to match simulated frequencies
     points_to_fit = interpolate_points(data, Z.columns)
@@ -72,7 +72,7 @@ def fit_P2D(data_string):
 
         results_array[run, 0] = run + 1
         results_array[run, 1] = scale.values[run]
-        results_array[run, 2] = avg_error
+        results_array[run, 2] = avg_error*100  # percentage
 
     results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
     results.index = results['run']
@@ -184,8 +184,15 @@ def find_hf_crossover(data, points_to_fit):
 
         points_to_fit.drop(positive_Zimag.index, inplace=True)
 
-    else:
+        hf_dict = {'mag': Zreal_hf, 'ph': 0.0,
+                   'real': Zreal_hf, 'imag': 0.0}
 
+        hf_df = pd.DataFrame(hf_dict, index=[1e5],
+                             columns=points_to_fit.columns)
+
+        points_to_fit = pd.concat([hf_df, points_to_fit])
+
+    elif max(data['f']) < 1e5:
         # Cubically extrapolate five highest frequencies to find Z_hf
         x = data['real'].iloc[0:5]
         y = data['imag'].iloc[0:5]
@@ -195,13 +202,16 @@ def find_hf_crossover(data, points_to_fit):
 
         Zreal_hf = np.real(func.r[np.real(func.r) < min(x)])
 
-    hf_dict = {'mag': Zreal_hf, 'ph': 0.0,
-               'real': Zreal_hf, 'imag': 0.0}
+        hf_dict = {'mag': Zreal_hf, 'ph': 0.0,
+                   'real': Zreal_hf, 'imag': 0.0}
 
-    hf_df = pd.DataFrame(hf_dict, index=[1e5],
-                         columns=points_to_fit.columns)
+        hf_df = pd.DataFrame(hf_dict, index=[1e5],
+                             columns=points_to_fit.columns)
 
-    points_to_fit = pd.concat([hf_df, points_to_fit])
+        points_to_fit = pd.concat([hf_df, points_to_fit])
+
+    else:
+        Zreal_hf = np.real(data[data['f'] == 1e5]['real'])
 
     return Zreal_hf, points_to_fit
 

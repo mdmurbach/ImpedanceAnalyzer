@@ -130,7 +130,7 @@ function loadModal(selected) {
 
                 // create form groups for ECtabs
                 groups = "<h5>Currently, fitting the P2D model requires no user-defined parameters.</h5>"
-                groups += "<br></br><h5>Model runs: <emph>28,645</emph></h5>"
+                groups += "<br></br><h5>Model runs: <emph>29,000(v2)</emph></h5>"
 
                 // append tab-content
                 $("#modal-analysis div.modal-body #ECtab").append(

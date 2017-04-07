@@ -156,7 +156,6 @@ def fitPhysics():
     freq = [f for f, r, i in data]
 
     Z = Z.loc[sorted_results['run'].map(int).values, mask]
-    # p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
 
     full_P = pd.read_csv('./application/static/data/model_runs.txt')
     full_P.index = full_P['run']
@@ -183,48 +182,14 @@ def fitPhysics():
 
         for p in P.columns[1:]:
             parameters.append({"name": p,
+                               "units": p.split('[')[-1].strip(']'),
                                "value": '{:.4e}'.format(P.loc[i, p])})
 
         full_results.append({"run": int(i),
                              "freq": Z.columns.values.tolist(),
-                             "real": Z.loc[i].apply(np.real).values.tolist(),
-                             "imag": Z.loc[i].apply(np.imag).values.tolist(),
+                             "real": spectrum.apply(np.real).values.tolist(),
+                             "imag": spectrum.apply(np.imag).values.tolist(),
                              "parameters": parameters})
-
-    # def format_freq_string(y):
-    #     return ','.join(Z.columns.map(str))
-    #
-    # def format_real_string(y):
-    #     return ','.join(y.map(lambda x: str(np.real(x))).values.tolist())
-    #
-    # def format_imag_string(y):
-    #     return ','.join(y.map(lambda x: str(np.imag(x))).values.tolist())
-    #
-    # p2d_simulations['real'] = Z.apply(format_real_string, axis=1)
-    # p2d_simulations['imag'] = Z.apply(format_imag_string, axis=1)
-    # p2d_simulations['freq'] = Z.apply(format_freq_string, axis=1)
-    # p2d_simulations['run'] = Z.index
-    #
-    # parameters = pd.read_csv('./application/static/data/model_runs.txt')
-    # parameters.index = parameters['run']
-    # P = parameters.loc[sorted_results['run'].map(int).values]
-    #
-    # to_skip = ['d2Udcp2_neg', 'd2Udcp2_pos', 'd3Udcp3_neg', 'd3Udcp3_pos']
-    #
-    # mask = [c for c in P.columns if c.split('[')[0] not in to_skip]
-    # P = P.loc[:, mask]
-    #
-    # def get_scale(y):
-    #     return str(sorted_results['scale'].loc[int(y['run'])]*1e4)
-    #
-    # def format_parameter_string(y):
-    #     scale = get_scale(y)
-    #     parameter_string = ','.join(y.map(lambda x: str(x)).values.tolist())
-    #     return scale + ',' + parameter_string
-    #
-    # p2d_simulations['param'] = P.apply(format_parameter_string, axis=1)
-    #
-    # p2d_simulations = p2d_simulations.values.tolist()
 
     best_fit = sorted_results['run'].iloc[0]
     param_Series = P.loc[best_fit]

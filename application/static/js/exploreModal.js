@@ -122,7 +122,13 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             impedance = full_results.find( function(data) { return data['run'] == d[0]; });
             scale = d[1];
 
-            var formatted_names = ["fit", "run", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
+            ohmicResistance = calcOhmicR(impedance);
+
+            console.log('ohmicResistance');
+            console.log(ohmicResistance/scale);
+            console.log(impedance['real'][0]/scale);
+
+            var formatted_names = ["fit[cm^2]", "run[]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
 
             parameters = get_parameters(formatted_names)
 
@@ -139,7 +145,8 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             div.html(
                 'Rank: ' + (i+1) + '<br>' +
                 'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
-                'Run: '+ d[0])
+                'Run: '+ d[0] + '<br>' +
+                'R_ohmic: ' + (ohmicResistance/scale).toPrecision(3) + ' Ohms')
                 .style("left", 0.8*width + "px")
                 .style("top", 0.8*height + "px");
 
@@ -194,17 +201,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
                 impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
-                console.log(impedance);
                 scale = d[1];
-                console.log(scale);
-
-                // parsed = [];
-                // impedance[1].split(',').forEach(function(d,j) {
-                //     parsed[j] = [+d,+impedance[2].split(',')[j],+impedance[3].split(',')[j]]
-                // })
-                //
-                // scaled = parsed.map(function(d) { return [d[0],d[1]/scale, d[2]/scale]; });
-
                 scaled = []
 
                 impedance['freq'].forEach(function(d,i) {
@@ -212,9 +209,6 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                                  impedance['real'][i]/scale,
                                  impedance['imag'][i]/scale]);
                 });
-
-                console.log('scaled');
-                console.log(scaled);
 
                 selected.push({ id:  "run-" + d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6]});
 
@@ -346,4 +340,54 @@ function createParameterTable(element, parameters) {
           });
       })
       .html(function(d) { return d.value; });
+}
+
+function calcOhmicR(impedance) {
+    parameters = impedance['parameters']
+
+    console.log(parameters);
+
+    l_neg = parameters.find(function(d) { return d.name == "l_neg[m]";}).value
+    l_sep = parameters.find(function(d) { return d.name == "l_sep[m]";}).value
+    l_pos = parameters.find(function(d) { return d.name == "l_pos[m]";}).value
+
+    epsilon_neg = parameters.find(function(d) {
+                                    return d.name == "epsilon_neg[1]";
+                                }).value
+
+    epsilon_sep = parameters.find(function(d) {
+                                    return d.name == "epsilon_sep[1]";
+                                }).value
+
+    epsilon_pos = parameters.find(function(d) {
+                                    return d.name == "epsilon_pos[1]";
+                                }).value
+
+    epsilon_f_neg = parameters.find(function(d) {
+                                    return d.name == "epsilon_f_neg[1]";
+                                }).value
+
+    epsilon_f_pos = parameters.find(function(d) {
+                                    return d.name == "epsilon_f_pos[1]";
+                                }).value
+
+    sigma_neg = parameters.find(function(d) {
+                                    return d.name == "sigma_neg[S/m]";
+                                }).value
+
+    sigma_pos = parameters.find(function(d) {
+                                    return d.name == "sigma_pos[S/m]";
+                                }).value
+
+    kappa = parameters.find(function(d) {
+                                    return d.name == "kappa_0[S/m]";
+                                }).value
+
+    r_sep = l_sep/(kappa*Math.pow(epsilon_sep,4))
+
+    r_pos = l_pos/(kappa*Math.pow(epsilon_pos,4) +      sigma_pos*Math.pow(1-epsilon_pos-epsilon_f_pos, 4))
+
+    r_neg = l_neg/(kappa*Math.pow(epsilon_neg,4) +      sigma_neg*Math.pow(1-epsilon_neg-epsilon_f_neg, 4))
+
+    return r_sep + r_pos + r_neg
 }
