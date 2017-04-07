@@ -153,15 +153,31 @@ function makeRequest(model, data) {
             contentType: false,
             cache: false,
             success: function(response) {
-                addData(response.pbFit, id, name, data, response.exp_data);
-                createParameterTab(id, name, response.names, response.units, response.values, response.errors);
-                populateModal(response.results, response.simulations, response.names, data, response.exp_data);
+
+                console.log(response.full_results);
+
+                var fit = response.fit
+                var fit_points = response.fit_points
+                var parameters = response.parameters
+
+                var names = parameters.map(function(d) {return d.name})
+                var units = parameters.map(function(d) {return d.units})
+                var values = parameters.map(function(d) {return d.value})
+
+                var results = response.results
+                var full_results = response.full_results
+
+                addData(fit, id, name, data, fit_points);
+                createParameterTab(id, name, names,  units, values, '');
+                populateModal(results, full_results, names, data, fit_points);
                 addP2dexploreButton();
+
                 result =  { model: name,
-                            names: response.names,
-                            units: response.units,
-                            values: response.values,
-                            errors: response.errors};
+                            names: names,
+                            units: units,
+                            values: values,
+                            errors: ''};
+
                 show_download();
             },
             error: function(error) {

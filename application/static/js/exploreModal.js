@@ -21,9 +21,12 @@ function addP2dexploreButton() {
 var color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
 var color_count = 0;
 
-function populateModal(sorted_results, simulations, names, data, fit_data) {
-    outerWidth = $(window).width()*.98/3;
-    outerHeight = $(window).height()*.7;
+function populateModal(sorted_results, full_results, names, data, fit_data) {
+
+    console.log(full_results);
+
+    let outerWidth = $(window).width()*0.98/3;
+    let outerHeight = $(window).height()*0.7;
 
     var size = d3.min([outerWidth,outerHeight]);
 
@@ -116,10 +119,10 @@ function populateModal(sorted_results, simulations, names, data, fit_data) {
         .attr("cy", function (d) { return yScale_res(d[2]); } )
         .attr("r", 5)
         .on("mouseover", function(d, i) {
-            impedance = simulations.find( function(data) { return data[0] == d[0]; });
+            impedance = full_results.find( function(data) { return data['run'] == d[0]; });
             scale = d[1];
 
-            var formatted_names = ["fit", "run", "a_{neg}[m^{-1}]", "a_{pos}[m^{-1}]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
+            var formatted_names = ["fit", "run", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
 
             parameters = get_parameters(formatted_names)
 
@@ -189,16 +192,29 @@ function populateModal(sorted_results, simulations, names, data, fit_data) {
                 d3.select(this).attr("id", "run-" + d[0])
                 d3.select(this).style('fill', color_list[color_count % 6]);
 
-                impedance = simulations.find( function(data) { return data[0] == d[0]; });
+                impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
+                console.log(impedance);
                 scale = d[1];
+                console.log(scale);
 
-                parsed = [];
-                impedance[1].split(',').forEach(function(d,j) {
-                    parsed[j] = [+d,+impedance[2].split(',')[j],+impedance[3].split(',')[j]]
-                })
+                // parsed = [];
+                // impedance[1].split(',').forEach(function(d,j) {
+                //     parsed[j] = [+d,+impedance[2].split(',')[j],+impedance[3].split(',')[j]]
+                // })
+                //
+                // scaled = parsed.map(function(d) { return [d[0],d[1]/scale, d[2]/scale]; });
 
-                scaled = parsed.map(function(d) { return [d[0],d[1]/scale, d[2]/scale]; });
+                scaled = []
+
+                impedance['freq'].forEach(function(d,i) {
+                    scaled.push([impedance['freq'][i],
+                                 impedance['real'][i]/scale,
+                                 impedance['imag'][i]/scale]);
+                });
+
+                console.log('scaled');
+                console.log(scaled);
 
                 selected.push({ id:  "run-" + d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6]});
 
@@ -260,25 +276,29 @@ function populateModal(sorted_results, simulations, names, data, fit_data) {
 function get_parameters(names) {
     parameters = []
 
-    names.forEach(function(d,i) {
+    console.log(impedance);
+
+    impedance['parameters'].forEach(function(d,i) {
         parameters[i] = {
-            name: "\\[" + d.split("[")[0] + "\\]",
-            units: "\\[" + d.split("[")[d.split("[").length-1].replace("]","") + "\\]",
-            value: parseFloat(impedance[4].split(',')[i]).toPrecision(4)
+            name: "\\[" + names[i].split("[")[0] + "\\]",
+            units: "\\[" + names[i].split("[")[names[i].split("[").length-1].replace("]","") + "\\]",
+            value: d['value']
         }
     })
     return parameters
 }
 
 function plot_impedance(data, scale, fit_data) {
+    console.log('fit data');
+    console.log(fit_data);
 
     impedance = [];
 
-    data[1].split(',').forEach(function(d,i) {
+    data['freq'].forEach(function(d,i) {
         impedance[i] = {
             f: +d,
-            real: +data[2].split(',')[i],
-            imag: -1*(+data[3].split(',')[i])
+            real: +data['real'][i],
+            imag: -1*(+data['imag'][i])
         }
     })
 
@@ -297,6 +317,7 @@ function plot_impedance(data, scale, fit_data) {
 
 function createParameterTable(element, parameters) {
 
+    console.log(parameters);
     d3.select(element).select("#parameter-estimates tbody").selectAll(".dataRow")
         .data(parameters)
         .enter()

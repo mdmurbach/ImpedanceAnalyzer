@@ -98,15 +98,47 @@ def fitCircuit():
 
     p_results, p_error, ecFit = fitEC.equivalent_circuit(data, circuit, p0)
 
-    params = circuit.replace(',', '-').replace('/', '-').split('-')
-    names = [param.replace('(', '').replace(')', '').replace('p', '') for param in params]
+    elements = circuit.replace(',', '-').replace('/', '-').split('-')
+    replace = {ord(x): '' for x in ['(', ')', 'p']}
+    names = [e.translate(replace) for e in elements]
 
-    return jsonify(names=names, values=p_results.tolist(), errors=p_error, ecFit=ecFit)
+    return jsonify(names=names,
+                   values=p_results.tolist(),
+                   errors=p_error,
+                   ecFit=ecFit)
 
 
 @application.route('/fitPhysics', methods=['POST'])
 def fitPhysics():
     """ fits physics model
+
+    Parameters
+    ----------
+
+    request.values["data"] : string
+        comma-separated data string
+
+    Returns
+    -------
+
+    fit : list
+        list of tuples containing the (f, Zr, Zi) of the best fit P2D model
+
+    names : list
+        list of parameter names
+
+    units : list
+
+
+    values=values,
+
+    errors=errors,
+
+    results=p2d_residuals,
+
+    simulations=p2d_simulations,
+
+    fit_points :
 
     """
     data = request.values["data"].split(',')
@@ -115,41 +147,87 @@ def fitPhysics():
     imag = [float(i) for i in data[2::3]]
     data = list(zip(f, real, imag))
 
-    exp_data, p2dFit, sorted_results = fit_P2D(data)
+    fit_points, fit, sorted_results = fit_P2D(data)
 
     Z = pd.read_pickle('application/static/data/29000-Z.pkl')
-    Z.index = range(len(Z))
 
-    mask = [f for f, r, i in p2dFit]
+    mask = [f for f, r, i in fit]
 
     freq = [f for f, r, i in data]
 
     Z = Z.loc[sorted_results['run'].map(int).values, mask]
-    p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
+    # p2d_simulations = pd.DataFrame(columns=['run', 'freq', 'real', 'imag'])
 
-    p2d_simulations['real'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.real(x))).values.tolist()), axis=1)
-    p2d_simulations['imag'] = Z.apply(lambda y: ','.join(y.map(lambda x: str(np.imag(x))).values.tolist()), axis=1)
-    p2d_simulations['freq'] = Z.apply(lambda y: ','.join(Z.columns.map(str)), axis=1)
-    p2d_simulations['run'] = Z.index
+    full_P = pd.read_csv('./application/static/data/model_runs.txt')
+    full_P.index = full_P['run']
+    P = full_P.loc[sorted_results['run'].map(int).values]
 
-    parameters = pd.read_csv('./application/static/data/model_runs-full.txt')
-    P = parameters.loc[sorted_results['run'].map(int).values]
-
-    to_skip = ['SOC_neg', 'SOC_pos', 'cs_max_neg', 'cs_max_pos',
-                          'epsilon_sep', 'd2Udcp2_neg', 'd2Udcp2_pos',
-                          'd3Udcp3_neg', 'd3Udcp3_pos']
+    to_skip = ['d2Udcp2_neg', 'd2Udcp2_pos', 'd3Udcp3_neg', 'd3Udcp3_pos']
 
     mask = [c for c in P.columns if c.split('[')[0] not in to_skip]
     P = P.loc[:, mask]
 
-    p2d_simulations['param'] = P.apply(lambda y: str(sorted_results['scale'].loc[int(y['run'])]*1e4) + ',' + ','.join(y.map(lambda x: str(x)).values.tolist()), axis=1)
+    full_results = []
 
-    p2d_simulations = p2d_simulations.values.tolist()
+    for i, spectrum in Z.iterrows():
 
-    p2d_names = ['fit parameter[cm^2]'] + (P.columns.values.tolist())
+        parameters = []
+
+        scale = sorted_results['scale'].loc[i]
+
+        parameters.append({"name": "fit parameter",
+                           "value": '{:.4e}'.format(scale*1e4)})
+
+        parameters.append({"name": "run",
+                           "value": str(P.loc[i, 'run'])})
+
+        for p in P.columns[1:]:
+            parameters.append({"name": p,
+                               "value": '{:.4e}'.format(P.loc[i, p])})
+
+        full_results.append({"run": int(i),
+                             "freq": Z.columns.values.tolist(),
+                             "real": Z.loc[i].apply(np.real).values.tolist(),
+                             "imag": Z.loc[i].apply(np.imag).values.tolist(),
+                             "parameters": parameters})
+
+    # def format_freq_string(y):
+    #     return ','.join(Z.columns.map(str))
+    #
+    # def format_real_string(y):
+    #     return ','.join(y.map(lambda x: str(np.real(x))).values.tolist())
+    #
+    # def format_imag_string(y):
+    #     return ','.join(y.map(lambda x: str(np.imag(x))).values.tolist())
+    #
+    # p2d_simulations['real'] = Z.apply(format_real_string, axis=1)
+    # p2d_simulations['imag'] = Z.apply(format_imag_string, axis=1)
+    # p2d_simulations['freq'] = Z.apply(format_freq_string, axis=1)
+    # p2d_simulations['run'] = Z.index
+    #
+    # parameters = pd.read_csv('./application/static/data/model_runs.txt')
+    # parameters.index = parameters['run']
+    # P = parameters.loc[sorted_results['run'].map(int).values]
+    #
+    # to_skip = ['d2Udcp2_neg', 'd2Udcp2_pos', 'd3Udcp3_neg', 'd3Udcp3_pos']
+    #
+    # mask = [c for c in P.columns if c.split('[')[0] not in to_skip]
+    # P = P.loc[:, mask]
+    #
+    # def get_scale(y):
+    #     return str(sorted_results['scale'].loc[int(y['run'])]*1e4)
+    #
+    # def format_parameter_string(y):
+    #     scale = get_scale(y)
+    #     parameter_string = ','.join(y.map(lambda x: str(x)).values.tolist())
+    #     return scale + ',' + parameter_string
+    #
+    # p2d_simulations['param'] = P.apply(format_parameter_string, axis=1)
+    #
+    # p2d_simulations = p2d_simulations.values.tolist()
 
     best_fit = sorted_results['run'].iloc[0]
-    param_Series = parameters.loc[best_fit]
+    param_Series = P.loc[best_fit]
 
     p2d_residuals = sorted_results.values.tolist()
 
@@ -165,14 +243,8 @@ def fitPhysics():
                                "value": param_Series.iloc[i],
                                "sensitivity": "x"})
 
-    names = [x['name'] for x in parameters]
-    units = [x['units'] for x in parameters]
-    values = [x['value'] for x in parameters]
-    errors = ['NaN' for x in parameters]
-
-    return jsonify(pbFit=p2dFit, names=names, units=units,
-                   values=values, errors=errors, results=p2d_residuals,
-                   simulations=p2d_simulations, exp_data=exp_data)
+    return jsonify(fit=fit, parameters=parameters, results=p2d_residuals,
+                   fit_points=fit_points, full_results=full_results)
 
 
 def to_array(input):
