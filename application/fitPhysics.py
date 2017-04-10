@@ -29,11 +29,8 @@ def fit_P2D(data_string):
         (frequency, real impedance, imaginary impedance) of
         the best fitting model
 
-    best_parameters : dict()
-        dictionary of best fit parameters with "name", "values", "units",
-        and "sensitivity" as keys
-
-    full_results :
+    full_results : pd.DataFrame
+        DataFrame of top fits sorted by their residual
 
 
     """
