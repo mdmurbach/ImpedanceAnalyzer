@@ -13,12 +13,14 @@ def fit_P2D(data_string):
 
     Parameters
     ----------
+
     data : list of tuples
         (frequency, real impedance, imaginary impedance) of the
         experimental data to be fit
 
     Returns
     -------
+
     fit_points : list of tuples
         (frequency, real impedance, imaginary impedance) of points
         used in the fitting of the physics-based model
