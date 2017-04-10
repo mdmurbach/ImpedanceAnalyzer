@@ -6,9 +6,12 @@
 # Docs
 docs/build/*
 
-#Compiled Python
+# Compiled Python
 *.pyc
 __pycache__/
 
 # To-Do Notes
 *.todo
+
+# Tests
+tests/.cache/*
