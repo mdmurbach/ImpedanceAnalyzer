@@ -23,8 +23,6 @@ var color_count = 0;
 
 function populateModal(sorted_results, full_results, names, data, fit_data) {
 
-    console.log(full_results);
-
     let outerWidth = $(window).width()*0.98/3;
     let outerHeight = $(window).height()*0.7;
 
@@ -124,19 +122,27 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
             ohmicResistance = calcOhmicR(impedance);
 
-            console.log('ohmicResistance');
-            console.log(ohmicResistance/scale);
-            console.log(impedance['real'][0]/scale);
-
-            var formatted_names = ["fit[cm^2]", "run[]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
-
-            parameters = get_parameters(formatted_names)
+            parameters = get_parameters(impedance)
 
             plot_impedance(impedance, scale, fit_data)
 
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("class", "hovered-circle")
             }
+
+            console.log('selected');
+            console.log(selected);
+            console.log(parameters);
+
+            // parame_table = [names, units, active, selected1..selectedN]
+
+            selected.forEach(function(selected_run, run) {
+                parameters.forEach(function(param, i) {
+                    parameters[i]['selected' + run] = selected_run['parameters'][i].value;
+                })
+            })
+
+            console.log(parameters);
 
             div.transition()
                 .duration(200)
@@ -163,21 +169,39 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                     return last_p[i].value != parameters[i].value;
                 })
 
+            var num_selected = selected.length
+            var row_range = Array.from({length: 3 + num_selected}, (v, k) => k+1);
+
+            d3.selectAll("#parameter-estimates tbody .dataRow")
+               .selectAll("td").remove()
+
             d3.selectAll("#parameter-estimates tbody .dataRow")
                .selectAll("td")
-               .data([0,1,2])
+               .data(row_range)
                .enter()
                .append("td")
+
+           var columns = ["name", "units", "value"]
+           for(i=0;i<num_selected;i++){columns.push('selected' + i)}
+
+           console.log(num_selected);
+           console.log(row_range);
+           console.log(columns);
 
            d3.selectAll("#parameter-estimates tbody .dataRow")
               .selectAll("td")
               .data(
                   function(row) {
-                  return ["name", "units", "value"].map(function(d) {
+                  return columns.map(function(d) {
                       return {value: row[d]};
                   });
               })
               .html(function(d) { return d.value; });
+
+          selected.forEach(function(selected_run, run) {
+              console.log(run);
+              $('#exploreFitModal table#parameter-estimates tr td:nth-child(' + (run+4) + ')').css('color', selected_run.color);
+          });
 
               last_p = parameters
 
@@ -201,6 +225,8 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
                 impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
+                parameters = get_parameters(impedance)
+
                 scale = d[1];
                 scaled = []
 
@@ -210,7 +236,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                                  impedance['imag'][i]/scale]);
                 });
 
-                selected.push({ id:  "run-" + d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6]});
+                selected.push({ id:  "run-" + d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6], parameters: parameters});
 
                 color_count += 1;
 
@@ -267,10 +293,11 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
     }
 }
 
-function get_parameters(names) {
-    parameters = []
+function get_parameters(impedance) {
 
-    console.log(impedance);
+    var names = ["fit[cm^2]", "run[]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
+
+    parameters = []
 
     impedance['parameters'].forEach(function(d,i) {
         parameters[i] = {
@@ -283,8 +310,6 @@ function get_parameters(names) {
 }
 
 function plot_impedance(data, scale, fit_data) {
-    console.log('fit data');
-    console.log(fit_data);
 
     impedance = [];
 
@@ -311,7 +336,6 @@ function plot_impedance(data, scale, fit_data) {
 
 function createParameterTable(element, parameters) {
 
-    console.log(parameters);
     d3.select(element).select("#parameter-estimates tbody").selectAll(".dataRow")
         .data(parameters)
         .enter()
@@ -344,8 +368,6 @@ function createParameterTable(element, parameters) {
 
 function calcOhmicR(impedance) {
     parameters = impedance['parameters']
-
-    console.log(parameters);
 
     l_neg = parameters.find(function(d) { return d.name == "l_neg[m]";}).value
     l_sep = parameters.find(function(d) { return d.name == "l_sep[m]";}).value
