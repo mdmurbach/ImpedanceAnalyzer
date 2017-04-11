@@ -1,6 +1,6 @@
 import numpy as np
 import cmath
-import sys
+
 
 def s(series):
     """ sums elements in series
@@ -15,6 +15,7 @@ def s(series):
     for elem in series:
         z += elem
     return z
+
 
 def p(parallel):
     """ adds elements in parallel
@@ -32,7 +33,6 @@ def p(parallel):
     return 1/z
 
 
-# Resistor
 def R(p, f):
     """ defines a resistor
 
@@ -46,7 +46,6 @@ def R(p, f):
     return np.array(len(f)*[p[0]])
 
 
-# Capacitor
 def C(p, f):
     """ defines a capacitor
 
@@ -76,11 +75,10 @@ def W(p, f):
 
     omega = 2*np.pi*np.array(f)
 
-
-
     Zw = np.vectorize(lambda y: p[0]/(np.sqrt(p[1]*1j*y)*cmath.tanh(np.sqrt(p[1]*1j*y))))
 
     return Zw(omega)
+
 
 def A(p, f):
     """ defines a semi-infinite Warburg element
@@ -94,6 +92,7 @@ def A(p, f):
 
     return Zw
 
+
 def E(p, f):
     """ defines a constant phase element
 
@@ -101,27 +100,10 @@ def E(p, f):
     -----
     .. math::
 
-        Z = \\frac{1}{Q \\times (j \\omega)^\\alpha}
+        Z = \\frac{1}{Q \\times (j 2 \\pi f)^\\alpha}
 
-    where :math:`Q` = p[0] and :math:`\\alpha` = p[1]. [1]_
-
-    References
-    ----------
-    .. [1] Equation (13.1) from Orazem, M. E. & Tribollet, B. Electrochemical impedance spectroscopy. (Wiley, 2008).
-
+    where :math:`Q` = p[0] and :math:`\\alpha` = p[1].
     """
-
-    # Parameters
-    # ----------
-    # p : list
-    #     parameters for the circuit element
-    # f : list
-    #     frequencies for calculating the element impedance
-    #
-    # Returns
-    # -------
-    # Z : array
-    #     impedance of the circuit element with the given parameters and frequency
 
     omega = 2*np.pi*np.array(f)
     Q = p[0]
