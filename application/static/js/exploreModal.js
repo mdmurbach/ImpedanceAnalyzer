@@ -106,8 +106,6 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
     var residuals = g_res.selectAll("circle").data(sorted_results);
 
-    var last_p = names
-
     var selected = []
 
     residuals.enter().append('circle');
@@ -122,27 +120,31 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
             ohmicResistance = calcOhmicR(impedance);
 
-            parameters = get_parameters(impedance)
+            // get names/values of parameters
+            parameters = parameter_names_units(impedance);
+
+            // add values for currently moused over run
+            impedance['parameters'].forEach(function(d,i) {
+                var run = impedance['run']
+                parameters[i].set(run.toString(), d['value']);
+            });
+
+            // add values for selected runs
+            selected.forEach(function(selected_run, run) {
+                var run = selected_run['run']
+                parameters.forEach(function(param, i) {
+                    parameters[i].set(run.toString(), selected_run['parameters'][i].value);
+                })
+            })
+
+            // update parameter table
+            updateParameterTable(parameters);
 
             plot_impedance(impedance, scale, fit_data)
 
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("class", "hovered-circle")
             }
-
-            console.log('selected');
-            console.log(selected);
-            console.log(parameters);
-
-            // parame_table = [names, units, active, selected1..selectedN]
-
-            selected.forEach(function(selected_run, run) {
-                parameters.forEach(function(param, i) {
-                    parameters[i]['selected' + run] = selected_run['parameters'][i].value;
-                })
-            })
-
-            console.log(parameters);
 
             div.transition()
                 .duration(200)
@@ -156,57 +158,6 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 .style("left", 0.8*width + "px")
                 .style("top", 0.8*height + "px");
 
-            d3.select("#parameter-estimates tbody").selectAll(".dataRow")
-                .data(parameters)
-                .enter()
-                .append("tr")
-                .attr("class", "dataRow")
-
-            d3.select("#parameter-estimates tbody").selectAll(".dataRow")
-                .data(parameters)
-                .attr("class", "dataRow")
-                .classed("info", function(d, i) {
-                    return last_p[i].value != parameters[i].value;
-                })
-
-            var num_selected = selected.length
-            var row_range = Array.from({length: 3 + num_selected}, (v, k) => k+1);
-
-            d3.selectAll("#parameter-estimates tbody .dataRow")
-               .selectAll("td").remove()
-
-            d3.selectAll("#parameter-estimates tbody .dataRow")
-               .selectAll("td")
-               .data(row_range)
-               .enter()
-               .append("td")
-
-           var columns = ["name", "units", "value"]
-           for(i=0;i<num_selected;i++){columns.push('selected' + i)}
-
-           console.log(num_selected);
-           console.log(row_range);
-           console.log(columns);
-
-           d3.selectAll("#parameter-estimates tbody .dataRow")
-              .selectAll("td")
-              .data(
-                  function(row) {
-                  return columns.map(function(d) {
-                      return {value: row[d]};
-                  });
-              })
-              .html(function(d) { return d.value; });
-
-          selected.forEach(function(selected_run, run) {
-              console.log(run);
-              $('#exploreFitModal table#parameter-estimates tr td:nth-child(' + (run+4) + ')').css('color', selected_run.color);
-          });
-
-              last_p = parameters
-
-        $('#parameter-estimates tbody td').each(function(i,d) { renderMathInElement(d); })
-
         })
         .on("mouseout", function(d) {
             if (d3.select(this).attr('class') != 'selected-circle') {
@@ -214,6 +165,20 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             }
             window.nyquistExplore.clear('.error_lines');
             window.nyquistExplore.clear('.explore-nyquist-path');
+
+            // get names/values of parameters
+            var parameters = parameter_names_units(impedance);
+
+            // add values for selected runs
+            selected.forEach(function(selected_run, run) {
+                var run = selected_run['run']
+                parameters.forEach(function(param, i) {
+                    parameters[i].set(run.toString(), selected_run['parameters'][i].value);
+                })
+            })
+
+            // update parameter table
+            updateParameterTable(parameters);
         })
         .on("click", function(d, i) {
 
@@ -225,8 +190,6 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
                 impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
-                parameters = get_parameters(impedance)
-
                 scale = d[1];
                 scaled = []
 
@@ -236,7 +199,15 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                                  impedance['imag'][i]/scale]);
                 });
 
-                selected.push({ id:  "run-" + d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6], parameters: parameters});
+                var selected_parameters = []
+
+                impedance['parameters'].forEach(function(d,i) {
+                    selected_parameters[i] = {
+                        value: d['value']
+                    }
+                })
+
+                selected.push({ id:  "run-" + d[0], run: d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6], parameters: selected_parameters});
 
                 color_count += 1;
 
@@ -255,6 +226,20 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             selected.forEach(function(d,i) {
                 window.nyquistExplore.addModel(d.data, "explore-nyquist-selected", d.id, d.color)
             });
+
+            // get names/values of parameters
+            var parameters = parameter_names_units(impedance);
+
+            // add values for selected runs
+            selected.forEach(function(selected_run, run) {
+                var run = selected_run['run']
+                parameters.forEach(function(param, i) {
+                    parameters[i].set(run.toString(), selected_run['parameters'][i].value);
+                })
+            })
+
+            // update parameter table
+            updateParameterTable(parameters);
 
             d3.select("#explore-nyquist svg").selectAll("text#legend").remove();
 
@@ -293,21 +278,68 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
     }
 }
 
-function get_parameters(impedance) {
-
+function parameter_names_units(impedance) {
     var names = ["fit[cm^2]", "run[]", "l_{neg}[m]", "l_{sep}[m]", "l_{pos}[m]", "R_{p,neg}[m]", "R_{p,pos}[m]", "\\epsilon_{f,neg}[1]", "\\epsilon_{f,pos}[1]", "\\epsilon_{neg}[1]", "\\epsilon_{sep}[1]", "\\epsilon_{pos}[1]", "C_{dl,neg}[{\\mu}F/cm^2]", "C_{dl,pos}[{\\mu}F/cm^2]", "c_0[mol/m^3]", "D[m^2/s]", "D_{s,neg}[m^2/s]", "D_{s,pos}[m^2/s]", "i_{0,neg}[A/m^2]", "i_{0,pos}[A/m^2]", "t_+^0[1]", "\\alpha_{a,neg}[1]", "\\alpha_{a,pos}[1]", "\\kappa_0[S/m]", "\\sigma_{neg}[S/m]", "\\sigma_{pos}[S/m]", "{\\frac{dU}{dc_p}\\bigg|_{neg}}[V*cm^3/mol]", "{\\frac{dU}{dc_p}\\bigg|_{pos}}[V*cm^3/mol]"];
 
     parameters = []
 
-    impedance['parameters'].forEach(function(d,i) {
-        parameters[i] = {
-            name: "\\[" + names[i].split("[")[0] + "\\]",
-            units: "\\[" + names[i].split("[")[names[i].split("[").length-1].replace("]","") + "\\]",
-            value: d['value']
-        }
+    names.forEach(function(d,i) {
+        var p = new Map();
+
+        p.set('name', "\\[" + d.split("[")[0] + "\\]")
+        p.set('units', "\\[" + d.split("[")[d.split("[").length-1].replace("]","") + "\\]")
+
+        parameters[i] = p
     })
     return parameters
 }
+
+function updateParameterTable(parameters) {
+
+    var columns = Array.from(parameters[0].keys());
+
+    var num_cols = columns.length;
+    var col_range = Array.from({length: num_cols}, (v, k) => k+1);
+
+    d3.select("#parameter-estimates tbody .table-header").selectAll('th').remove()
+
+    d3.select("#parameter-estimates tbody .table-header").selectAll('th')
+        .data(columns)
+        .enter()
+        .append("th")
+        .html(function(d) { return d; });
+
+    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+        .data(parameters)
+        .enter()
+        .append("tr")
+        .attr("class", "dataRow");
+
+    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+        .data(parameters)
+        .attr("class", "dataRow");
+
+    d3.selectAll("#parameter-estimates tbody .dataRow")
+        .selectAll("td").remove()
+
+    d3.selectAll("#parameter-estimates tbody .dataRow")
+        .selectAll("td")
+        .data(col_range)
+        .enter()
+        .append("td")
+
+    d3.selectAll("#parameter-estimates tbody .dataRow")
+        .selectAll("td")
+        .data(
+            function(row) {
+                return columns.map(function(d) {
+                    return {value: row.get(d)};
+            })
+        })
+        .html(function(d) { return d.value; });
+
+    $('#parameter-estimates tbody td').each(function(i,d) { renderMathInElement(d); })
+};
 
 function plot_impedance(data, scale, fit_data) {
 
@@ -345,9 +377,9 @@ function createParameterTable(element, parameters) {
     d3.select("#parameter-estimates tbody").selectAll(".dataRow")
         .data(parameters)
         .attr("class", "dataRow")
-        .classed("info", function(d, i) {
-            return last_p[i].value != parameters[i].value;
-        })
+        // .classed("info", function(d, i) {
+        //     return last_p[i].value != parameters[i].value;
+        // })
 
     d3.selectAll("#parameter-estimates tbody .dataRow")
        .selectAll("td")
