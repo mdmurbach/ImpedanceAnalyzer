@@ -138,7 +138,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             })
 
             // update parameter table
-            updateParameterTable(parameters);
+            updateParameterTable(parameters, selected);
 
             plot_impedance(impedance, scale, fit_data)
 
@@ -178,7 +178,8 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             })
 
             // update parameter table
-            updateParameterTable(parameters);
+            updateParameterTable(parameters, selected);
+
         })
         .on("click", function(d, i) {
 
@@ -239,7 +240,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             })
 
             // update parameter table
-            updateParameterTable(parameters);
+            updateParameterTable(parameters, selected);
 
             d3.select("#explore-nyquist svg").selectAll("text#legend").remove();
 
@@ -294,7 +295,7 @@ function parameter_names_units(impedance) {
     return parameters
 }
 
-function updateParameterTable(parameters) {
+function updateParameterTable(parameters, selected) {
 
     var columns = Array.from(parameters[0].keys());
 
@@ -339,6 +340,18 @@ function updateParameterTable(parameters) {
         .html(function(d) { return d.value; });
 
     $('#parameter-estimates tbody td').each(function(i,d) { renderMathInElement(d); })
+
+    let selected_cols = d3.select("#parameter-estimates tbody .table-header").selectAll('th').filter(function(d) {return parseInt(d)})[0]
+
+    selected_cols.forEach(function(d,i) {
+        let run = parseInt(d.textContent);
+        let selected_run = selected.filter(function(d) {
+            return d.run == run
+        })[0];
+        if(selected_run) {
+            $('#exploreFitModal table#parameter-estimates tr td:nth-child(' + (i+3) + ')').css('color', selected_run.color);
+        }
+    })
 };
 
 function plot_impedance(data, scale, fit_data) {
