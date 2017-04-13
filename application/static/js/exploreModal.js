@@ -222,6 +222,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 d3.select(this)
                     // .style('fill', '#009688')
                     .attr("r", 5)
+                    .attr('stroke-width', 0)
 
                 var selected_id = d3.select(this).attr('id')
 
