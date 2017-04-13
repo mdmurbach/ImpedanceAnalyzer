@@ -89,7 +89,7 @@ def fit_P2D(data_string):
                         best_Z.map(np.real),
                         best_Z.map(np.imag)))
 
-    NUM_RESULTS = 200
+    NUM_RESULTS = 100
 
     return fit_points, best_fit, sorted_results.iloc[0:NUM_RESULTS]
 
