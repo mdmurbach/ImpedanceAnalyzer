@@ -110,15 +110,16 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
     residuals.enter().append('circle');
     residuals
-        .attr("class", "default-circle")
+        // .attr("class", "default-circle")
         .attr("cx", function (d, i) { return xScale_res(i); } )
         .attr("cy", function (d) { return yScale_res(d[2]); } )
         .attr("r", 5)
+        .attr("fill", function(d) {return get_accu_color(d, full_results)})
         .on("mouseover", function(d, i) {
             impedance = full_results.find( function(data) { return data['run'] == d[0]; });
             scale = d[1];
 
-            ohmicResistance = calcOhmicR(impedance);
+            ohmicResistance = calcHFAccuracy(impedance);
 
             // get names/values of parameters
             parameters = parameter_names_units(impedance);
@@ -143,7 +144,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             plot_impedance(impedance, scale, fit_data)
 
             if (d3.select(this).attr('class') != 'selected-circle') {
-                d3.select(this).attr("class", "hovered-circle")
+                d3.select(this).attr("r", 7);
             }
 
             div.transition()
@@ -154,14 +155,14 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 'Rank: ' + (i+1) + '<br>' +
                 'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
                 'Run: '+ d[0] + '<br>' +
-                'R_ohmic: ' + (ohmicResistance/scale).toPrecision(3) + ' Ohms')
+                'HF Accuracy: ' + (ohmicResistance*100).toPrecision(3) + '%')
                 .style("left", 0.8*width + "px")
                 .style("top", 0.8*height + "px");
 
         })
         .on("mouseout", function(d) {
             if (d3.select(this).attr('class') != 'selected-circle') {
-                d3.select(this).transition().duration(150).attr("class", "default-circle");
+                d3.select(this).attr("r", 5)
             }
             window.nyquistExplore.clear('.error_lines');
             window.nyquistExplore.clear('.explore-nyquist-path');
@@ -187,7 +188,11 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("class", "selected-circle")
                 d3.select(this).attr("id", "run-" + d[0])
-                d3.select(this).style('fill', color_list[color_count % 6]);
+                d3.select(this)
+                    // .style('fill', '#009688')
+                    .attr("r", 7)
+                    .style('stroke-width', 3)
+                    .style('stroke', color_list[color_count % 6]);
 
                 impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
@@ -213,8 +218,10 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 color_count += 1;
 
             } else {
-                d3.select(this).attr("class", "default-circle")
-                d3.select(this).style('fill', '#009688');
+                d3.select(this).classed("selected-circle", false)
+                d3.select(this)
+                    // .style('fill', '#009688')
+                    .attr("r", 5)
 
                 var selected_id = d3.select(this).attr('id')
 
@@ -276,6 +283,18 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
     if (fit_data) {
         window.nyquistExplore.addPoints(fit_data, "fit_points");
+    }
+}
+
+function get_accu_color(d, full_results) {
+    impedance = full_results.find( function(data) { return data['run'] == d[0]; });
+
+    accuracy = calcHFAccuracy(impedance);
+
+    if(accuracy < 0.15) {
+        return "#009688"
+    } else {
+        return "#d0d1e6"
     }
 }
 
@@ -457,4 +476,12 @@ function calcOhmicR(impedance) {
     r_neg = l_neg/(kappa*Math.pow(epsilon_neg,4) +      sigma_neg*Math.pow(1-epsilon_neg-epsilon_f_neg, 4))
 
     return r_sep + r_pos + r_neg
+}
+
+function calcHFAccuracy(impedance) {
+
+    predicted = calcOhmicR(impedance)
+    hf_sim = impedance.real[0]
+
+    return (hf_sim - predicted)/predicted;
 }

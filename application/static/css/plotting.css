@@ -62,9 +62,9 @@ circle.explore-nyquist-path {
     fill: #009688;
 }
 
-.selected-circle {
+/*.selected-circle {
     fill: #FF5722;
-}
+}*/
 
 .hovered-circle {
     fill: #21FFF5;
