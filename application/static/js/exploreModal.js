@@ -151,11 +151,15 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 .duration(200)
                 .style("opacity", 1);
 
+            let {positive, negative} = calcCapacity(impedance, scale)
+
             div.html(
                 'Rank: ' + (i+1) + '<br>' +
                 'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
                 'Run: '+ d[0] + '<br>' +
-                'HF Accuracy: ' + (ohmicResistance*100).toPrecision(3) + '%')
+                // 'HF Accuracy: ' + (ohmicResistance*100).toPrecision(3) + '%')
+                'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
+                'Neg Capacity: ' + negative.toPrecision(4) + 'mAh')
                 .style("left", 0.8*width + "px")
                 .style("top", 0.8*height + "px");
 
@@ -376,7 +380,7 @@ function updateParameterTable(parameters, selected) {
 
 function plot_impedance(data, scale, fit_data) {
 
-    impedance = [];
+    let impedance = [];
 
     data['freq'].forEach(function(d,i) {
         impedance[i] = {
@@ -485,4 +489,36 @@ function calcHFAccuracy(impedance) {
     hf_sim = impedance.real[0]
 
     return (hf_sim - predicted)/predicted;
+}
+
+function calcCapacity(impedance, scale) {
+    parameters = impedance['parameters']
+
+    l_neg = parameters.find(function(d) { return d.name == "l_neg[m]";}).value
+    l_pos = parameters.find(function(d) { return d.name == "l_pos[m]";}).value
+
+    epsilon_neg = parameters.find(function(d) {
+                                    return d.name == "epsilon_neg[1]";
+                                }).value
+
+    epsilon_pos = parameters.find(function(d) {
+                                    return d.name == "epsilon_pos[1]";
+                                }).value
+
+    epsilon_f_neg = parameters.find(function(d) {
+                                    return d.name == "epsilon_f_neg[1]";
+                                }).value
+
+    epsilon_f_pos = parameters.find(function(d) {
+                                    return d.name == "epsilon_f_pos[1]";
+                                }).value
+
+    const volEnerCap_pos = 550; // mAh/cm^3
+    const volEnerCap_neg = 700; // mAh/cm^3
+
+    posCapacity = (1/scale)*(l_pos*100)*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
+    negCapacity = (1/scale)*(l_neg*100)*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
+
+    return {positive: posCapacity, negative: negCapacity}
+
 }
