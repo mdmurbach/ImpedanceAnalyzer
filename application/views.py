@@ -149,7 +149,7 @@ def fitPhysics():
 
     fit_points, fit, sorted_results = fit_P2D(data)
 
-    Z = pd.read_pickle('application/static/data/29000-Z.pkl')
+    Z = pd.read_pickle('application/static/data/33500-Z.pkl')
 
     mask = [f for f, r, i in fit]
 
