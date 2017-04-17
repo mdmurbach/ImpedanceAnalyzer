@@ -221,3 +221,110 @@ def magnitude(x):
 
 def phase(x):
     return np.arctan2(x['imag'], x['real'])
+
+
+def fit_P2D_by_capcity(data_string, target_capacity):
+    """ Fit physics-based model by matching the capacity
+
+    Parameters
+    ----------
+
+    data : list of tuples
+        (frequency, real impedance, imaginary impedance) of the
+        experimental data to be fit
+
+    Returns
+    -------
+
+    fit_points : list of tuples
+        (frequency, real impedance, imaginary impedance) of points
+        used in the fitting of the physics-based model
+
+    best_fit : list of tuples
+        (frequency, real impedance, imaginary impedance) of
+        the best fitting model
+
+    full_results : pd.DataFrame
+        DataFrame of top fits sorted by their residual
+
+
+    """
+
+    # transform data from string to pd.DataFrame
+    data = prepare_data(data_string)
+
+    # read in all of the simulation results
+    Z = pd.read_pickle('./application/static/data/33500-Z.pkl')
+
+    # interpolate data to match simulated frequencies
+    points_to_fit = interpolate_points(data, Z.columns)
+
+    # find the high frequency real intercept
+    Zreal_hf, points_to_fit = find_hf_crossover(data, points_to_fit)
+
+    Z_data_r = np.array(points_to_fit['real'].tolist())
+    Z_data_i = 1j*np.array(points_to_fit['imag'].tolist())
+    Z_data = Z_data_r + Z_data_i
+
+    mask = [i for i, f in enumerate(Z.columns) if f in points_to_fit.index]
+
+    results_array = np.ndarray(shape=(len(Z), 3))
+
+    TARGET_CAPACITY = 1500  # mAh
+
+    P = pd.read_csv('./application/static/data/model_runs.txt')
+    P.index = P['run']
+
+    ah_per_v = {'pos': 550, 'neg': 700}  # mAh/cm^3
+
+    def scale_by_capacity(d, target_capacity, ah_per_v):
+
+        l_pos = d['l_pos[m]']*100
+        l_neg = d['l_neg[m]']*100
+
+        e_pos = d['epsilon_pos[1]']
+        e_neg = d['epsilon_neg[1]']
+
+        e_f_pos = d['epsilon_f_pos[1]']
+        e_f_neg = d['epsilon_f_neg[1]']
+
+        scale_pos = target_capacity/(ah_per_v['pos']*l_pos*(1-e_pos-e_f_pos))
+        scale_neg = target_capacity/(ah_per_v['neg']*l_neg*(1-e_neg-e_f_neg))
+
+        return max([scale_pos, scale_neg])
+
+    scale = P.apply(scale_by_capacity, axis=1,
+                    args=(target_capacity, ah_per_v))
+
+    for run, impedance in enumerate(Z.iloc[:, mask].values):
+        scaled = impedance/(scale.iloc[run]*10**-4)
+
+        real_squared = (np.real(Z_data) - np.real(scaled))**2
+        imag_squared = (np.imag(Z_data) - np.imag(scaled))**2
+        sum_of_squares = sum(np.sqrt(real_squared + imag_squared))
+
+        avg_error = 1./len(scaled)*sum_of_squares/points_to_fit['mag'].mean()
+
+        results_array[run, 0] = run + 1
+        results_array[run, 1] = scale.iloc[run]*10**-4  # m^2
+        results_array[run, 2] = avg_error*100  # percentage
+
+    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
+    results.index = results['run']
+
+    sorted_results = results.sort_values(['residual'])
+
+    best_fit_idx = int(sorted_results['run'].iloc[0])
+    best_Z = Z.loc[best_fit_idx].iloc[mask]/sorted_results['scale'].iloc[0]
+
+    fit_points = list(zip(points_to_fit.index,
+                      points_to_fit.real,
+                      points_to_fit.imag))
+
+    best_fit = list(zip(best_Z.index,
+                        best_Z.map(np.real),
+                        best_Z.map(np.imag)))
+
+    NUM_RESULTS = 100
+
+    return fit_points, best_fit, sorted_results.iloc[0:NUM_RESULTS]
