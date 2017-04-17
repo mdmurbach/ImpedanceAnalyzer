@@ -128,8 +128,28 @@ function loadModal(selected) {
                     "</li>"
                 );
 
-                // create form groups for ECtabs
-                groups = "<h5>Currently, fitting the P2D model requires no user-defined parameters.</h5>"
+                groups =  "<div class='form-group'>" +
+                                "<label for='P2D-fitting' style='padding:15px'>" +
+                                    "Select type of fit" +
+                                "</label>" +
+                                "<div class='radio'>" +
+                                    "<label>" +
+                                    "<input type='radio' name='fittingRadio' value='hf-intercept' checked>" +
+                                    "High Frequency Intercept" +
+                                    "</label>" +
+                                "</div>" +
+                                "<div class='radio'>" +
+                                    "<label>" +
+                                    "<input type='radio' name='fittingRadio' value='capacity'>" +
+                                    "Electrode Capacity" +
+                                    "</label>" +
+                                    "<div class='input-group' style='width:50%'>" +
+                                        "<input type='text' class='form-control' name='fittingmAh' placeholder='Capacity (mAh)'>" +
+                                        "<div class='input-group-addon'>mAh</div>" +
+                                    "</div>" +
+                                "</div>" +
+                             "</div>"
+
                 groups += "<br></br><h5>Model runs: <emph>33,500(v2)</emph></h5>"
 
                 // append tab-content
@@ -137,7 +157,7 @@ function loadModal(selected) {
                     "<div class='tab-pane' id='" + model.id +
                                         "' name= '" + model.name +
                                         "' model-type='" + model.type + "'>" +
-                        "<form class='form-horizontal' id='defineECparam'>" +
+                        "<form class='form-horizontal' id='defineP2Dparam'>" +
                             groups +
                             "<div class='form-group'>" +
                                 "<button type='button' class='btn btn-primary btn-next pull-right'>Next</button>" +

@@ -155,12 +155,12 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
             div.html(
                 'Rank: ' + (i+1) + '<br>' +
-                'MSE:  ' + Math.round(d[2] * 1000)/ 1000  + '%'  + '<br>' +
+                'MSE:  ' + d[2].toPrecision(2)  + '%'  + '<br>' +
                 'Run: '+ d[0] + '<br>' +
                 // 'HF Accuracy: ' + (ohmicResistance*100).toPrecision(3) + '%')
                 'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
                 'Neg Capacity: ' + negative.toPrecision(4) + 'mAh')
-                .style("left", 0.8*width + "px")
+                .style("left", 0.6*width + "px")
                 .style("top", 0.8*height + "px");
 
         })
@@ -516,8 +516,8 @@ function calcCapacity(impedance, scale) {
     const volEnerCap_pos = 550; // mAh/cm^3
     const volEnerCap_neg = 700; // mAh/cm^3
 
-    posCapacity = (1/scale)*(l_pos*100)*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
-    negCapacity = (1/scale)*(l_neg*100)*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
+    posCapacity = (scale*10000)*(l_pos*100)*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
+    negCapacity = (scale*10000)*(l_neg*100)*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
 
     return {positive: posCapacity, negative: negCapacity}
 

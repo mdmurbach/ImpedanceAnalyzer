@@ -144,6 +144,15 @@ function makeRequest(model, data) {
         formData.append('data', data)
         formData.append('filename', filename)
 
+        let fitType = $('input[name=fittingRadio]:checked')[0].value
+
+        formData.append('fit-type', fitType)
+
+        if (fitType == 'capacity') {
+            let mAh = $('input[name=fittingmAh]')[0].value
+            formData.append('fit-mAh', mAh)
+        }
+
         $.ajax({
             url: $SCRIPT_ROOT + '/fitPhysics',
             type: "POST",
