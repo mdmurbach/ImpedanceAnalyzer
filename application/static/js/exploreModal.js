@@ -118,6 +118,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         .on("mouseover", function(d, i) {
             impedance = full_results.find( function(data) { return data['run'] == d[0]; });
             scale = d[1];
+            contact_resistance = d[3];
 
             ohmicResistance = calcHFAccuracy(impedance);
 
@@ -141,7 +142,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             // update parameter table
             updateParameterTable(parameters, selected);
 
-            plot_impedance(impedance, scale, fit_data)
+            plot_impedance(impedance, scale, contact_resistance, fit_data)
 
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("r", 7);
@@ -153,15 +154,17 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
             let {positive, negative} = calcCapacity(impedance, scale)
 
+            console.log(impedance);
             div.html(
                 'Rank: ' + (i+1) + '<br>' +
                 'MSE:  ' + d[2].toPrecision(2)  + '%'  + '<br>' +
                 'Run: '+ d[0] + '<br>' +
-                // 'HF Accuracy: ' + (ohmicResistance*100).toPrecision(3) + '%')
+                'HF Accuracy: ' + (1000*calcOhmicR(impedance)/scale).toPrecision(3) + ' mOhms' + '<br>' +
                 'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
-                'Neg Capacity: ' + negative.toPrecision(4) + 'mAh')
+                'Neg Capacity: ' + negative.toPrecision(4) + 'mAh' + '<br>' +
+                'Contact Resistance: ' + (1000*contact_resistance/scale).toPrecision(3) + ' mOhms')
                 .style("left", 0.6*width + "px")
-                .style("top", 0.8*height + "px");
+                .style("top", 0.6*height + "px");
 
         })
         .on("mouseout", function(d) {
@@ -200,12 +203,13 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
                 impedance = full_results.find( function(data) { return data['run'] == d[0]; });
 
-                scale = d[1];
+                let scale = d[1];
+                let contact_resistance = d[3];
                 scaled = []
 
                 impedance['freq'].forEach(function(d,i) {
                     scaled.push([impedance['freq'][i],
-                                 impedance['real'][i]/scale,
+                                 (impedance['real'][i] + contact_resistance)/scale,
                                  impedance['imag'][i]/scale]);
                 });
 
@@ -277,6 +281,25 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
         });
 
+        let legend_text = [{name: 'Good, Pos. Contact Res.', color: '#0571b0'},
+                           {name: 'Suspect, Pos. Contact Res.', color: '#ca0020'},
+                           {name: 'Good, Neg. Contact Res.', color: '#92c5de'},
+                           {name: 'Suspect, Neg. Contact Res.', color: '#f4a582'}]
+
+        let residual_legend = d3.select("#explore-residuals svg")
+                                .selectAll("text#legend")
+                                    .data(legend_text);
+
+        residual_legend.enter().append('text');
+
+        residual_legend
+            .attr("id", "legend")
+            .attr('x', margin.left + 5)
+            .attr('y', function(d,i) {return 5 + 20*(i+1) + "px";})
+            .text(function(d) {return d.name})
+            .style('fill', function(d) { return d.color} )
+
+
     nyquist_config = {
         outerWidth: outerWidth,
         outerHeight: outerHeight,
@@ -289,17 +312,29 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
     if (fit_data) {
         window.nyquistExplore.addPoints(fit_data, "fit_points");
     }
+
+    console.log('fit data');
+    console.log(fit_data);
 }
 
 function get_accu_color(d, full_results) {
     impedance = full_results.find( function(data) { return data['run'] == d[0]; });
+    let contact_resistance = d[3];
 
     accuracy = calcHFAccuracy(impedance);
 
     if(accuracy < 0.15) {
-        return "#009688"
+        if (contact_resistance > 0) {
+            return "#0571b0" // dark blue
+        } else {
+            return "#92c5de" // light blue
+        }
     } else {
-        return "#d0d1e6"
+        if (contact_resistance > 0) {
+            return "#ca0020" // dark red
+        } else {
+            return "#f4a582" // light red
+        }
     }
 }
 
@@ -378,14 +413,14 @@ function updateParameterTable(parameters, selected) {
     })
 };
 
-function plot_impedance(data, scale, fit_data) {
+function plot_impedance(data, scale, contact_resistance, fit_data) {
 
     let impedance = [];
 
     data['freq'].forEach(function(d,i) {
         impedance[i] = {
             f: +d,
-            real: +data['real'][i],
+            real: +data['real'][i] + contact_resistance,
             imag: -1*(+data['imag'][i])
         }
     })
@@ -488,6 +523,9 @@ function calcHFAccuracy(impedance) {
     predicted = calcOhmicR(impedance)
     hf_sim = impedance.real[0]
 
+    console.log(predicted);
+    console.log(hf_sim);
+
     return (hf_sim - predicted)/predicted;
 }
 
@@ -514,7 +552,7 @@ function calcCapacity(impedance, scale) {
                                 }).value
 
     const volEnerCap_pos = 550; // mAh/cm^3
-    const volEnerCap_neg = 700; // mAh/cm^3
+    const volEnerCap_neg = 400; // mAh/cm^3
 
     posCapacity = (scale*10000)*(l_pos*100)*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
     negCapacity = (scale*10000)*(l_neg*100)*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)

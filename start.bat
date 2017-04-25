@@ -1,1 +1,1 @@
-activate impedance-analyzer-3 && python application.py
+activate impedance-analyzer-3 && start firefox.exe localhost:5000 && python application.py

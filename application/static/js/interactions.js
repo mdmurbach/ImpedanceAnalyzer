@@ -148,7 +148,7 @@ function makeRequest(model, data) {
 
         formData.append('fit-type', fitType)
 
-        if (fitType == 'capacity') {
+        if (fitType == 'capacity' || fitType == 'cap_contact') {
             let mAh = $('input[name=fittingmAh]')[0].value
             formData.append('fit-mAh', mAh)
         }

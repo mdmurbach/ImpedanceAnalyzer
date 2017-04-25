@@ -140,17 +140,17 @@ function loadModal(selected) {
                                 "</div>" +
                                 "<div class='radio'>" +
                                     "<label>" +
-                                    "<input type='radio' name='fittingRadio' value='capacity'>" +
-                                    "Electrode Capacity" +
+                                    "<input type='radio' name='fittingRadio' value='cap_contact' checked>" +
+                                    "Capacity and Contact Resistance" +
                                     "</label>" +
                                     "<div class='input-group' style='width:50%'>" +
-                                        "<input type='text' class='form-control' name='fittingmAh' placeholder='Capacity (mAh)'>" +
+                                        "<input type='text' class='form-control' name='fittingmAh' placeholder='Capacity (mAh)' onkeypress='return event.keyCode != 13;'>" +
                                         "<div class='input-group-addon'>mAh</div>" +
                                     "</div>" +
                                 "</div>" +
                              "</div>"
 
-                groups += "<br></br><h5>Model runs: <emph>33,500(v2)</emph></h5>"
+                groups += "<br></br><h5>Model runs: <emph>36,500(v2)</emph></h5>"
 
                 // append tab-content
                 $("#modal-analysis div.modal-body #ECtab").append(

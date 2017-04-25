@@ -2,7 +2,7 @@ import sys
 import os
 from application import application
 from flask import render_template, request, jsonify
-from application.fitPhysics import fit_P2D, fit_P2D_by_capcity
+from application.fitPhysics import fit_P2D, fit_P2D_by_capacity
 import pandas as pd
 import numpy as np
 import json
@@ -149,13 +149,13 @@ def fitPhysics():
 
     fit_type = request.values["fit-type"]
 
-    if fit_type == "capacity":
+    if fit_type == "cap_contact":
         fit_mAh = float(request.values["fit-mAh"])
-        fit_points, fit, sorted_results = fit_P2D_by_capcity(data, fit_mAh)
+        fit_points, fit, sorted_results = fit_P2D_by_capacity(data, fit_mAh)
     else:
         fit_points, fit, sorted_results = fit_P2D(data)
 
-    Z = pd.read_pickle('application/static/data/33500-Z.pkl')
+    Z = pd.read_pickle('application/static/data/36500-Z.pkl')
 
     mask = [f for f, r, i in fit]
 

@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
+from scipy.optimize import leastsq
 
 
 def fit_P2D(data_string):
@@ -196,7 +197,7 @@ def find_hf_crossover(data, points_to_fit):
         x = data['real'].iloc[0:5]
         y = data['imag'].iloc[0:5]
 
-        fit = np.polyfit(x, -y, 3)
+        fit = np.polyfit(x, -y, 4)
         func = np.poly1d(fit)
 
         Zreal_hf = np.real(func.r[np.real(func.r) < min(x)])
@@ -326,5 +327,140 @@ def fit_P2D_by_capcity(data_string, target_capacity):
                         best_Z.map(np.imag)))
 
     NUM_RESULTS = 100
+
+    return fit_points, best_fit, sorted_results.iloc[0:NUM_RESULTS]
+
+
+def fit_P2D_by_capacity(data_string, target_capacity):
+    """ Fit physics-based model by matching the capacity and then sliding along real (contact resistance)
+
+    Parameters
+    ----------
+
+    data : list of tuples
+        (frequency, real impedance, imaginary impedance) of the
+        experimental data to be fit
+
+    Returns
+    -------
+
+    fit_points : list of tuples
+        (frequency, real impedance, imaginary impedance) of points
+        used in the fitting of the physics-based model
+
+    best_fit : list of tuples
+        (frequency, real impedance, imaginary impedance) of
+        the best fitting model
+
+    full_results : pd.DataFrame
+        DataFrame of top fits sorted by their residual
+
+
+    """
+
+    # transform data from string to pd.DataFrame
+    data = prepare_data(data_string)
+
+    # read in all of the simulation results
+    Z = pd.read_pickle('./application/static/data/36500-Z.pkl')
+
+    # interpolate data to match simulated frequencies
+    points_to_fit = interpolate_points(data, Z.columns)
+
+    # find the high frequency real intercept
+    Zreal_hf, points_to_fit = find_hf_crossover(data, points_to_fit)
+
+    Z_data_r = np.array(points_to_fit['real'].tolist())
+    Z_data_i = 1j*np.array(points_to_fit['imag'].tolist())
+    Z_data = Z_data_r + Z_data_i
+
+    mask = [i for i, f in enumerate(Z.columns) if f in points_to_fit.index]
+
+    results_array = np.ndarray(shape=(len(Z), 4))
+
+    TARGET_CAPACITY = 1500  # mAh
+
+    P = pd.read_csv('./application/static/data/model_runs.txt')
+    P.index = P['run']
+
+    ah_per_v = {'pos': 550, 'neg': 400}  # mAh/cm^3
+
+    def scale_by_capacity(d, target_capacity, ah_per_v):
+        """ returns the area (cm^2) for the parameter Series capacity
+        to match the target capacity
+
+        """
+
+        l_pos = d['l_pos[m]']*100  # convert to cm
+        l_neg = d['l_neg[m]']*100
+
+        e_pos = d['epsilon_pos[1]']
+        e_neg = d['epsilon_neg[1]']
+
+        e_f_pos = d['epsilon_f_pos[1]']
+        e_f_neg = d['epsilon_f_neg[1]']
+
+        scale_pos = target_capacity/(ah_per_v['pos']*l_pos*(1-e_pos-e_f_pos))
+        scale_neg = target_capacity/(ah_per_v['neg']*l_neg*(1-e_neg-e_f_neg))
+
+        return max([scale_pos, scale_neg])
+
+    scale = P.apply(scale_by_capacity, axis=1,
+                    args=(target_capacity, ah_per_v))
+
+    def contact_residual(contact_resistance, Z_model, Z_data):
+        z1d = np.zeros(Z_data.size*2, dtype=np.float64)
+        Zr = np.real(Z_model)
+        Zi = np.imag(Z_model)
+
+        z1d[0:z1d.size:2] = Zr + contact_resistance - np.real(Z_data)
+        z1d[1:z1d.size:2] = Zi - np.imag(Z_data)
+
+        return z1d
+
+    for run, impedance in enumerate(Z.iloc[:, mask].values):
+        scaled = impedance/(scale.iloc[run]*10**-4)
+
+        # contact_resistance = np.real(Z_data[0]) - np.real(scaled[0])
+        # shifted = scaled + contact_resistance
+
+        p_values, covar, _, _, ier = leastsq(contact_residual, 0,
+                                             args=(scaled, Z_data),
+                                             maxfev=100000, ftol=1E-13,
+                                             full_output=True)
+
+        contact_resistance = p_values[0]
+        shifted = scaled + contact_resistance
+
+        real_squared = (np.real(Z_data) - np.real(shifted))**2
+        imag_squared = (np.imag(Z_data) - np.imag(shifted))**2
+        sum_of_squares = sum(np.sqrt(real_squared + imag_squared))
+
+        avg_error = 1./len(shifted)*sum_of_squares/points_to_fit['mag'].mean()
+
+        results_array[run, 0] = run + 1  # run is 1-indexed
+        results_array[run, 1] = scale.iloc[run]*10**-4  # m^2
+        results_array[run, 2] = avg_error*100  # percentage
+        results_array[run, 3] = contact_resistance*(scale.iloc[run]*10**-4)
+
+    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual', 'contact_resistance'])
+    results.index = results['run']
+
+    results = results[results['contact_resistance'] > 0]
+    sorted_results = results.sort_values(['residual'])
+
+    best_fit_idx = int(sorted_results['run'].iloc[0])
+    best_Z = (Z.loc[best_fit_idx].iloc[mask] + sorted_results['contact_resistance'].iloc[0])/sorted_results['scale'].iloc[0]
+    # best_Z = sorted_results['impedance'].iloc[0]
+
+    fit_points = list(zip(points_to_fit.index,
+                      points_to_fit.real,
+                      points_to_fit.imag))
+
+    best_fit = list(zip(best_Z.index,
+                        best_Z.map(np.real),
+                        best_Z.map(np.imag)))
+
+    NUM_RESULTS = 50
 
     return fit_points, best_fit, sorted_results.iloc[0:NUM_RESULTS]
