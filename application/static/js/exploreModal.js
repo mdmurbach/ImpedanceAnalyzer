@@ -159,9 +159,9 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                 'Rank: ' + (i+1) + '<br>' +
                 'MSE:  ' + d[2].toPrecision(2)  + '%'  + '<br>' +
                 'Run: '+ d[0] + '<br>' +
-                'HF Accuracy: ' + (1000*calcOhmicR(impedance)/scale).toPrecision(3) + ' mOhms' + '<br>' +
                 'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
                 'Neg Capacity: ' + negative.toPrecision(4) + 'mAh' + '<br>' +
+                'HF Intercept: ' + (1000*calcOhmicR(impedance)/scale).toPrecision(3) + ' mOhms' + '<br>' +
                 'Contact Resistance: ' + (1000*contact_resistance/scale).toPrecision(3) + ' mOhms')
                 .style("left", 0.6*width + "px")
                 .style("top", 0.6*height + "px");
@@ -282,9 +282,9 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         });
 
         let legend_text = [{name: 'Good, Pos. Contact Res.', color: '#0571b0'},
-                           {name: 'Suspect, Pos. Contact Res.', color: '#ca0020'},
-                           {name: 'Good, Neg. Contact Res.', color: '#92c5de'},
-                           {name: 'Suspect, Neg. Contact Res.', color: '#f4a582'}]
+                           {name: 'Suspect, Pos. Contact Res.', color: '#ca0020'}]//,
+                        //    {name: 'Good, Neg. Contact Res.', color: '#92c5de'},
+                        //    {name: 'Suspect, Neg. Contact Res.', color: '#f4a582'}]
 
         let residual_legend = d3.select("#explore-residuals svg")
                                 .selectAll("text#legend")
@@ -313,8 +313,6 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         window.nyquistExplore.addPoints(fit_data, "fit_points");
     }
 
-    console.log('fit data');
-    console.log(fit_data);
 }
 
 function get_accu_color(d, full_results) {
@@ -521,10 +519,13 @@ function calcOhmicR(impedance) {
 function calcHFAccuracy(impedance) {
 
     predicted = calcOhmicR(impedance)
+
+    console.log('predicted', predicted);
+    console.log('impedance.real[0]', impedance.real[0]);
+
     hf_sim = impedance.real[0]
 
-    console.log(predicted);
-    console.log(hf_sim);
+    console.log('(hf_sim - predicted)/predicted', (hf_sim - predicted)/predicted);
 
     return (hf_sim - predicted)/predicted;
 }

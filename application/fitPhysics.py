@@ -383,7 +383,7 @@ def fit_P2D_by_capacity(data_string, target_capacity):
     P = pd.read_csv('./application/static/data/model_runs.txt')
     P.index = P['run']
 
-    ah_per_v = {'pos': 550, 'neg': 400}  # mAh/cm^3
+    ah_per_v = {'pos': 550, 'neg': 400}  # mAh/cm^3 from Nitta (2015)
 
     def scale_by_capacity(d, target_capacity, ah_per_v):
         """ returns the area (cm^2) for the parameter Series capacity

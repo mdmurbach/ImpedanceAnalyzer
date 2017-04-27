@@ -12,7 +12,7 @@ from application.ECfit import fitEC
 @application.route('/', methods=['GET'])
 def index():
     """ Impedance Analyzer Main Page """
-    return render_template('index.html', version='20171704')
+    return render_template('index.html', version='20172504')
 
 
 @application.route('/getExampleData', methods=['GET'])
