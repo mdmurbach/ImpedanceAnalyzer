@@ -12,7 +12,7 @@ from application.ECfit import fitEC
 @application.route('/', methods=['GET'])
 def index():
     """ Impedance Analyzer Main Page """
-    return render_template('index.html', version='20172504')
+    return render_template('index.html', version='20172704')
 
 
 @application.route('/getExampleData', methods=['GET'])
@@ -155,7 +155,7 @@ def fitPhysics():
     else:
         fit_points, fit, sorted_results = fit_P2D(data)
 
-    Z = pd.read_pickle('application/static/data/36500-Z.pkl')
+    Z = pd.read_pickle('application/static/data/38800-Z.pkl')
 
     mask = [f for f, r, i in fit]
 

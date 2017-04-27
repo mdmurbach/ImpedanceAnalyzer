@@ -255,7 +255,7 @@ def fit_P2D_by_capcity(data_string, target_capacity):
     data = prepare_data(data_string)
 
     # read in all of the simulation results
-    Z = pd.read_pickle('./application/static/data/33500-Z.pkl')
+    Z = pd.read_pickle('./application/static/data/38800-Z.pkl')
 
     # interpolate data to match simulated frequencies
     points_to_fit = interpolate_points(data, Z.columns)

@@ -150,7 +150,7 @@ function loadModal(selected) {
                                 "</div>" +
                              "</div>"
 
-                groups += "<br></br><h5>Model runs: <emph>36,500(v2)</emph></h5>"
+                groups += "<br></br><h5>Model runs: <emph>38,800</emph></h5>"
 
                 // append tab-content
                 $("#modal-analysis div.modal-body #ECtab").append(
