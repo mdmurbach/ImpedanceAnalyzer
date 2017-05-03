@@ -1,14 +1,15 @@
+/* Adds a button (using button.js) to the main Nyquist plot*/
 function addP2dexploreButton() {
-    var svg = d3.select("#nyquist svg")
+    let svg = d3.select("#nyquist svg")
 
-    outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
-    outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
+    let width = d3.select('#nyquist').node().getBoundingClientRect().width;
+    let height = d3.select('#nyquist').node().getBoundingClientRect().height;
 
-    var g = svg.append('g')
+    let g = svg.append('g')
         .attr('class', 'button')
-        .attr('transform', 'translate(' + outerWidth*.75 + ',' + outerHeight*.1 + ')')
+        .attr('transform', 'translate(' + width*.7 + ',' + height*.1 + ')')
 
-    var text = g.append('text')
+    let text = g.append('text')
         .text('Explore P2D Fit')
 
     button()
@@ -21,39 +22,45 @@ function addP2dexploreButton() {
 var color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
 var color_count = 0;
 
-function populateModal(sorted_results, full_results, names, data, fit_data) {
+/* Creates the residual plot, nyquist plot, and parameter table within the
+ modal for exploring the results.
+
+ @param {Array.<Object>} full_results An array containing impedance objects
+
+ */
+function populateModal(full_results, names, data, fit_data) {
 
     let outerWidth = $(window).width()*0.98/3;
     let outerHeight = $(window).height()*0.7;
 
-    var size = d3.min([outerWidth,outerHeight]);
+    let size = d3.min([outerWidth, outerHeight]);
 
-    var svg_res = d3.select('#explore-residuals').append("svg")
+    let svg_res = d3.select('#explore-residuals').append("svg")
 
-    var margin = {top: 10, right: 10, bottom: 60, left: 60};
-    var width = size - margin.left - margin.right;
-    var height = size - margin.top - margin.bottom;
+    let margin = {top: 10, right: 10, bottom: 60, left: 60};
+    let width = size - margin.left - margin.right;
+    let height = size - margin.top - margin.bottom;
 
-    var xScale_res = d3.scale.linear()
-    var yScale_res = d3.scale.linear()
+    let xScale_res = d3.scale.linear()
+    let yScale_res = d3.scale.linear()
 
-    var xAxis_res = d3.svg.axis()
+    let xAxis_res = d3.svg.axis()
         .scale(xScale_res)
         .ticks(5)
         .orient('bottom');
 
-    var yAxis_res = d3.svg.axis()
+    let yAxis_res = d3.svg.axis()
         .scale(yScale_res)
         .ticks(5)
         .orient('left');
 
     xScale_res
         .range([0, width])
-        .domain(d3.extent(sorted_results, function(d, i) { return i} ));
+        .domain(d3.extent(full_results, (d, i) => i ));
 
     yScale_res
         .range([height, 0])
-        .domain(d3.extent(sorted_results, function(d, i) { return d[2]} ));
+        .domain(d3.extent(full_results, (d, i) => d.residual ));
 
 
     // Update the outer dimensions.
@@ -61,7 +68,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         .attr("width", outerWidth)
         .attr("height", outerHeight);
 
-    var plot_res = svg_res.append("g");
+    let plot_res = svg_res.append("g");
 
     plot_res.append("g")
         .attr("class", "x axis")
@@ -73,7 +80,7 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         .attr("width", width)
         .attr("height", height);
 
-    var g_res = svg_res.select("g")
+    let g_res = svg_res.select("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     g_res.select(".x.axis")
@@ -100,33 +107,34 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         .style("text-anchor", "middle")
         .text("Avg. % Error");
 
-    var div = d3.select("#explore-residuals").append("div")
+    let div = d3.select("#explore-residuals").append("div")
         .attr("class", "explore-tooltip")
         .style("opacity", 0);
 
-    var residuals = g_res.selectAll("circle").data(sorted_results);
+    let residuals = g_res.selectAll("circle").data(full_results);
 
     var selected = []
 
     residuals.enter().append('circle');
     residuals
-        // .attr("class", "default-circle")
-        .attr("cx", function (d, i) { return xScale_res(i); } )
-        .attr("cy", function (d) { return yScale_res(d[2]); } )
+        .attr("cx", (d, i) => xScale_res(i))
+        .attr("cy", (d) => yScale_res(d.residual))
         .attr("r", 5)
-        .attr("fill", function(d) {return get_accu_color(d, full_results)})
+        .attr("fill", (d) => get_accu_color(d, full_results))
         .on("mouseover", function(d, i) {
-            impedance = full_results.find( function(data) { return data['run'] == d[0]; });
-            scale = d[1];
-            contact_resistance = d[3];
 
-            ohmicResistance = calcHFAccuracy(impedance);
+            impedance = full_results.find((data) => data['run'] == d.run);
+
+            let area = d.area;
+            let contact_resistance = d.contact_resistance;
+
+            let ohmicResistance = calcHFAccuracy(impedance);
 
             // get names/values of parameters
             parameters = parameter_names_units(impedance);
 
             // add values for currently moused over run
-            impedance['parameters'].forEach(function(d,i) {
+            impedance['parameters'].forEach((d,i) => {
                 var run = impedance['run']
                 parameters[i].set(run.toString(), d['value']);
             });
@@ -142,27 +150,23 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
             // update parameter table
             updateParameterTable(parameters, selected);
 
-            plot_impedance(impedance, scale, contact_resistance, fit_data)
+            // plot the impedance as a line
+            plot_impedance(impedance, area, contact_resistance, fit_data)
 
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("r", 7);
             }
 
-            div.transition()
-                .duration(200)
-                .style("opacity", 1);
+            let {positive, negative} = calcCapacity(impedance, area)
 
-            let {positive, negative} = calcCapacity(impedance, scale)
-
-            console.log(impedance);
             div.html(
                 'Rank: ' + (i+1) + '<br>' +
-                'MSE:  ' + d[2].toPrecision(2)  + '%'  + '<br>' +
-                'Run: '+ d[0] + '<br>' +
+                'MSE:  ' + d.residual.toPrecision(2)  + '%'  + '<br>' +
+                'Run: '+ d.run + '<br>' +
                 'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
                 'Neg Capacity: ' + negative.toPrecision(4) + 'mAh' + '<br>' +
-                'HF Intercept: ' + (1000*calcOhmicR(impedance)/scale).toPrecision(3) + ' mOhms' + '<br>' +
-                'Contact Resistance: ' + (1000*contact_resistance/scale).toPrecision(3) + ' mOhms')
+                'HF Intercept: ' + (1000*calcOhmicR(impedance)/area).toPrecision(3) + ' mOhms' + '<br>' +
+                'Contact Resistance: ' + (1000*contact_resistance/area).toPrecision(3) + ' mOhms')
                 .style("left", 0.6*width + "px")
                 .style("top", 0.6*height + "px");
 
@@ -194,23 +198,22 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 
             if (d3.select(this).attr('class') != 'selected-circle') {
                 d3.select(this).attr("class", "selected-circle")
-                d3.select(this).attr("id", "run-" + d[0])
+                d3.select(this).attr("id", "run-" + d.run)
                 d3.select(this)
-                    // .style('fill', '#009688')
                     .attr("r", 7)
                     .style('stroke-width', 3)
                     .style('stroke', color_list[color_count % 6]);
 
-                impedance = full_results.find( function(data) { return data['run'] == d[0]; });
+                impedance = full_results.find((data) => data['run'] == d.run);
 
-                let scale = d[1];
-                let contact_resistance = d[3];
+                let area = impedance.area;
+                let contact_resistance = impedance.contact_resistance;
                 scaled = []
 
                 impedance['freq'].forEach(function(d,i) {
                     scaled.push([impedance['freq'][i],
-                                 (impedance['real'][i] + contact_resistance)/scale,
-                                 impedance['imag'][i]/scale]);
+                                 (impedance['real'][i] + contact_resistance)/area,
+                                 impedance['imag'][i]/area]);
                 });
 
                 var selected_parameters = []
@@ -221,14 +224,13 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
                     }
                 })
 
-                selected.push({ id:  "run-" + d[0], run: d[0], rank: i + 1, data: scaled, color: color_list[color_count % 6], parameters: selected_parameters});
+                selected.push({ id:  "run-" + d.run, run: d.run, rank: i + 1, data: scaled, color: color_list[color_count % 6], parameters: selected_parameters});
 
                 color_count += 1;
 
             } else {
                 d3.select(this).classed("selected-circle", false)
                 d3.select(this)
-                    // .style('fill', '#009688')
                     .attr("r", 5)
                     .style('stroke-width', 0)
 
@@ -295,9 +297,9 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
         residual_legend
             .attr("id", "legend")
             .attr('x', margin.left + 5)
-            .attr('y', function(d,i) {return 5 + 20*(i+1) + "px";})
-            .text(function(d) {return d.name})
-            .style('fill', function(d) { return d.color} )
+            .attr('y', (d,i) => 5 + 20*(i+1) + "px")
+            .text((d) => d.name)
+            .style('fill', (d) => d.color)
 
 
     nyquist_config = {
@@ -316,8 +318,8 @@ function populateModal(sorted_results, full_results, names, data, fit_data) {
 }
 
 function get_accu_color(d, full_results) {
-    impedance = full_results.find( function(data) { return data['run'] == d[0]; });
-    let contact_resistance = d[3];
+    impedance = full_results.find((data) => data['run'] == d.run);
+    let contact_resistance = d.contact_resistance;
 
     accuracy = calcHFAccuracy(impedance);
 
@@ -365,7 +367,7 @@ function updateParameterTable(parameters, selected) {
         .data(columns)
         .enter()
         .append("th")
-        .html(function(d) { return d; });
+        .html((d) => d);
 
     d3.select("#parameter-estimates tbody").selectAll(".dataRow")
         .data(parameters)
@@ -411,7 +413,7 @@ function updateParameterTable(parameters, selected) {
     })
 };
 
-function plot_impedance(data, scale, contact_resistance, fit_data) {
+function plot_impedance(data, area, contact_resistance, fit_data) {
 
     let impedance = [];
 
@@ -423,15 +425,15 @@ function plot_impedance(data, scale, contact_resistance, fit_data) {
         }
     })
 
-    window.nyquistExplore.updateModel(impedance, scale, "explore-nyquist-path")
+    window.nyquistExplore.updateModel(impedance, area, "explore-nyquist-path")
 
     window.nyquistExplore.clear('.error_lines');
 
     var length = 0;
 
     impedance.forEach(function(d,i) {
-        var bisector = [{real: d.real/scale, imag: d.imag/scale}, {real: fit_data[i][1], imag: -1*fit_data[i][2]}];
-        length += Math.sqrt(Math.pow(d.real/scale - fit_data[i][1], 2) + Math.pow(d.imag/scale + fit_data[i][2], 2))
+        var bisector = [{real: d.real/area, imag: d.imag/area}, {real: fit_data[i][1], imag: -1*fit_data[i][2]}];
+        length += Math.sqrt(Math.pow(d.real/area - fit_data[i][1], 2) + Math.pow(d.imag/area + fit_data[i][2], 2))
         window.nyquistExplore.addLines(bisector, "error_lines")
     });
 }
@@ -475,37 +477,17 @@ function calcOhmicR(impedance) {
     l_sep = parameters.find(function(d) { return d.name == "l_sep[m]";}).value
     l_pos = parameters.find(function(d) { return d.name == "l_pos[m]";}).value
 
-    epsilon_neg = parameters.find(function(d) {
-                                    return d.name == "epsilon_neg[1]";
-                                }).value
+    epsilon_neg = parameters.find((d) => d.name == "epsilon_neg[1]").value
+    epsilon_sep = parameters.find((d) => d.name == "epsilon_sep[1]").value
+    epsilon_pos = parameters.find((d) => d.name == "epsilon_pos[1]").value
 
-    epsilon_sep = parameters.find(function(d) {
-                                    return d.name == "epsilon_sep[1]";
-                                }).value
+    epsilon_f_neg = parameters.find((d) => d.name == "epsilon_f_neg[1]").value
+    epsilon_f_pos = parameters.find((d) => d.name == "epsilon_f_pos[1]").value
 
-    epsilon_pos = parameters.find(function(d) {
-                                    return d.name == "epsilon_pos[1]";
-                                }).value
+    sigma_neg = parameters.find((d) => d.name == "sigma_neg[S/m]").value
+    sigma_pos = parameters.find((d) => d.name == "sigma_pos[S/m]").value
 
-    epsilon_f_neg = parameters.find(function(d) {
-                                    return d.name == "epsilon_f_neg[1]";
-                                }).value
-
-    epsilon_f_pos = parameters.find(function(d) {
-                                    return d.name == "epsilon_f_pos[1]";
-                                }).value
-
-    sigma_neg = parameters.find(function(d) {
-                                    return d.name == "sigma_neg[S/m]";
-                                }).value
-
-    sigma_pos = parameters.find(function(d) {
-                                    return d.name == "sigma_pos[S/m]";
-                                }).value
-
-    kappa = parameters.find(function(d) {
-                                    return d.name == "kappa_0[S/m]";
-                                }).value
+    kappa = parameters.find((d) => d.name == "kappa_0[S/m]").value
 
     r_sep = l_sep/(kappa*Math.pow(epsilon_sep,4))
 
@@ -520,43 +502,28 @@ function calcHFAccuracy(impedance) {
 
     predicted = calcOhmicR(impedance)
 
-    console.log('predicted', predicted);
-    console.log('impedance.real[0]', impedance.real[0]);
-
     hf_sim = impedance.real[0]
-
-    console.log('(hf_sim - predicted)/predicted', (hf_sim - predicted)/predicted);
 
     return (hf_sim - predicted)/predicted;
 }
 
-function calcCapacity(impedance, scale) {
+function calcCapacity(impedance, area) {
     parameters = impedance['parameters']
 
-    l_neg = parameters.find(function(d) { return d.name == "l_neg[m]";}).value
-    l_pos = parameters.find(function(d) { return d.name == "l_pos[m]";}).value
+    l_neg = parameters.find((d) => d.name == "l_neg[m]").value
+    l_pos = parameters.find((d) => d.name == "l_pos[m]").value
 
-    epsilon_neg = parameters.find(function(d) {
-                                    return d.name == "epsilon_neg[1]";
-                                }).value
+    epsilon_neg = parameters.find((d) => d.name == "epsilon_neg[1]").value
+    epsilon_pos = parameters.find((d) => d.name == "epsilon_pos[1]").value
 
-    epsilon_pos = parameters.find(function(d) {
-                                    return d.name == "epsilon_pos[1]";
-                                }).value
+    epsilon_f_neg = parameters.find((d) => d.name == "epsilon_f_neg[1]").value
+    epsilon_f_pos = parameters.find((d) => d.name == "epsilon_f_pos[1]").value
 
-    epsilon_f_neg = parameters.find(function(d) {
-                                    return d.name == "epsilon_f_neg[1]";
-                                }).value
+    const volEnerCap_pos = 550*10**6; // mAh/cm^3
+    const volEnerCap_neg = 400*10**6; // mAh/cm^3
 
-    epsilon_f_pos = parameters.find(function(d) {
-                                    return d.name == "epsilon_f_pos[1]";
-                                }).value
-
-    const volEnerCap_pos = 550; // mAh/cm^3
-    const volEnerCap_neg = 400; // mAh/cm^3
-
-    posCapacity = (scale*10000)*(l_pos*100)*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
-    negCapacity = (scale*10000)*(l_neg*100)*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
+    posCapacity = area*l_pos*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
+    negCapacity = area*l_neg*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
 
     return {positive: posCapacity, negative: negCapacity}
 

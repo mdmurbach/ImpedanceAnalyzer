@@ -178,7 +178,7 @@ function makeRequest(model, data) {
 
                 addData(fit, id, name, data, fit_points);
                 createParameterTab(id, name, names,  units, values, '');
-                populateModal(results, full_results, names, data, fit_points);
+                populateModal(full_results, names, data, fit_points);
                 addP2dexploreButton();
 
                 result =  { model: name,

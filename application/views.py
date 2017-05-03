@@ -178,10 +178,12 @@ def fitPhysics():
 
         parameters = []
 
-        scale = sorted_results['scale'].loc[i]
+        area = sorted_results['area'].loc[i]
+        contact_resistance = sorted_results['contact_resistance'].loc[i]
+        residual = sorted_results['residual'].loc[i]
 
         parameters.append({"name": "fit parameter",
-                           "value": '{:.4e}'.format(scale*1e4)})
+                           "value": '{:.4e}'.format(area*1e4)})
 
         parameters.append({"name": "run",
                            "value": str(P.loc[i, 'run'])})
@@ -195,7 +197,10 @@ def fitPhysics():
                              "freq": Z.columns.values.tolist(),
                              "real": spectrum.apply(np.real).values.tolist(),
                              "imag": spectrum.apply(np.imag).values.tolist(),
-                             "parameters": parameters})
+                             "parameters": parameters,
+                             "contact_resistance": contact_resistance,
+                             "area": area,
+                             "residual": residual})
 
     best_fit = sorted_results['run'].iloc[0]
     param_Series = P.loc[best_fit]
@@ -204,7 +209,7 @@ def fitPhysics():
 
     parameters = []
     parameters.append({"name": "fit parameter", "units": "cm^2",
-                       "value": sorted_results['scale'].iloc[0]*1e4,
+                       "value": sorted_results['area'].iloc[0]*1e4,
                        "sensitivity": "x"})
 
     for i, parameter in enumerate(param_Series.index):

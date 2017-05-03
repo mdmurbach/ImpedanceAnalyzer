@@ -383,7 +383,7 @@ def fit_P2D_by_capacity(data_string, target_capacity):
     P = pd.read_csv('./application/static/data/model_runs.txt')
     P.index = P['run']
 
-    ah_per_v = {'pos': 550, 'neg': 400}  # mAh/cm^3 from Nitta (2015)
+    ah_per_v = {'pos': 550*10**6, 'neg': 400*10**6}  # mAh/m^3 from Nitta (2015)
 
     def scale_by_capacity(d, target_capacity, ah_per_v):
         """ returns the area (cm^2) for the parameter Series capacity
@@ -391,8 +391,8 @@ def fit_P2D_by_capacity(data_string, target_capacity):
 
         """
 
-        l_pos = d['l_pos[m]']*100  # convert to cm
-        l_neg = d['l_neg[m]']*100
+        l_pos = d['l_pos[m]']  # convert to cm
+        l_neg = d['l_neg[m]']
 
         e_pos = d['epsilon_pos[1]']
         e_neg = d['epsilon_neg[1]']
@@ -400,13 +400,13 @@ def fit_P2D_by_capacity(data_string, target_capacity):
         e_f_pos = d['epsilon_f_pos[1]']
         e_f_neg = d['epsilon_f_neg[1]']
 
-        scale_pos = target_capacity/(ah_per_v['pos']*l_pos*(1-e_pos-e_f_pos))
-        scale_neg = target_capacity/(ah_per_v['neg']*l_neg*(1-e_neg-e_f_neg))
+        area_pos = target_capacity/(ah_per_v['pos']*l_pos*(1-e_pos-e_f_pos))
+        area_neg = target_capacity/(ah_per_v['neg']*l_neg*(1-e_neg-e_f_neg))
 
-        return max([scale_pos, scale_neg])
+        return max([area_pos, area_neg])
 
-    scale = P.apply(scale_by_capacity, axis=1,
-                    args=(target_capacity, ah_per_v))
+    area = P.apply(scale_by_capacity, axis=1,
+                   args=(target_capacity, ah_per_v))
 
     def contact_residual(contact_resistance, Z_model, Z_data):
         z1d = np.zeros(Z_data.size*2, dtype=np.float64)
@@ -419,10 +419,7 @@ def fit_P2D_by_capacity(data_string, target_capacity):
         return z1d
 
     for run, impedance in enumerate(Z.iloc[:, mask].values):
-        scaled = impedance/(scale.iloc[run]*10**-4)
-
-        # contact_resistance = np.real(Z_data[0]) - np.real(scaled[0])
-        # shifted = scaled + contact_resistance
+        scaled = impedance/(area.iloc[run])
 
         p_values, covar, _, _, ier = leastsq(contact_residual, 0,
                                              args=(scaled, Z_data),
@@ -439,18 +436,18 @@ def fit_P2D_by_capacity(data_string, target_capacity):
         avg_error = 1./len(shifted)*sum_of_squares/points_to_fit['mag'].mean()
 
         results_array[run, 0] = run + 1  # run is 1-indexed
-        results_array[run, 1] = scale.iloc[run]*10**-4  # m^2
+        results_array[run, 1] = area.iloc[run]  # m^2
         results_array[run, 2] = avg_error*100  # percentage
-        results_array[run, 3] = contact_resistance*(scale.iloc[run]*10**-4)
+        results_array[run, 3] = contact_resistance*(area.iloc[run])
 
-    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual', 'contact_resistance'])
+    results = pd.DataFrame(results_array, columns=['run', 'area', 'residual', 'contact_resistance'])
     results.index = results['run']
 
     results = results[results['contact_resistance'] > 0]
     sorted_results = results.sort_values(['residual'])
 
     best_fit_idx = int(sorted_results['run'].iloc[0])
-    best_Z = (Z.loc[best_fit_idx].iloc[mask] + sorted_results['contact_resistance'].iloc[0])/sorted_results['scale'].iloc[0]
+    best_Z = (Z.loc[best_fit_idx].iloc[mask] + sorted_results['contact_resistance'].iloc[0])/sorted_results['area'].iloc[0]
     # best_Z = sorted_results['impedance'].iloc[0]
 
     fit_points = list(zip(points_to_fit.index,
