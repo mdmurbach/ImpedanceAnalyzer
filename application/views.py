@@ -155,12 +155,9 @@ def fitPhysics():
     else:
         fit_points, fit, sorted_results = fit_P2D(data)
 
-    Z = pd.read_pickle('application/static/data/38800-Z.pkl')
+    Z = pd.read_pickle('./application/static/data/38800-Z.pkl')
 
     mask = [f for f, r, i in fit]
-
-    freq = [f for f, r, i in data]
-
     Z = Z.loc[sorted_results['run'].map(int).values, mask]
 
     full_P = pd.read_csv('./application/static/data/model_runs.txt')
