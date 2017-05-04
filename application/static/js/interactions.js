@@ -163,8 +163,6 @@ function makeRequest(model, data) {
             cache: false,
             success: function(response) {
 
-                console.log(response.full_results);
-
                 var fit = response.fit
                 var fit_points = response.fit_points
                 var parameters = response.parameters

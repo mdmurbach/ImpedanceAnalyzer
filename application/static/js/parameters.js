@@ -1,7 +1,5 @@
 function createParameterTab(id, name, parameters, units, values, errors) {
 
-    console.log(parameters);
-
     $("#grid-parameters ul").append(
         "<li class='nav' role='presentation'>" +
             "<a role='tab' data-toggle='tab' href='#" + "parameters-" + id + "'>" + name +

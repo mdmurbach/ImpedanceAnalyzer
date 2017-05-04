@@ -24,8 +24,6 @@ Nyquist.prototype.draw = function() {
         .attr('width', this.outerWidth)
         .attr('height', this.outerHeight)
 
-    console.log(svg);
-
     this.plot = svg.append('g')
         .attr('transform', 'translate(' + this.margin.left + "," + this.margin.top + ')')
 

@@ -178,8 +178,6 @@ function populateModal(full_results, names, data, fit_data) {
                 .style("left", 0.6*width + "px")
                 .style("top", 0.6*height + "px");
 
-            console.log(selected);
-
         })
         .on("mouseout", function(d) {
             if (d3.select(this).attr('class') != 'selected-circle') {
@@ -279,9 +277,7 @@ function populateModal(full_results, names, data, fit_data) {
 
             let legend = d3.select("#explore-nyquist svg").selectAll("text#legend")
                             .data(selected);
-
-            console.log(selected);
-
+                            
             legend.enter().append('text');
 
             legend
