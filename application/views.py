@@ -1,4 +1,4 @@
-import sys
+import sys, time
 import os
 from application import application
 from flask import render_template, request, jsonify
@@ -12,7 +12,7 @@ from application.ECfit import fitEC
 @application.route('/', methods=['GET'])
 def index():
     """ Impedance Analyzer Main Page """
-    return render_template('index.html', version='20172704v2')
+    return render_template('index.html', version=str(int(time.time())))
 
 
 @application.route('/getExampleData', methods=['GET'])
