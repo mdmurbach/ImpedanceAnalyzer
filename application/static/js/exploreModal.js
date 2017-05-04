@@ -19,9 +19,6 @@ function addP2dexploreButton() {
         .cb(function() { $('#exploreFitModal').modal('show') })();
 }
 
-var color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
-var color_count = 0;
-
 /* Creates the residual plot, nyquist plot, and parameter table within the
  modal for exploring the results.
 
@@ -113,7 +110,10 @@ function populateModal(full_results, names, data, fit_data) {
 
     let residuals = g_res.selectAll("circle").data(full_results);
 
-    var selected = []
+    let selected = []
+
+    let color_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
+    let color_count = 0;
 
     residuals.enter().append('circle');
     residuals
@@ -134,15 +134,15 @@ function populateModal(full_results, names, data, fit_data) {
             parameters = parameter_names_units(impedance);
 
             // add values for currently moused over run
-            impedance['parameters'].forEach((d,i) => {
-                var run = impedance['run']
+            impedance['parameters'].forEach(function(d,i) {
+                let run = impedance['run']
                 parameters[i].set(run.toString(), d['value']);
             });
 
             // add values for selected runs
-            selected.forEach(function(selected_run, run) {
-                var run = selected_run['run']
-                parameters.forEach(function(param, i) {
+            selected.forEach(function(selected_run) {
+                let run = selected_run['run']
+                parameters.forEach((p, i) => {
                     parameters[i].set(run.toString(), selected_run['parameters'][i].value);
                 })
             })
@@ -159,16 +159,26 @@ function populateModal(full_results, names, data, fit_data) {
 
             let {positive, negative} = calcCapacity(impedance, area)
 
-            div.html(
-                'Rank: ' + (i+1) + '<br>' +
-                'MSE:  ' + d.residual.toPrecision(2)  + '%'  + '<br>' +
-                'Run: '+ d.run + '<br>' +
-                'Pos Capacity: ' + positive.toPrecision(4) + 'mAh' + '<br>' +
-                'Neg Capacity: ' + negative.toPrecision(4) + 'mAh' + '<br>' +
-                'HF Intercept: ' + (1000*calcOhmicR(impedance)/area).toPrecision(3) + ' mOhms' + '<br>' +
-                'Contact Resistance: ' + (1000*contact_resistance/area).toPrecision(3) + ' mOhms')
+            div.transition()
+                .duration(1200)
+                .style("opacity", 1);
+
+            let to_display = [
+                {label: 'Rank', value: (i+1)},
+                {label: 'MSE', value: d.residual.toPrecision(2)  + '%'},
+                {label: 'Run', value: d.run},
+                {label: 'Pos. Capacity', value: positive.toPrecision(4)+'mAh'},
+                {label: 'Neg. Capacity', value: negative.toPrecision(4)+'mAh'},
+                {label: 'Contact Resistance', value: (1000*contact_resistance).toPrecision(3) + 'mOhms'}];
+
+            display_string = ''
+            to_display.forEach(d => display_string += d.label + ': ' + d.value + '<br>')
+
+            div.html(display_string)
                 .style("left", 0.6*width + "px")
                 .style("top", 0.6*height + "px");
+
+            console.log(selected);
 
         })
         .on("mouseout", function(d) {
@@ -179,18 +189,23 @@ function populateModal(full_results, names, data, fit_data) {
             window.nyquistExplore.clear('.explore-nyquist-path');
 
             // get names/values of parameters
-            var parameters = parameter_names_units(impedance);
+            let parameters = parameter_names_units(impedance);
 
             // add values for selected runs
-            selected.forEach(function(selected_run, run) {
-                var run = selected_run['run']
-                parameters.forEach(function(param, i) {
+            selected.forEach(function(selected_run) {
+                let run = selected_run['run']
+                parameters.forEach((param, i) => {
                     parameters[i].set(run.toString(), selected_run['parameters'][i].value);
                 })
             })
 
             // update parameter table
             updateParameterTable(parameters, selected);
+
+            div.transition()
+                .delay(500)
+                .duration(1200)
+                .style("opacity", 0);
 
         })
         .on("click", function(d, i) {
@@ -210,15 +225,15 @@ function populateModal(full_results, names, data, fit_data) {
                 let contact_resistance = impedance.contact_resistance;
                 scaled = []
 
-                impedance['freq'].forEach(function(d,i) {
+                impedance['freq'].forEach((d,i) => {
                     scaled.push([impedance['freq'][i],
-                                 (impedance['real'][i] + contact_resistance)/area,
+                                 impedance['real'][i]/area + contact_resistance,
                                  impedance['imag'][i]/area]);
                 });
 
                 var selected_parameters = []
 
-                impedance['parameters'].forEach(function(d,i) {
+                impedance['parameters'].forEach((d,i) => {
                     selected_parameters[i] = {
                         value: d['value']
                     }
@@ -236,7 +251,7 @@ function populateModal(full_results, names, data, fit_data) {
 
                 var selected_id = d3.select(this).attr('id')
 
-                selected = $.grep(selected, function(d) { return d.id == selected_id}, true);
+                selected = $.grep(selected, (d) => d.id == selected_id, true);
 
             }
 
@@ -250,9 +265,9 @@ function populateModal(full_results, names, data, fit_data) {
             var parameters = parameter_names_units(impedance);
 
             // add values for selected runs
-            selected.forEach(function(selected_run, run) {
-                var run = selected_run['run']
-                parameters.forEach(function(param, i) {
+            selected.forEach(function(selected_run) {
+                let run = selected_run['run']
+                parameters.forEach((param, i) => {
                     parameters[i].set(run.toString(), selected_run['parameters'][i].value);
                 })
             })
@@ -262,8 +277,10 @@ function populateModal(full_results, names, data, fit_data) {
 
             d3.select("#explore-nyquist svg").selectAll("text#legend").remove();
 
-            var legend = d3.select("#explore-nyquist svg").selectAll("text#legend")
+            let legend = d3.select("#explore-nyquist svg").selectAll("text#legend")
                             .data(selected);
+
+            console.log(selected);
 
             legend.enter().append('text');
 
@@ -271,9 +288,9 @@ function populateModal(full_results, names, data, fit_data) {
                 .attr("id", "legend")
                 .attr('r', 5)
                 .attr('x', margin.left + 40)
-                .attr('y', function(d,i) {return 40 + 20*(i+1) + "px";})
-                .text(function(d) {return "Rank: " + d.rank + "   Run: " + d.id.split('-')[1];})
-                .style('fill', function(d) { return d.color} )
+                .attr('y', (d,i) => 40 + 20*(i+1) + "px")
+                .text((d) => "Rank: " + d.rank + "   Run: " + d.run)
+                .style('fill', (d) => d.color)
                 .on("click", function(d, i) {
                     d3.selectAll("circle#" + d.id).each(function(d, i) {
                         var onClickFunc = d3.select(this).on("click");
@@ -298,7 +315,7 @@ function populateModal(full_results, names, data, fit_data) {
             .attr("id", "legend")
             .attr('x', margin.left + 5)
             .attr('y', (d,i) => 5 + 20*(i+1) + "px")
-            .text((d) => d.name)
+            .text( (d) => d.name)
             .style('fill', (d) => d.color)
 
 
@@ -396,17 +413,15 @@ function updateParameterTable(parameters, selected) {
                     return {value: row.get(d)};
             })
         })
-        .html(function(d) { return d.value; });
+        .html((d) => d.value);
 
-    $('#parameter-estimates tbody td').each(function(i,d) { renderMathInElement(d); })
+    $('#parameter-estimates tbody td').each((i,d) => renderMathInElement(d))
 
     let selected_cols = d3.select("#parameter-estimates tbody .table-header").selectAll('th').filter(function(d) {return parseInt(d)})[0]
 
     selected_cols.forEach(function(d,i) {
         let run = parseInt(d.textContent);
-        let selected_run = selected.filter(function(d) {
-            return d.run == run
-        })[0];
+        let selected_run = selected.filter(d => d.run == run)[0];
         if(selected_run) {
             $('#exploreFitModal table#parameter-estimates tr td:nth-child(' + (i+3) + ')').css('color', selected_run.color);
         }
@@ -420,7 +435,7 @@ function plot_impedance(data, area, contact_resistance, fit_data) {
     data['freq'].forEach(function(d,i) {
         impedance[i] = {
             f: +d,
-            real: +data['real'][i] + contact_resistance,
+            real: +data['real'][i] + contact_resistance*area,
             imag: -1*(+data['imag'][i])
         }
     })
@@ -519,8 +534,8 @@ function calcCapacity(impedance, area) {
     epsilon_f_neg = parameters.find((d) => d.name == "epsilon_f_neg[1]").value
     epsilon_f_pos = parameters.find((d) => d.name == "epsilon_f_pos[1]").value
 
-    const volEnerCap_pos = 550*10**6; // mAh/cm^3
-    const volEnerCap_neg = 400*10**6; // mAh/cm^3
+    const volEnerCap_pos = 550*10**6; // mAh/m^3
+    const volEnerCap_neg = 400*10**6; // mAh/m^3
 
     posCapacity = area*l_pos*volEnerCap_pos*(1-epsilon_pos-epsilon_f_pos)
     negCapacity = area*l_neg*volEnerCap_neg*(1-epsilon_neg-epsilon_f_neg)
