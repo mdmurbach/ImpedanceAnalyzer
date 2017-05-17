@@ -19,6 +19,49 @@ function addP2dexploreButton() {
         .cb(function() { $('#exploreFitModal').modal('show') })();
 }
 
+/* B for downloading parameter table */
+function downloadParameterTable() {
+
+    let headers = $('#table-exploreModal .table-header th');
+    let columns = headers.map((i,d) => d.innerText).get();
+
+    let csv = 'data:text/csv;charset=utf-8,';
+
+    let parameters = ['area[cm^2]', 'run', 'l_neg[m]', 'l_sep[m]', 'l_pos[m]',
+       'Rp_neg[m]', 'Rp_pos[m]','epsilon_f_neg[1]', 'epsilon_f_pos[1]',
+       'epsilon_neg[1]', 'epsilon_sep[1]', 'epsilon_pos[1]',
+       'Cdl_neg[uF/cm^2]', 'Cdl_pos[uF/cm^2]', 'c0[mol/m^3]', 'D[m^2/s]',
+       'Ds_neg[m^2/s]', 'Ds_pos[m^2/s]', 'i0_neg[A/m^2]', 'i0_pos[A/m^2]',
+       'tP[1]', 'aa_neg[1]', 'aa_pos[1]', 'kappa_0[S/m]', 'sigma_neg[S/m]',
+       'sigma_pos[S/m]', 'dUdcp_neg[V*cm^3/mol]', 'dUdcp_pos[V*cm^3/mol]'];
+
+    parameters.forEach(p => csv += p + ',');
+    csv = csv.slice(0, -1) + '\n'; // remove last comma
+
+    columns.filter(d => d != 'name' && d!= 'units').forEach((d,i) => {
+        console.log(i, d);
+        let values = ""
+        $('#table-exploreModal tr:not(.table-header)').each(function() { values += $(this).children().eq(i+2)[0].innerText + ',' })
+
+        csv += values.slice(0,-1) + '\n'
+    })
+
+    var encodedUri = encodeURI(csv)
+
+    var link = document.createElement('a');
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "data.csv");
+
+    if (typeof link.download != "undefined") {
+        document.body.appendChild(link);
+        link.click();
+        document.body.appendChild(link);
+    } else {
+        alert('Unable to download using this browser. Please try again using Firefox or Chrome.')
+    }
+}
+
+
 /* Creates the residual plot, nyquist plot, and parameter table within the
  modal for exploring the results.
 
@@ -277,7 +320,7 @@ function populateModal(full_results, names, data, fit_data) {
 
             let legend = d3.select("#explore-nyquist svg").selectAll("text#legend")
                             .data(selected);
-                            
+
             legend.enter().append('text');
 
             legend
@@ -293,6 +336,12 @@ function populateModal(full_results, names, data, fit_data) {
                         onClickFunc.apply(this, [d, i]);
                     });
                 });
+
+            if(selected.length > 0) {
+                $('#btn-downloadTable').removeClass('hidden')
+            } else {
+                $('#btn-downloadTable').addClass('hidden')
+            }
 
         });
 
@@ -374,34 +423,34 @@ function updateParameterTable(parameters, selected) {
     var num_cols = columns.length;
     var col_range = Array.from({length: num_cols}, (v, k) => k+1);
 
-    d3.select("#parameter-estimates tbody .table-header").selectAll('th').remove()
+    d3.select("#table-exploreModal tbody .table-header").selectAll('th').remove()
 
-    d3.select("#parameter-estimates tbody .table-header").selectAll('th')
+    d3.select("#table-exploreModal tbody .table-header").selectAll('th')
         .data(columns)
         .enter()
         .append("th")
         .html((d) => d);
 
-    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+    d3.select("#table-exploreModal tbody").selectAll(".dataRow")
         .data(parameters)
         .enter()
         .append("tr")
         .attr("class", "dataRow");
 
-    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+    d3.select("#table-exploreModal tbody").selectAll(".dataRow")
         .data(parameters)
         .attr("class", "dataRow");
 
-    d3.selectAll("#parameter-estimates tbody .dataRow")
+    d3.selectAll("#table-exploreModal tbody .dataRow")
         .selectAll("td").remove()
 
-    d3.selectAll("#parameter-estimates tbody .dataRow")
+    d3.selectAll("#table-exploreModal tbody .dataRow")
         .selectAll("td")
         .data(col_range)
         .enter()
         .append("td")
 
-    d3.selectAll("#parameter-estimates tbody .dataRow")
+    d3.selectAll("#table-exploreModal tbody .dataRow")
         .selectAll("td")
         .data(
             function(row) {
@@ -411,15 +460,15 @@ function updateParameterTable(parameters, selected) {
         })
         .html((d) => d.value);
 
-    $('#parameter-estimates tbody td').each((i,d) => renderMathInElement(d))
+    $('#table-exploreModal tbody td').each((i,d) => renderMathInElement(d))
 
-    let selected_cols = d3.select("#parameter-estimates tbody .table-header").selectAll('th').filter(function(d) {return parseInt(d)})[0]
+    let selected_cols = d3.select("#table-exploreModal tbody .table-header").selectAll('th').filter(function(d) {return parseInt(d)})[0]
 
     selected_cols.forEach(function(d,i) {
         let run = parseInt(d.textContent);
         let selected_run = selected.filter(d => d.run == run)[0];
         if(selected_run) {
-            $('#exploreFitModal table#parameter-estimates tr td:nth-child(' + (i+3) + ')').css('color', selected_run.color);
+            $('#exploreFitModal table#table-exploreModal tr td:nth-child(' + (i+3) + ')').css('color', selected_run.color);
         }
     })
 };
@@ -451,26 +500,26 @@ function plot_impedance(data, area, contact_resistance, fit_data) {
 
 function createParameterTable(element, parameters) {
 
-    d3.select(element).select("#parameter-estimates tbody").selectAll(".dataRow")
+    d3.select(element).select("#table-exploreModal tbody").selectAll(".dataRow")
         .data(parameters)
         .enter()
         .append("tr")
         .attr("class", "dataRow")
 
-    d3.select("#parameter-estimates tbody").selectAll(".dataRow")
+    d3.select("#table-exploreModal tbody").selectAll(".dataRow")
         .data(parameters)
         .attr("class", "dataRow")
         // .classed("info", function(d, i) {
         //     return last_p[i].value != parameters[i].value;
         // })
 
-    d3.selectAll("#parameter-estimates tbody .dataRow")
+    d3.selectAll("#table-exploreModal tbody .dataRow")
        .selectAll("td")
        .data([0,1,2])
        .enter()
        .append("td")
 
-   d3.selectAll("#parameter-estimates tbody .dataRow")
+   d3.selectAll("#table-exploreModal tbody .dataRow")
       .selectAll("td")
       .data(
           function(row) {

@@ -18,6 +18,7 @@ function download_csv() {
             csv += row
         }
         csv += "\n"
+        
     })
 
     var encodedUri = encodeURI(csv)

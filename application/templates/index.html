@@ -71,6 +71,7 @@
                 <div class="modal-content" id="exploreFitModal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <button id="btn-downloadTable" class="btn btn-sm hidden" style="float: right; margin-right: 25px;" onclick="downloadParameterTable()">Download Parameter Table</button>
                         <h4 class="modal-title" id="myModalLabel">Explore P2D fit</h4>
                     </div>
                     <div class="modal-body" style="height: calc(100% - 120px);">
@@ -83,7 +84,7 @@
                             </div>
                             <div class="col-md-4" style="height: 100%">
                                 <div class="table-responsive" id="table-div" style="height: 100%">
-                                    <table class="table table-condensed" id="parameter-estimates" style="height: 100%; overflow-y: auto">
+                                    <table class="table table-condensed" id="table-exploreModal" style="height: 100%; overflow-y: auto">
                                         <tbody>
                                             <tr class="table-header">
                                             </tr>
