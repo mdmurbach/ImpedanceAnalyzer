@@ -261,7 +261,7 @@ def fit_P2D_by_capacity(data_string, target_capacity):
     points_to_fit = interpolate_points(data, Z.columns)
 
     # find the high frequency real intercept
-    Zreal_hf, points_to_fit = find_hf_crossover(data, points_to_fit)
+    # Zreal_hf, points_to_fit = find_hf_crossover(data, points_to_fit)
 
     Z_data_r = np.array(points_to_fit['real'].tolist())
     Z_data_i = 1j*np.array(points_to_fit['imag'].tolist())
