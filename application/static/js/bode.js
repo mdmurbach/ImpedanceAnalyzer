@@ -184,7 +184,7 @@ Bode.prototype.addAxes = function() {
         .style("text-anchor", "middle")
 
     katex.render("Magnitude, |Z|, \\mathrm{ [Ohms]}", ylabelMagnitude.node(), {displayMode: true})
-    katex.render("Phase, -\\phi_Z, \\mathrm{ [Ohms]}", ylabelPhase.node(), {displayMode: true})
+    katex.render("Phase, -\\phi_Z, \\mathrm{ [Deg]}", ylabelPhase.node(), {displayMode: true})
 
     katex.render("Frequency, f, \\mathrm{ [Hz]}", xlabelMagnitude.node(), {displayMode: true})
     katex.render("Frequency, f, \\mathrm{ [Hz]}", xlabelPhase.node(), {displayMode: true})
