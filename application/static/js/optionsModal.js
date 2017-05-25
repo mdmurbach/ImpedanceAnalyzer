@@ -132,12 +132,12 @@ function loadModal(selected) {
                                 "<label for='P2D-fitting' style='padding:15px'>" +
                                     "Select type of fit" +
                                 "</label>" +
-                                "<div class='radio'>" +
-                                    "<label>" +
-                                    "<input type='radio' name='fittingRadio' value='hf-intercept' checked>" +
-                                    "High Frequency Intercept" +
-                                    "</label>" +
-                                "</div>" +
+                                // "<div class='radio'>" +
+                                //     "<label>" +
+                                //     "<input type='radio' name='fittingRadio' value='hf-intercept' checked>" +
+                                //     "High Frequency Intercept" +
+                                //     "</label>" +
+                                // "</div>" +
                                 "<div class='radio'>" +
                                     "<label>" +
                                     "<input type='radio' name='fittingRadio' value='cap_contact' checked>" +
