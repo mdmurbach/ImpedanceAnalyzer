@@ -15,7 +15,7 @@ var Bode = function(config) {
 
     if(this.outerHeight == 0) { this.outerHeight = 500};
 
-    this.margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
+    this.margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: 80, left: 80};
     this.width = this.outerWidth - this.margin.left - this.margin.right;
     this.height = this.outerHeight/2 - this.margin.top - this.margin.bottom;
 
@@ -113,38 +113,81 @@ Bode.prototype.addAxes = function() {
         .attr('class', 'y axis')
         .attr('transform', 'translate(0,' + 0 + ')')
         .call(yAxis_mag)
+    //
+    // this.plot_ph.append("text")
+    //     .attr("class", "label")
+    //     .attr("transform", "translate(" + (this.width/2) + " ," +
+    //                                     (this.height + this.margin.bottom - 10) + ")")
+    //     .style("text-anchor", "middle")
+    //     .text("Frequency [Hz]");
+    //
+    // this.plot_ph.append("text")
+    //     .attr("class", "label")
+    //     .attr("transform", "rotate(-90)")
+    //     .attr("y", -this.margin.left - 1)
+    //     .attr("x",0 - (this.height / 2))
+    //     .attr("dy", "1em")
+    //     .style("text-anchor", "middle")
+    //     .text("-Phase [deg]");
+    //
+    // this.plot_mag.append("text")
+    //     .attr("class", "label")
+    //     .attr("transform", "translate(" + (this.width/2) + " ," +
+    //                                     (this.height + this.margin.bottom - 10) + ")")
+    //     .style("text-anchor", "middle")
+    //     .text("Frequency [Hz]");
+    //
+    // this.plot_mag.append("text")
+    //     .attr("class", "label")
+    //     .attr("transform", "rotate(-90)")
+    //     .attr("y", -this.margin.left - 1)
+    //     .attr("x",0 - (this.height / 2))
+    //     .attr("dy", "1em")
+    //     .style("text-anchor", "middle")
+    //     .text("Magnitude [Ohms]");
+    //
 
-    this.plot_ph.append("text")
-        .attr("class", "label")
-        .attr("transform", "translate(" + (this.width/2) + " ," +
-                                        (this.height + this.margin.bottom - 10) + ")")
-        .style("text-anchor", "middle")
-        .text("Frequency [Hz]");
+    width = d3.select(this.element).select('svg#phase').node().getBBox().width
 
-    this.plot_ph.append("text")
-        .attr("class", "label")
-        .attr("transform", "rotate(-90)")
-        .attr("y", -this.margin.left - 1)
-        .attr("x",0 - (this.height / 2))
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .text("-Phase [deg]");
+    height = d3.select(this.element).select('svg#phase').node().getBBox().height
 
-    this.plot_mag.append("text")
-        .attr("class", "label")
-        .attr("transform", "translate(" + (this.width/2) + " ," +
-                                        (this.height + this.margin.bottom - 10) + ")")
-        .style("text-anchor", "middle")
-        .text("Frequency [Hz]");
+    svgHeight = d3.select(this.element).select('svg#phase').node().height.baseVal.value
 
-    this.plot_mag.append("text")
-        .attr("class", "label")
-        .attr("transform", "rotate(-90)")
-        .attr("y", -this.margin.left - 1)
-        .attr("x",0 - (this.height / 2))
-        .attr("dy", "1em")
+    var ylabelMagnitude = d3.select(this.element).append("div.label")
+
+    ylabelMagnitude.style("transform", "rotate(-90deg)")
+        .style("position", "absolute")
+        .style("left", -.5*this.margin.left + "px")
+        .style("top", svgHeight + height/2 + "px")
         .style("text-anchor", "middle")
-        .text("Magnitude [Ohms]");
+
+    var xlabelMagnitude = d3.select(this.element).append("div.label")
+
+    xlabelMagnitude.style("position", "absolute")
+        .style("left", width/2 + "px")
+        .style("top", height + "px")
+        .style("text-anchor", "middle")
+
+    var ylabelPhase = d3.select(this.element).append("div.label")
+
+    ylabelPhase.style("transform", "rotate(-90deg)")
+        .style("position", "absolute")
+        .style("left", -.5*this.margin.left + "px")
+        .style("top", height/2 + "px")
+        .style("text-anchor", "middle")
+
+    var xlabelPhase = d3.select(this.element).append("div.label")
+
+    xlabelPhase.style("position", "absolute")
+        .style("left", width/2 + "px")
+        .style("top", svgHeight + height + "px")
+        .style("text-anchor", "middle")
+
+    katex.render("Magnitude, |Z|, \\mathrm{ [Ohms]}", ylabelMagnitude.node(), {displayMode: true})
+    katex.render("Phase, -\\phi_Z, \\mathrm{ [Ohms]}", ylabelPhase.node(), {displayMode: true})
+
+    katex.render("Frequency, f, \\mathrm{ [Hz]}", xlabelMagnitude.node(), {displayMode: true})
+    katex.render("Frequency, f, \\mathrm{ [Hz]}", xlabelPhase.node(), {displayMode: true})
 }
 
 

@@ -5,15 +5,16 @@ var Nyquist = function(config) {
     this.element = config.element;
     this.data = config.data;
 
-    this.margin = {top: 20, right: 20, bottom: 80, left: 80};
-    this.width = this.outerWidth - this.margin.left - this.margin.right;
-    this.height = this.outerHeight - this.margin.top - this.margin.bottom;
-
     if(this.outerWidth < this.outerHeight) {
         this.outerHeight = this.outerWidth;
     } else {
         this.outerWidth = this.outerHeight;
     }
+    
+    this.margin = {top: 20, right: 20, bottom: 80, left: 80};
+    this.width = this.outerWidth - this.margin.left - this.margin.right;
+    this.height = this.outerHeight - this.margin.top - this.margin.bottom;
+
 
     this.draw();
 }
@@ -69,21 +70,29 @@ Nyquist.prototype.addAxes = function() {
         .attr('transform', 'translate(0,' + 0 + ')')
         .call(yAxis)
 
-    this.plot.append("text")
-        .attr("class", "label")
-        .attr("transform", "translate(" + (this.width/2) + " ," +
-                                        (this.height + this.margin.bottom - 10) + ")")
-        .style("text-anchor", "middle")
-        .text("Z' [Ohms]");
+    svgWidth = d3.select(this.element).select('svg')
+                    .node().getAttribute('width')
+    svgHeight = d3.select(this.element).select('svg')
+                    .node().getAttribute('height')
 
-    this.plot.append("text")
-        .attr("class", "label")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 20 - this.margin.left)
-        .attr("x",0 - (this.height / 2))
-        .attr("dy", "1em")
+    var ylabel = d3.select(this.element).append("div.label")
+
+    ylabel.style("transform", "rotate(-90deg)")
+        .style("position", "absolute")
+        .style("left", -.2*this.margin.left + "px")
+        .style("top", svgHeight/2 + "px")
+        .style("text-anchor", "right")
+
+    var xlabel = d3.select(this.element).append("div.label")
+
+    xlabel.style("position", "absolute")
+        .style("left", svgWidth/2 + "px")
+        .style("top", svgHeight - .6*this.margin.bottom + "px")
         .style("text-anchor", "middle")
-        .text("-Z'' [Ohms] ");
+
+    katex.render("-Z_{1,1}^{\\prime\\prime} \\mathrm{ [Ohms]}", ylabel.node())
+
+    katex.render("Z_{1,1}^{\\prime} \\mathrm{ [Ohms]}", xlabel.node())
 }
 
 

@@ -2,11 +2,13 @@ function initializeCharts(data) {
     outerWidth = d3.select('#bode').node().getBoundingClientRect().width;
     outerHeight = d3.select('#bode').node().getBoundingClientRect().height;
 
-    if(outerHeight == 0) { outerHeight = 500};
+    console.log(outerWidth, outerHeight)
 
-    var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
-    var width = outerWidth - margin.left - margin.right;
-    var height = outerHeight/2 - margin.top - margin.bottom;
+    // if(outerHeight == 0) { outerHeight = 500};
+    //
+    // var margin = {top: outerHeight*.01, right: outerWidth*.01, bottom: outerHeight*.12, left: outerWidth*.12};
+    // var width = outerWidth - margin.left - margin.right;
+    // var height = outerHeight/2 - margin.top - margin.bottom;
 
     nyquist_config = {
         outerWidth: outerWidth,
