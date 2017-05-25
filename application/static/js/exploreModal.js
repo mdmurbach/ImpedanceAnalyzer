@@ -345,8 +345,8 @@ function populateModal(full_results, names, data, fit_data) {
 
         });
 
-        let legend_text = [{name: 'Good, Pos. Contact Res.', color: '#0571b0'},
-                           {name: 'Suspect, Pos. Contact Res.', color: '#ca0020'}]//,
+        let legend_text = [{name: 'Pos. Contact Res.', color: '#0571b0'},
+                           {name: 'Neg. Contact Res.', color: '#f4a582'}]//,
                         //    {name: 'Good, Neg. Contact Res.', color: '#92c5de'},
                         //    {name: 'Suspect, Neg. Contact Res.', color: '#f4a582'}]
 
@@ -385,18 +385,24 @@ function get_accu_color(d, full_results) {
 
     accuracy = calcHFAccuracy(impedance);
 
-    if(accuracy < 0.15) {
-        if (contact_resistance > 0) {
-            return "#0571b0" // dark blue
-        } else {
-            return "#92c5de" // light blue
-        }
+    // if(accuracy < 0.15) {
+    //     if (contact_resistance > 0) {
+    //         return "#0571b0" // dark blue
+    //     } else {
+    //         return "#92c5de" // light blue
+    //     }
+    // } else {
+    //     if (contact_resistance > 0) {
+    //         return "#ca0020" // dark red
+    //     } else {
+    //         return "#f4a582" // light red
+    //     }
+    // }
+
+    if (contact_resistance > 0) {
+        return "#0571b0" // dark blue
     } else {
-        if (contact_resistance > 0) {
-            return "#ca0020" // dark red
-        } else {
-            return "#f4a582" // light red
-        }
+        return "#f4a582" // light blue
     }
 }
 

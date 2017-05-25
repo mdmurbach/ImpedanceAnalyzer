@@ -330,8 +330,8 @@ def fit_P2D_by_capacity(data_string, target_capacity):
 
     results.index = results['run']
 
-    # remove contact resistances below zero
-    results = results[results['contact_resistance'] > 0]
+    # remove contact resistances below 10% of high frequency real
+    results = results[results['contact_resistance'] > -0.1*np.real(Z_data[0])]
 
     sorted_results = results.sort_values(['residual'])
 
