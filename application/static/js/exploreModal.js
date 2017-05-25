@@ -10,7 +10,7 @@ function addP2dexploreButton() {
         .attr('transform', 'translate(' + width*.7 + ',' + height*.1 + ')')
 
     let text = g.append('text')
-        .text('Explore P2D Fit')
+        .text('Explore P2D')
 
     button()
         .container(g)
