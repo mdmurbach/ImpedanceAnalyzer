@@ -43,7 +43,7 @@ function loadModal(selected) {
             "image": "randles_cpe.png",
             "parameters": ["R0", "R1", "E1", "E2", "W1", "W2"],
             "values": ["0.01", "0.005", ".1", ".9", ".0001", "200"],
-            "units": ["Ohms", "Ohms", "F", "1", "Ohms", "Sec"],
+            "units": ["Ohms", "Ohms", "F", "-", "Ohms", "Sec"],
             "circuit": "R_0-p(R_1,E_1/E_2)-W_1/W_2"
         },
         "two_constant_warburg" :
