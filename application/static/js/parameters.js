@@ -62,7 +62,7 @@ function createParameterTab(id, name, parameters, units, values, errors) {
                                 "<th>Parameter</th>" +
                                 "<th>Units</th>" +
                                 "<th>Best Estimate</th>" +
-                                "<th data-toggle='tooltip' title='The error is given as the estimated one-sigma standard deviation'>Error</th>" +
+                                "<th>Error<i class='glyphicon glyphicon-question-sign' id='info-parameters' data-toggle='tooltip' title='Additional information' aria-hidden='true'></i></th>" +
                                 "<th>% Error</th>" +
                             "</tr>" +
                             rows +
