@@ -35,7 +35,8 @@ class TestFitting(unittest.TestCase):
                         selected.map(np.real),
                         selected.map(np.imag)))
 
-        fit_points, best_fit, sorted_results = fitPhysics.fit_P2D(data)
+        results = fitPhysics.fit_P2D_by_capacity(data, 1500)
+        fit_points, best_fit, sorted_results = results
 
         result = sorted_results.iloc[0]['run']
         self.assertEqual(run, result)

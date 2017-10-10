@@ -1,98 +1,10 @@
-""" Provides functions for fitting equivalent circuit and physics-based models
-
-"""
+""" Provides functions for fitting physics-based models """
 
 import sys
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.optimize import leastsq
-
-
-def fit_P2D(data_string):
-    """ Fit physics-based model by matching the hf intercept
-
-    Parameters
-    ----------
-
-    data : list of tuples
-        (frequency, real impedance, imaginary impedance) of the
-        experimental data to be fit
-
-    Returns
-    -------
-
-    fit_points : list of tuples
-        (frequency, real impedance, imaginary impedance) of points
-        used in the fitting of the physics-based model
-
-    best_fit : list of tuples
-        (frequency, real impedance, imaginary impedance) of
-        the best fitting model
-
-    full_results : pd.DataFrame
-        DataFrame of top fits sorted by their residual
-
-
-    """
-
-    # transform data from string to pd.DataFrame
-    data = prepare_data(data_string)
-
-    # read in all of the simulation results
-    Z = pd.read_pickle('./application/static/data/33500-Z.pkl')
-
-    # interpolate data to match simulated frequencies
-    points_to_fit = interpolate_points(data, Z.columns)
-
-    # find the high frequency real intercept
-    Zreal_hf, points_to_fit = find_hf_crossover(data, points_to_fit)
-
-    # scale by matching the high frequency intercept for data and simulation
-    hf_real = Z.loc[:, 1e5].map(np.real)
-    scale = hf_real/Zreal_hf  # m^2
-    scale.index = range(1, len(scale)+1)
-
-    Z_data_r = np.array(points_to_fit['real'].tolist())
-    Z_data_i = 1j*np.array(points_to_fit['imag'].tolist())
-    Z_data = Z_data_r + Z_data_i
-
-    mask = [i for i, f in enumerate(Z.columns) if f in points_to_fit.index]
-
-    results_array = np.ndarray(shape=(len(Z), 3))
-
-    for run, impedance in enumerate(Z.iloc[:, mask].values):
-        scaled = impedance/scale.values[run]
-
-        real_squared = (np.real(Z_data) - np.real(scaled))**2
-        imag_squared = (np.imag(Z_data) - np.imag(scaled))**2
-        sum_of_squares = sum(np.sqrt(real_squared + imag_squared))
-
-        avg_error = 1./len(scaled)*sum_of_squares/points_to_fit['mag'].mean()
-
-        results_array[run, 0] = run + 1
-        results_array[run, 1] = scale.values[run]
-        results_array[run, 2] = avg_error*100  # percentage
-
-    results = pd.DataFrame(results_array, columns=['run', 'scale', 'residual'])
-    results.index = results['run']
-
-    sorted_results = results.sort_values(['residual'])
-
-    best_fit_idx = int(sorted_results['run'].iloc[0])
-    best_Z = Z.loc[best_fit_idx].iloc[mask]/sorted_results['scale'].iloc[0]
-
-    fit_points = list(zip(points_to_fit.index,
-                      points_to_fit.real,
-                      points_to_fit.imag))
-
-    best_fit = list(zip(best_Z.index,
-                        best_Z.map(np.real),
-                        best_Z.map(np.imag)))
-
-    NUM_RESULTS = 100
-
-    return fit_points, best_fit, sorted_results.iloc[0:NUM_RESULTS]
 
 
 def prepare_data(data):
@@ -225,7 +137,8 @@ def phase(x):
 
 
 def fit_P2D_by_capacity(data_string, target_capacity):
-    """ Fit physics-based model by matching the capacity and then sliding along real (contact resistance)
+    """ Fit physics-based model by matching the capacity and then sliding along
+    real axes to determine contact resistance
 
     Parameters
     ----------

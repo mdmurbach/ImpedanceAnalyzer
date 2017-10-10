@@ -1,8 +1,9 @@
-import sys, time
+import sys
+import time
 import os
 from application import application
 from flask import render_template, request, jsonify
-from application.fitPhysics import fit_P2D, fit_P2D_by_capacity
+from application.fitPhysics import fit_P2D_by_capacity
 import pandas as pd
 import numpy as np
 import json
@@ -152,8 +153,6 @@ def fitPhysics():
     if fit_type == "cap_contact":
         fit_mAh = float(request.values["fit-mAh"])
         fit_points, fit, sorted_results = fit_P2D_by_capacity(data, fit_mAh)
-    else:
-        fit_points, fit, sorted_results = fit_P2D(data)
 
     Z = pd.read_pickle('./application/static/data/38800-Z.pkl')
 
