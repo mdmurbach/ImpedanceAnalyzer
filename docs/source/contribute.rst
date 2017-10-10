@@ -8,9 +8,9 @@ Recommended minimum environment:
 
 * `Python <https://www.python.org/>`_
 * `git <https://git-scm.com/>`_
-* `virtualenv <https://python-guide.readthedocs.io/en/latest/dev/virtualenvs/#virtualenv>`_
+* `conda <https://conda.io/docs/index.html>`_
 
-The following assumes you have all of the above tools installed already.
+The following assumes you have all of the above tools installed already and are using the git Bash shell.
 
 Windows
 ^^^^^^^^
@@ -21,21 +21,19 @@ Windows
     > git clone https://github.com/mdmurbach/ImpedanceAnalyzer.git
     > cd ImpedanceAnalyzer
 
-2. Create and initialize the virtual environment for the project:
+2. Create and initialize the conda environment for the project:
 ::
 
-    > virtualenv flask
-    > cd flask/Scripts
-    > activate
-    > cd ../..
-    > pip install -r requirements.txt
+    > conda env create -f conda-env.yml
 
-3. Run the python flask server
+3. Use start.bat to activate the environment and start the application
 ::
 
-    > python application.py
+    > ./start.bat
 
-4. Open http://localhost:5000
+4. If a browser window doesn't open. Navigate to http://localhost:5000/
+::
+
 
 Flask Application Structure
 ---------------------------
@@ -89,3 +87,12 @@ Circuit elements can be added to the circuit_elements.py
 
 .. automodule:: application.ECfit.circuit_elements
     :members:
+
+Documentation
+-------------
+
+This project is documented using Sphinx. To rebuild the documentation:
+::
+
+    > cd docs
+    > ./make.bat html

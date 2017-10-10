@@ -1,0 +1,14 @@
+name: impedance-analyzer-env
+dependencies:
+- python=3.4
+- Flask
+- pandas
+- pip
+- pip:
+    - awsebcli
+    - sphinx-rtd-theme
+    - sphinxcontrib-httpdomain
+    - numpydoc
+- pytest
+- scipy
+- sphinx
