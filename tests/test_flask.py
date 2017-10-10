@@ -25,7 +25,7 @@ class TestFitting(unittest.TestCase):
         """
 
         os.chdir('../')
-        Z = pd.read_pickle('./application/static/data/29000-Z.pkl')
+        Z = pd.read_pickle('./application/static/data/38800-Z.pkl')
 
         run = np.random.randint(1, high=len(Z)+1)
         print('run = {}'.format(run))
