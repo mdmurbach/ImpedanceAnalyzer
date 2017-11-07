@@ -21,10 +21,12 @@ Windows
     > git clone https://github.com/mdmurbach/ImpedanceAnalyzer.git
     > cd ImpedanceAnalyzer
 
-2. Create and initialize the conda environment for the project:
+2. Create and initialize the virtual environment for the project:
 ::
 
-    > conda env create -f conda-env.yml
+    > conda env create -n impedance-analyzer-env python=3.4
+    > conda install scipy=0.19.1
+    > pip install -r requirements.txt
 
 3. Use start.bat to activate the environment and start the application
 ::
@@ -49,7 +51,8 @@ ImpedanceAnalyzer's structure is a Flask application with the structure shown be
             \static         <-- folder for static (data, images, js, css, etc.) files
             \templates      <-- contains html templates for pages
             __init.py__     <-- makes this folder a module
-            fitModels.py    <-- python functions for fitting equivalent circuit and physics-based models
+            fitPhysics.py   <-- python functions for fitting physics-based models
+            ECfit           <-- module for fitting equivalent circuits
             views.py        <-- responsible for routing requests to different pages
         \docs               <-- contains files associated with this documentation
         application.py      <-- .py file for starting Flask app
