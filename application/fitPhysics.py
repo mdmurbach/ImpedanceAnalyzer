@@ -168,7 +168,17 @@ def fit_P2D_by_capacity(data_string, target_capacity):
     data = prepare_data(data_string)
 
     # read in all of the simulation results
-    Z = pd.read_pickle('./application/static/data/38800-Z.pkl')
+    Z_csv = pd.read_csv('./application/static/data/38800-Z.csv', index_col=0)
+
+    real = [a for a in Z_csv.columns if 'real' in a]
+    real_df = Z_csv[real]
+    real_df.columns = [float(a.split('_real')[0]) for a in real_df.columns]
+
+    imag = [a for a in Z_csv.columns if 'imag' in a]
+    imag_df = Z_csv[imag]
+    imag_df.columns = [float(a.split('_imag')[0]) for a in imag_df.columns]
+
+    Z = real_df + imag_df*1j
 
     # interpolate data to match simulated frequencies
     points_to_fit = interpolate_points(data, Z.columns)

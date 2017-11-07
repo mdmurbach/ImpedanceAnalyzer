@@ -15,3 +15,6 @@ __pycache__/
 
 # Tests
 tests/.cache/*
+
+# Virtual environment
+impedance-analyzer-env/*
