@@ -10,7 +10,10 @@ Welcome to Impedance Analyzer's documentation!
 Impedance Analyzer is an open-source, web-based analysis platform aimed at making
 physics-based models as easy to use as equivalent circuits for quantitative analysis of EIS experimental data.
 
-It is currently hosted here: http://theimpedanceanalyzer.com
+The tool is currently hosted here: http://theimpedanceanalyzer.com
+
+It should be noted that the ImpedanceAnalyzer is currently a beta release.
+Improved documentation, tests, features, and an improved dataset are upcoming in the v1.0.0 release.
 
 .. toctree::
     :maxdepth: 1
