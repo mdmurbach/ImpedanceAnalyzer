@@ -13,7 +13,6 @@ This repository contains all of the code for the [Impedance Analyzer](http://the
 The requirements.txt file can be used to recreate the same conda environment with the following commands:
 
     > conda create -n impedance-analyzer-env
-    > conda install scipy pandas
     > pip install -r requirements.txt
 
 And then the ImpedanceAnalyzer can be run locally using either:
