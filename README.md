@@ -4,7 +4,7 @@
 
 The ImpedanceAnalyzer is an open-source, web-based analysis platform aimed at making physics-based models as easy to use as equivalent circuits for the analysis of experimental EIS spectra. *These tools are currently under development and contributions, suggestions, and feedback are really appreciated!* (contact: mmurbach `at` uw `dot` edu)
 
-This repository contains all of the code for the [Impedance Analyzer](http://theimpedanceanalyzer.com) currently running using Elastic Beanstalk on Amazon Web Services.
+This repository contains all of the code for the [Impedance Analyzer](http://impedance-analyzer-3-env.2j7dzwcppe.us-west-2.elasticbeanstalk.com/) currently running using Elastic Beanstalk on Amazon Web Services.
 
 **Documentation:** [ReadTheDocs](http://impedanceanalyzer.readthedocs.io/en/latest/)
 
